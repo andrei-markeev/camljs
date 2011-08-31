@@ -298,6 +298,7 @@ CamlBuilder.Token.prototype = {
             writer.writeEndElement();
         }
 
+        this.camlBuilder.tree = new Array();
         writer.close();
         return sb.toString();
     }
