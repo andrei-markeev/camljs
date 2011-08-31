@@ -7,24 +7,32 @@
 <%@ Page Language="C#" Inherits="Microsoft.SharePoint.WebControls.LayoutsPageBase" DynamicMasterPageFile="~masterurl/default.master" %>
 
 <asp:Content ID="PageHead" ContentPlaceHolderID="PlaceHolderAdditionalPageHead" runat="server">
-<SharePoint:ScriptLink Name="/_layouts/CamlBuilder.Test/CamlBuilder.js" Localizable="false" runat="server" />
+<script type="text/javascript" src="/_layouts/CamlBuilder/CamlBuilder.js"></script>
 </asp:Content>
 
 <asp:Content ID="Main" ContentPlaceHolderID="PlaceHolderMain" runat="server">
 <script type="text/javascript">
     function test() {
-        var caml = new CamlBuilder()
+        var caml = new CamlBuilder();
 
         var s = caml
         .IntegerField("ID").In([10, 15, 19])
         .And()
         .TextField("Title").EqualTo("Hello")
+        .And()
+        .IntegerField("AssignedTo").EqualTo("{UserID}")
+        .And()
+        .LookupIdField("Department").EqualTo(10)
+        .And()
+        .DateField("ExpirationDate").LessOrEqualThan("{Now}")
         .ToString();
 
-        alert(s);
+        document.getElementById("caml").innerHTML = SP.Utilities.HttpUtility.htmlEncode(s);
     }
     ExecuteOrDelayUntilScriptLoaded(test, 'sp.core.js');
 </script>
+<div id="caml">
+</div>
 </asp:Content>
 
 <asp:Content ID="PageTitle" ContentPlaceHolderID="PlaceHolderPageTitle" runat="server">

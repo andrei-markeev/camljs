@@ -72,11 +72,10 @@
     <Folder Include="Features\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Layouts\CamlBuilder.Test\CamlBuilder.js" />
-    <Content Include="Layouts\CamlBuilder.Test\Test.aspx">
+    <Content Include="Layouts\CamlBuilder\CamlBuilder.js" />
+    <Content Include="Layouts\CamlBuilder\Test.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
-    <Content Include="Layouts\CamlBuilder.Test\Test.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\SharePointTools\Microsoft.VisualStudio.SharePoint.targets" />
