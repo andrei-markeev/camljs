@@ -74,17 +74,8 @@ CamlBuilder.prototype = {
         // TODO: implementation
 
         return new CamlBuilder.Token(this, this.tree.length);
-    },
-    
-    Membership: function () {
-        /// <summary>
-        /// Defines a filter based on the type of membership for the user.
-        /// </summary>
-
-        // TODO: implementation
-
-        return new CamlBuilder.Token(this, this.tree.length);
     }
+
 };
 
 
@@ -93,7 +84,13 @@ CamlBuilder.prototype = {
 CamlBuilder.FieldRef = function (camlBuilder, name, valueType, lookupId, includeTimeValue) {
 
     this.camlBuilder = camlBuilder;
+    this.Membership.camlBuilder = camlBuilder;
+    this.Membership.SPWeb.camlBuilder = camlBuilder;
+
     this.startIndex = camlBuilder.tree.length;
+    this.Membership.startIndex = camlBuilder.tree.length;
+    this.Membership.SPWeb.startIndex = camlBuilder.tree.length;
+
     this.valueType = valueType;
 
     this.camlBuilder.tree.push({ Element: 'FieldRef', Name: name, LookupId: lookupId });
@@ -201,10 +198,39 @@ CamlBuilder.FieldRef.prototype = {
         this.camlBuilder.tree.push({ Element: "End" });
 
         return new CamlBuilder.Token(this.camlBuilder, this.startIndex);
+    },
+
+    Membership: {
+
+        SPWeb: {
+            AllUsers: function () {
+                CamlBuilder.Membership(this.camlBuilder, this.startIndex, "SPWeb.AllUsers");
+                return new CamlBuilder.Token(this.camlBuilder, this.startIndex);
+            },
+            Users: function () {
+                CamlBuilder.Membership(this.camlBuilder, this.startIndex, "SPWeb.Users");
+                return new CamlBuilder.Token(this.camlBuilder, this.startIndex);
+            },
+            Groups: function () {
+                CamlBuilder.Membership(this.camlBuilder, this.startIndex, "SPWeb.Groups");
+                return new CamlBuilder.Token(this.camlBuilder, this.startIndex);
+            }
+        },
+        SPGroup: function () {
+            CamlBuilder.Membership(this.camlBuilder, this.startIndex, "SPGroup");
+            return new CamlBuilder.Token(this.camlBuilder, this.startIndex);
+        },
+        CurrentUserGroups: function () {
+            CamlBuilder.Membership(this.camlBuilder, this.startIndex, "CurrentUserGroups");
+            return new CamlBuilder.Token(this.camlBuilder, this.startIndex);
+        }
+
     }
+
 }
 
 // -------------------------------------------------------------------------------------------------------------------
+
 
 CamlBuilder.Token = function (camlBuilder, startIndex) {
     this.camlBuilder = camlBuilder;
@@ -245,6 +271,13 @@ CamlBuilder.Token.prototype = {
                 writer.writeEndElement();
             } else if (this.camlBuilder.tree[i].Element == "Start") {
                 writer.writeStartElement(this.camlBuilder.tree[i].Name);
+                if (this.camlBuilder.tree[i].Attributes) {
+                    for (var a = 0; a < this.camlBuilder.tree[i].Attributes.length; a++) {
+                        writer.writeAttributeString(
+                            this.camlBuilder.tree[i].Attributes[a].Name,
+                            this.camlBuilder.tree[i].Attributes[a].Value);
+                    }
+                }
             } else if (this.camlBuilder.tree[i].Element == "Value") {
                 writer.writeStartElement("Value");
                 writer.writeAttributeString("Type", this.camlBuilder.tree[i].ValueType);
@@ -270,6 +303,13 @@ CamlBuilder.Token.prototype = {
     }
 }
 
+// -------------------------------------------------------------------------------------------------------------------
+
+
+CamlBuilder.Membership = function (camlBuilder, startIndex, type) {
+    camlBuilder.tree.splice(startIndex, 0, { Element: "Start", Name: "Membership", Attributes: [{ Name: "Type", Value: type}] });
+    camlBuilder.tree.push({ Element: "End" });
+}
 CamlBuilder.UnaryOperator = function (camlBuilder, startIndex, operation) {
     camlBuilder.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
     camlBuilder.tree.push({ Element: "End" });

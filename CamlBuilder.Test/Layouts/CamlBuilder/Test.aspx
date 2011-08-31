@@ -18,13 +18,15 @@
         var s = caml
         .IntegerField("ID").In([10, 15, 19])
         .And()
-        .TextField("Title").EqualTo("Hello")
-        .And()
-        .IntegerField("AssignedTo").EqualTo("{UserID}")
+        .TextField("Title").Contains("red")
         .And()
         .LookupIdField("Department").EqualTo(10)
         .And()
-        .DateField("ExpirationDate").LessOrEqualThan("{Now}")
+        .DateField("ExpirationDate").LessThanOrEqualTo("{Now}")
+        .And()
+        .IntegerField("AssignedTo").EqualTo("{UserID}")
+        .And()
+        .UserField("AssignedTo").Membership.CurrentUserGroups()
         .ToString();
 
         document.getElementById("caml").innerHTML = SP.Utilities.HttpUtility.htmlEncode(s);
