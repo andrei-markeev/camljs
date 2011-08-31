@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" dslVersion="1.0.0.0" Id="435e55e0-c6eb-4c7e-898d-21ec5c3e1862" solutionId="435e55e0-c6eb-4c7e-898d-21ec5c3e1862" resetWebServer="false" name="CamlBuilder.Test" xmlns="http://schemas.microsoft.com/VisualStudio/2008/SharePointTools/PackageModel">
+  <projectItems>
+    <projectItemReference itemId="8b468192-48f1-47fe-84b3-de4e0a930db5" />
+  </projectItems>
+</package>
