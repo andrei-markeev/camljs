@@ -21,6 +21,7 @@
                 .IntegerField("AssignedTo").EqualTo("{UserID}")
                 .Or()
                 .UserField("AssignedTo").Membership.CurrentUserGroups()
+                .OrderBy("Priority").ThenBy("Title")
                 .ToString();
 
             alert(caml);
@@ -29,6 +30,7 @@
                 .LookupIdField("Category").In([2, 3, 10])
                 .And()
                 .DateField("ExpirationDate").LessThanOrEqualTo("{Now}")
+                .OrderByDesc("ExpirationDate")
                 .ToString()
 
             alert(caml);
