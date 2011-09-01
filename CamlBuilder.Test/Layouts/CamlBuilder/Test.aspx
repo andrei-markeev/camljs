@@ -17,16 +17,29 @@
         function test() {
             var camlBuilder = new CamlBuilder();
 
-            var caml = camlBuilder
+            var caml = camlBuilder.Where()
+                .TextField("Email").EqualTo("support@google.com")
+                .Or()
+                .TextField("Email").EqualTo("plus@google.com")
+                .Or()
+                .TextField("Title").BeginsWith("[Google]")
+                .Or()
+                .TextField("Content").Contains("Google")
+                .ToString();
+
+            alert(caml);
+
+            var caml = camlBuilder.Where()
                 .IntegerField("AssignedTo").EqualTo("{UserID}")
                 .Or()
                 .UserField("AssignedTo").Membership.CurrentUserGroups()
+                .GroupBy("Version")
                 .OrderBy("Priority").ThenBy("Title")
                 .ToString();
 
             alert(caml);
 
-            caml = camlBuilder
+            caml = camlBuilder.Where()
                 .LookupIdField("Category").In([2, 3, 10])
                 .And()
                 .DateField("ExpirationDate").LessThanOrEqualTo("{Now}")

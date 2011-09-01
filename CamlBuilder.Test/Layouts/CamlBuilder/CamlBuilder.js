@@ -9,68 +9,110 @@ CamlBuilder = function () {
 };
 
 CamlBuilder.prototype = {
+    Where: function () {
+        this.tree.push({ Element: "Start", Name: "Where" });
+        this.unclosedTags++;
+        return new CamlBuilder.Where(this);
+    },
+
+    GroupBy: function (groupFieldName, collapse) {
+        /// <summary>
+        /// Specifies grouping field for retrieved items
+        /// </summary>
+        CamlBuilder.StartGroupBy(this, groupFieldName, collapse);
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: groupFieldName });
+        return new CamlBuilder.GroupedQuery(this);
+    },
+
+    OrderBy: function (sortFieldName, override, useIndexForOrderBy) {
+        /// <summary>
+        /// Specifies primary sort field for retrieved items
+        /// </summary>
+        CamlBuilder.StartOrderBy(this, override, useIndexForOrderBy);
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: sortFieldName });
+        return new CamlBuilder.OrderedQuery(this);
+    },
+
+    OrderByDesc: function (sortFieldName, override, useIndexForOrderBy) {
+        /// <summary>
+        /// Specifies primary sort field for retrieved items
+        /// </summary>
+        CamlBuilder.StartOrderBy(this, override, useIndexForOrderBy);
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: sortFieldName, Descending: true });
+        return new CamlBuilder.OrderedQuery(this);
+    }
+}
+
+
+// -------------------------------------------------------------------------------------------------------------------
+
+CamlBuilder.Where = function (camlBuilder) {
+    this.camlBuilder = camlBuilder;
+}
+
+CamlBuilder.Where.prototype = {
 
     IntegerField: function (name) {
         /// <summary>
         /// Specifies reference to the Integer field with given internal name
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "Integer");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "Integer");
     },
 
     NumberField: function (name) {
         /// <summary>
         /// Specifies reference to the Number field with given internal name
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "Number");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "Number");
     },
 
     CounterField: function (name) {
         /// <summary>
         /// Specifies reference to the Counter field with given internal name (usually it is the "ID" field)
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "Counter");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "Counter");
     },
     
     TextField: function (name) {
         /// <summary>
         /// Specifies reference to the Text field with given internal name
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "Text");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "Text");
     },
 
     DateField: function (name) {
         /// <summary>
         /// Specifies reference to the DateTime field with given internal name, and specifies, that it's time value will not be included
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "Date");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "Date");
     },
 
     DateTimeField: function (name) {
         /// <summary>
         /// Specifies reference to the datetime field with given internal name
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "DateTime");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "DateTime");
     },
 
     UserField: function (name) {
         /// <summary>
         /// Specifies reference to the integer field with given internal name
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "User");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "User");
     },
 
     LookupField: function (name) {
         /// <summary>
         /// Specifies reference to a lookup field, using it's display value for further comparisons
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "Lookup");
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "Lookup");
     },
 
     LookupIdField: function (name) {
         /// <summary>
         /// Specifies reference to a lookup field, using it's ID for further comparisons
         /// </summary>
-        return new CamlBuilder.FieldRef(this, name, "Integer", true);
+        return new CamlBuilder.FieldRef(this.camlBuilder, name, "Integer", true);
     },
 
     DateRangesOverlap: function (eventDateField, EndDateField, RecurrenceIDField, dateTimeValue) {
@@ -80,7 +122,7 @@ CamlBuilder.prototype = {
 
         // TODO: implementation
 
-        return new CamlBuilder.Token(this, this.tree.length);
+        return new CamlBuilder.Token(this.camlBuilder, this.camlBuilder.tree.length);
     }
 
 };
@@ -251,7 +293,7 @@ CamlBuilder.Token.prototype = {
         /// </summary>
         this.camlBuilder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "And" });
         this.camlBuilder.unclosedTags++;
-        return this.camlBuilder;
+        return new CamlBuilder.Where(this.camlBuilder);
     },
 
     Or: function () {
@@ -260,14 +302,23 @@ CamlBuilder.Token.prototype = {
         /// </summary>
         this.camlBuilder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "Or" });
         this.camlBuilder.unclosedTags++;
-        return this.camlBuilder;
+        return new CamlBuilder.Where(this.camlBuilder);
+    },
+
+    GroupBy: function (groupFieldName, collapse) {
+        /// <summary>
+        /// Specifies grouping field for retrieved items
+        /// </summary>
+        CamlBuilder.StartGroupBy(this.camlBuilder, groupFieldName, collapse);
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: groupFieldName });
+        return new CamlBuilder.GroupedQuery(this.camlBuilder);
     },
 
     OrderBy: function (sortFieldName, override, useIndexForOrderBy) {
         /// <summary>
         /// Specifies primary sort field for retrieved items
         /// </summary>
-        CamlBuilder.StartOrderBy(this.camlBuilder, sortFieldName, override, useIndexForOrderBy);
+        CamlBuilder.StartOrderBy(this.camlBuilder, override, useIndexForOrderBy);
         this.camlBuilder.tree.push({ Element: "FieldRef", Name: sortFieldName });
         return new CamlBuilder.OrderedQuery(this.camlBuilder);
     },
@@ -276,7 +327,7 @@ CamlBuilder.Token.prototype = {
         /// <summary>
         /// Specifies primary sort field for retrieved items
         /// </summary>
-        CamlBuilder.StartOrderBy(this.camlBuilder, sortFieldName, override, useIndexForOrderBy);
+        CamlBuilder.StartOrderBy(this.camlBuilder, override, useIndexForOrderBy);
         this.camlBuilder.tree.push({ Element: "FieldRef", Name: sortFieldName, Descending: true });
         return new CamlBuilder.OrderedQuery(this.camlBuilder);
     },
@@ -289,8 +340,42 @@ CamlBuilder.Token.prototype = {
     }
 }
 
+
 // -------------------------------------------------------------------------------------------------------------------
 
+CamlBuilder.GroupedQuery = function (camlBuilder, startIndex) {
+    this.camlBuilder = camlBuilder;
+}
+
+CamlBuilder.GroupedQuery.prototype = {
+    OrderBy: function (sortFieldName, override, useIndexForOrderBy) {
+        /// <summary>
+        /// Specifies primary sort field for retrieved items
+        /// </summary>
+        CamlBuilder.StartOrderBy(this.camlBuilder, override, useIndexForOrderBy);
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: sortFieldName });
+        return new CamlBuilder.OrderedQuery(this.camlBuilder);
+    },
+
+    OrderByDesc: function (sortFieldName, override, useIndexForOrderBy) {
+        /// <summary>
+        /// Specifies primary sort field for retrieved items
+        /// </summary>
+        CamlBuilder.StartOrderBy(this.camlBuilder, override, useIndexForOrderBy);
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: sortFieldName, Descending: true });
+        return new CamlBuilder.OrderedQuery(this.camlBuilder);
+    },
+
+    ToString: function () {
+        /// <summary>
+        /// Convert to string with final CAML query XML
+        /// </summary>
+        return CamlBuilder.Finalize(this.camlBuilder);
+    }
+}
+
+
+// -------------------------------------------------------------------------------------------------------------------
 
 CamlBuilder.OrderedQuery = function (camlBuilder, startIndex) {
     this.camlBuilder = camlBuilder;
@@ -329,7 +414,17 @@ CamlBuilder.BinaryOperator = function (camlBuilder, startIndex, operation, value
     camlBuilder.tree.push({ Element: "Value", ValueType: valueType, Value: value });
     camlBuilder.tree.push({ Element: "End" });
 }
-CamlBuilder.StartOrderBy = function (camlBuilder, sortFieldName, override, useIndexForOrderBy) {
+CamlBuilder.StartGroupBy = function (camlBuilder, groupFieldName, collapse) {
+    camlBuilder.tree.push({ Element: "End", Count: camlBuilder.unclosedTags });
+    camlBuilder.unclosedTags = 0;
+    if (collapse)
+        camlBuilder.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{Name: "Collapse", Value: "TRUE"] });
+    else
+        camlBuilder.tree.push({ Element: "Start", Name: "GroupBy" });
+    camlBuilder.tree.push({ Element: "FieldRef", Name: groupFieldName });
+    camlBuilder.tree.push({ Element: "End" });
+}
+CamlBuilder.StartOrderBy = function (camlBuilder, override, useIndexForOrderBy) {
     camlBuilder.tree.push({ Element: "End", Count: camlBuilder.unclosedTags });
     camlBuilder.unclosedTags = 1;
 
