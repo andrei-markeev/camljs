@@ -20,7 +20,6 @@ CamlBuilder.prototype = {
         /// Specifies grouping field for retrieved items
         /// </summary>
         CamlBuilder.StartGroupBy(this, groupFieldName, collapse);
-        this.camlBuilder.tree.push({ Element: "FieldRef", Name: groupFieldName });
         return new CamlBuilder.GroupedQuery(this);
     },
 
@@ -310,7 +309,6 @@ CamlBuilder.Token.prototype = {
         /// Specifies grouping field for retrieved items
         /// </summary>
         CamlBuilder.StartGroupBy(this.camlBuilder, groupFieldName, collapse);
-        this.camlBuilder.tree.push({ Element: "FieldRef", Name: groupFieldName });
         return new CamlBuilder.GroupedQuery(this.camlBuilder);
     },
 
@@ -343,7 +341,7 @@ CamlBuilder.Token.prototype = {
 
 // -------------------------------------------------------------------------------------------------------------------
 
-CamlBuilder.GroupedQuery = function (camlBuilder, startIndex) {
+CamlBuilder.GroupedQuery = function (camlBuilder) {
     this.camlBuilder = camlBuilder;
 }
 
@@ -377,7 +375,7 @@ CamlBuilder.GroupedQuery.prototype = {
 
 // -------------------------------------------------------------------------------------------------------------------
 
-CamlBuilder.OrderedQuery = function (camlBuilder, startIndex) {
+CamlBuilder.OrderedQuery = function (camlBuilder) {
     this.camlBuilder = camlBuilder;
 }
 
@@ -415,17 +413,19 @@ CamlBuilder.BinaryOperator = function (camlBuilder, startIndex, operation, value
     camlBuilder.tree.push({ Element: "End" });
 }
 CamlBuilder.StartGroupBy = function (camlBuilder, groupFieldName, collapse) {
-    camlBuilder.tree.push({ Element: "End", Count: camlBuilder.unclosedTags });
+    if (camlBuilder.unclosedTags > 0)
+        camlBuilder.tree.push({ Element: "End", Count: camlBuilder.unclosedTags });
     camlBuilder.unclosedTags = 0;
     if (collapse)
-        camlBuilder.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{Name: "Collapse", Value: "TRUE"] });
+        camlBuilder.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE"}] });
     else
         camlBuilder.tree.push({ Element: "Start", Name: "GroupBy" });
     camlBuilder.tree.push({ Element: "FieldRef", Name: groupFieldName });
     camlBuilder.tree.push({ Element: "End" });
 }
 CamlBuilder.StartOrderBy = function (camlBuilder, override, useIndexForOrderBy) {
-    camlBuilder.tree.push({ Element: "End", Count: camlBuilder.unclosedTags });
+    if (camlBuilder.unclosedTags > 0)
+        camlBuilder.tree.push({ Element: "End", Count: camlBuilder.unclosedTags });
     camlBuilder.unclosedTags = 1;
 
     var attributes = new Array();

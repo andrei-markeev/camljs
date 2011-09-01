@@ -33,11 +33,14 @@
                 .IntegerField("AssignedTo").EqualTo("{UserID}")
                 .Or()
                 .UserField("AssignedTo").Membership.CurrentUserGroups()
-                .GroupBy("Version")
+                .GroupBy("ProductTitle")
                 .OrderBy("Priority").ThenBy("Title")
                 .ToString();
 
-            alert(caml);
+            if (caml != '<Where><Or><Eq><FieldRef Name="AssignedTo" /><Value Type="Integer"><UserID /></Value></Eq><Membership Type="CurrentUserGroups"><FieldRef Name="AssignedTo" /></Membership></Or></Where><GroupBy><FieldRef Name="ProductTitle" /></GroupBy><OrderBy><FieldRef Name="Priority" /><FieldRef Name="Title" /></OrderBy>')
+                alert("ERROR! Assertion failed: " + caml);
+            else
+                alert("TEST 2 passed");
 
             caml = camlBuilder.Where()
                 .LookupIdField("Category").In([2, 3, 10])
