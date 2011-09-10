@@ -114,14 +114,21 @@ CamlBuilder.Where.prototype = {
         return new CamlBuilder.FieldRef(this.camlBuilder, name, "Integer", true);
     },
 
-    DateRangesOverlap: function (eventDateField, EndDateField, RecurrenceIDField, dateTimeValue) {
+    DateRangesOverlap: function (eventDateField, endDateField, recurrenceIDField, dateTimeValue) {
         /// <summary>
-        /// UNIMPLEMENTED YET!! Used in queries to compare the dates in a recurring event with a specified DateTime value, to determine whether they overlap.
+        /// Used in queries to compare the dates in a recurring event with a specified DateTime value, to determine whether they overlap.
         /// </summary>
+        
+        var pos = this.camlBuilder.tree.length;
 
-        // TODO: implementation
+        this.camlBuilder.tree.push({ Element: "Start", Name: "DateRangesOverlap" });
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: eventDateField });
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: endDateField });
+        this.camlBuilder.tree.push({ Element: "FieldRef", Name: recurrenceIDField });
+        this.camlBuilder.tree.push({ Element: "Value", ValueType: "DateTime", Value: dateTimeValue });
+        this.camlBuilder.tree.push({ Element: "End" });
 
-        return new CamlBuilder.Token(this.camlBuilder, this.camlBuilder.tree.length);
+        return new CamlBuilder.Token(this.camlBuilder, pos);
     }
 
 };

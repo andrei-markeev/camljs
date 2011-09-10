@@ -18,6 +18,17 @@
             var camlBuilder = new CamlBuilder();
 
             var caml = camlBuilder.Where()
+                .DateRangesOverlap("EventDate", "EndDate", "RecurrenceID", "{Today}")
+                .And()
+                .TextField("BroadcastTo").Membership.CurrentUserGroups()
+                .Or()
+                .LookupIdField("BroadcastTo").EqualTo("{UserID}")
+                .OrderByDesc("EventDate")
+                .ToString();
+
+            alert(caml);
+
+            var caml = camlBuilder.Where()
                 .TextField("Email").EqualTo("support@google.com")
                 .Or()
                 .TextField("Email").EqualTo("plus@google.com")
