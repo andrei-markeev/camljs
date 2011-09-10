@@ -499,3 +499,35 @@ CamlBuilder.Finalize = function (camlBuilder) {
     writer.close();
     return sb.toString();
 }
+
+
+// -------------------------------------------------------------------------------------------------------------------
+
+
+CamlValues = {
+    UserID: "{UserID}",
+    Today: "{Today}",
+    ListProperty: {
+        Created: "{ListProperty Name=\"Created\"}",
+        DefaultViewUrl: "{ListProperty Name=\"DefaultViewUrl\"}",
+        Description: "{ListProperty Name=\"Description\"}",
+        EnableSyndication: "{ListProperty Name=\"EnableSyndication\"}",
+        ItemCount: "{ListProperty Name=\"ItemCount\"}",
+        LinkTitle: "{ListProperty Name=\"LinkTitle\"}",
+        MajorVersionLimit: "{ListProperty Name=\"MajorVersionLimit\"}",
+        MajorWithMinorVersionsLimit: "{ListProperty Name=\"MajorWithMinorVersionsLimit\"}",
+        RelativeFolderPath: "{ListProperty Name=\"RelativeFolderPath\"}",
+        Title: "{ListProperty Name=\"Title\"}",
+        ViewSelector: "{ListProperty Name=\"ViewSelector\"}"
+    },
+    ProjectProperty: {
+        BlogCategoryTitle: "{ProjectProperty Name=\"BlogCategoryTitle\"}",
+        BlogPostTitle: "{ProjectProperty Name=\"BlogPostTitle\"}",
+        Description: "{ProjectProperty Name=\"Description\"}",
+        RecycleBinEnabled: "{ProjectProperty Name=\"RecycleBinEnabled\"}",
+        SiteOwnerName: "{ProjectProperty Name=\"SiteOwnerName\"}",
+        SiteUrl: "{ProjectProperty Name=\"SiteUrl\"}",
+        Title: "{ProjectProperty Name=\"Title\"}",
+        Url: "{ProjectProperty Name=\"Url\"}"
+    }
+}
