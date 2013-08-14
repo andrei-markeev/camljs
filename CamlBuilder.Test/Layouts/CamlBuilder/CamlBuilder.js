@@ -1,157 +1,135 @@
 var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
 var CamlBuilder = (function () {
-    function CamlBuilder() { }
-    CamlBuilder.Query = function Query() {
+    function CamlBuilder() {
+    }
+    CamlBuilder.Query = function () {
         return CamlBuilderInternal.Query.create();
     };
-    CamlBuilder.QueryPart = function QueryPart() {
+    CamlBuilder.Expression = function () {
         return CamlBuilderInternal.QueryPart.create();
     };
     return CamlBuilder;
 })();
+
 var CamlBuilderInternal;
 (function (CamlBuilderInternal) {
     var Query = (function () {
-        function Query() { }
-        Query.create = function create() {
+        function Query() {
+        }
+        Query.create = function () {
             return new QueryInternal();
         };
         return Query;
     })();
-    CamlBuilderInternal.Query = Query;    
+    CamlBuilderInternal.Query = Query;
     var QueryPart = (function () {
-        function QueryPart() { }
-        QueryPart.create = function create() {
-            return new FieldExpression();
+        function QueryPart() {
+        }
+        QueryPart.create = function () {
+            return new FieldExpression(new Builder());
         };
         return QueryPart;
     })();
-    CamlBuilderInternal.QueryPart = QueryPart;    
+    CamlBuilderInternal.QueryPart = QueryPart;
+
     /** Represents SharePoint CAML Query element */
     var QueryInternal = (function () {
         /** Creates Query CAML element */
         function QueryInternal() {
-            this.builder.tree.push({
-                Element: "Start",
-                Name: "Query"
-            });
-            this.builder.unclosedTags++;
             this.builder = new Builder();
-        }
-        QueryInternal.prototype.Where = /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
-        function (expressionBuilder) {
-            var part = expressionBuilder(new FieldExpression());
-            this.builder.tree.push({
-                Element: "Start",
-                Name: "Where"
-            });
+            this.builder.tree.push({ Element: "Start", Name: "Query" });
             this.builder.unclosedTags++;
-            var partBuilder = part["builder"];
-            this.builder.tree.push(partBuilder.tree);
-            return this;
+        }
+        /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
+        QueryInternal.prototype.Where = function () {
+            this.builder.tree.push({ Element: "Start", Name: "Where" });
+            this.builder.unclosedTags++;
+            return new FieldExpression(this.builder);
         };
-        QueryInternal.prototype.GroupBy = /** Adds GroupBy clause to the query.
+
+        /** Adds GroupBy clause to the query.
         @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        function (groupFieldName, collapse) {
+        QueryInternal.prototype.GroupBy = function (groupFieldName, collapse) {
             this.builder.StartGroupBy(groupFieldName, collapse);
             return new GroupedQuery(this.builder);
         };
-        QueryInternal.prototype.OrderBy = /** Adds OrderBy clause to the query
+
+        /** Adds OrderBy clause to the query
         @param fieldInternalName Internal field of the first field by that the data will be sorted (ascending)
         @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
         @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
-        function (fieldInternalName, override, useIndexForOrderBy) {
+        QueryInternal.prototype.OrderBy = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
         };
-        QueryInternal.prototype.OrderByDesc = /** Adds OrderBy clause to the query (using descending order for the first field).
+
+        /** Adds OrderBy clause to the query (using descending order for the first field).
         @param fieldInternalName Internal field of the first field by that the data will be sorted (descending)
         @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
         @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
-        function (fieldInternalName, override, useIndexForOrderBy) {
+        QueryInternal.prototype.OrderByDesc = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName,
-                Descending: true
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
         };
         QueryInternal.prototype.ToString = function () {
             return this.builder.Finalize();
         };
         return QueryInternal;
-    })();    
+    })();
     var QueryToken = (function () {
         function QueryToken(builder, startIndex) {
             this.builder = builder;
             this.startIndex = startIndex;
         }
-        QueryToken.prototype.And = function (expressionBuilder) {
-            var part = expressionBuilder(new FieldExpression());
-            var partBuilder = part["builder"];
-            partBuilder.tree.splice(0, 0, {
-                Element: "Start",
-                Name: "Or"
-            });
-            partBuilder.tree.push({
-                Element: "End"
-            });
-            this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-            return this;
-        };
-        QueryToken.prototype.Or = function (expressionBuilder) {
-            var part = expressionBuilder(new FieldExpression());
-            var partBuilder = part["builder"];
-            partBuilder.tree.splice(0, 0, {
-                Element: "Start",
-                Name: "Or"
-            });
-            partBuilder.tree.push({
-                Element: "End"
-            });
-            this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-            return this;
-        };
+        //And(): IQueryPart {
+        //    var partBuilder = <Builder>part["builder"];
+        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
+        //    partBuilder.tree.push({ Element: "End" });
+        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
+        //    return this;
+        //}
+        //Or(): IQueryPart {
+        //    var partBuilder = <Builder>part["builder"];
+        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
+        //    partBuilder.tree.push({ Element: "End" });
+        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
+        //    return this;
+        //}
         QueryToken.prototype.GroupBy = function (groupFieldName, collapse) {
             this.builder.StartGroupBy(groupFieldName, collapse);
             return new GroupedQuery(this.builder);
         };
+
         QueryToken.prototype.OrderBy = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
         };
+
         QueryToken.prototype.OrderByDesc = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName,
-                Descending: true
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
         };
+
         QueryToken.prototype.ToString = function () {
             return this.builder.Finalize();
         };
         return QueryToken;
-    })();    
+    })();
+
     var FieldExpression = (function () {
-        function FieldExpression() {
-            this.builder = new Builder();
+        function FieldExpression(builder) {
+            this.builder = builder;
         }
         FieldExpression.prototype.TextField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Text");
@@ -171,6 +149,9 @@ var CamlBuilderInternal;
         FieldExpression.prototype.LookupMultiField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "LookupMulti");
         };
+        FieldExpression.prototype.UserMultiField = function (internalName) {
+            return new FieldExpressionToken(this.builder, internalName, "UserMulti");
+        };
         FieldExpression.prototype.DateField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Date");
         };
@@ -182,34 +163,55 @@ var CamlBuilderInternal;
             /// Used in queries to compare the dates in a recurring event with a specified DateTime value, to determine whether they overlap.
             /// </summary>
             var pos = this.builder.tree.length;
-            this.builder.tree.push({
-                Element: "Start",
-                Name: "DateRangesOverlap"
-            });
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: eventDateField
-            });
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: endDateField
-            });
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: recurrenceIDField
-            });
-            this.builder.tree.push({
-                Element: "Value",
-                ValueType: "DateTime",
-                Value: dateTimeValue
-            });
-            this.builder.tree.push({
-                Element: "End"
-            });
+
+            this.builder.tree.push({ Element: "Start", Name: "DateRangesOverlap" });
+            this.builder.tree.push({ Element: "FieldRef", Name: eventDateField });
+            this.builder.tree.push({ Element: "FieldRef", Name: endDateField });
+            this.builder.tree.push({ Element: "FieldRef", Name: recurrenceIDField });
+            this.builder.tree.push({ Element: "Value", ValueType: "DateTime", Value: dateTimeValue });
+            this.builder.tree.push({ Element: "End" });
+
+            return new QueryToken(this.builder, pos);
+        };
+        FieldExpression.prototype.All = function () {
+            var conditions = [];
+            for (var _i = 0; _i < (arguments.length - 0); _i++) {
+                conditions[_i] = arguments[_i + 0];
+            }
+            var pos = this.builder.tree.length;
+
+            conditions.reverse();
+            for (var i = 0; i < conditions.length; i++) {
+                var conditionBuilder = conditions[i]["builder"];
+                if (i > 0) {
+                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
+                    this.builder.tree.push({ Element: "End" });
+                }
+                Array.prototype.splice.apply(this.builder.tree, [pos, 0].concat(conditionBuilder.tree));
+            }
+            return new QueryToken(this.builder, pos);
+        };
+        FieldExpression.prototype.Any = function () {
+            var conditions = [];
+            for (var _i = 0; _i < (arguments.length - 0); _i++) {
+                conditions[_i] = arguments[_i + 0];
+            }
+            var pos = this.builder.tree.length;
+
+            conditions.reverse();
+            for (var i = 0; i < conditions.length; i++) {
+                var conditionBuilder = conditions[i]["builder"];
+                if (i > 0) {
+                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
+                    this.builder.tree.push({ Element: "End" });
+                }
+                Array.prototype.splice.apply(this.builder.tree, [pos, 0].concat(conditionBuilder.tree));
+            }
             return new QueryToken(this.builder, pos);
         };
         return FieldExpression;
-    })();    
+    })();
+
     var LookupFieldExpression = (function () {
         function LookupFieldExpression(builder, name, valueType) {
             this.builder = builder;
@@ -223,77 +225,57 @@ var CamlBuilderInternal;
             return new FieldExpressionToken(this.builder, this.name, this.valueType);
         };
         return LookupFieldExpression;
-    })();    
+    })();
+
     var UserFieldExpression = (function (_super) {
         __extends(UserFieldExpression, _super);
         function UserFieldExpression(builder, name) {
-            this.builder = builder;
-            this.name = name;
-            this.startIndex = builder.tree.length;
-                _super.call(this, builder, name, "User");
+            this.builder2 = builder;
+            this.name2 = name;
+            this.startIndex2 = builder.tree.length;
+            _super.call(this, builder, name, "User");
         }
         UserFieldExpression.prototype.IsEqualToCurrentUser = function () {
-            this.builder.tree.push({
-                Element: 'FieldRef',
-                Name: this.name,
-                LookupId: true
-            });
-            this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "{UserID}");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2, LookupId: true });
+            this.builder2.BinaryOperator(this.startIndex2, "Eq", "Integer", "{UserID}");
+            return new QueryToken(this.builder2, this.startIndex2);
         };
         UserFieldExpression.prototype.IsInCurrentUserGroups = function () {
-            this.builder.tree.push({
-                Element: 'FieldRef',
-                Name: this.name
-            });
-            this.builder.Membership(this.startIndex, "CurrentUserGroups");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "CurrentUserGroups");
+            return new QueryToken(this.builder2, this.startIndex2);
         };
         UserFieldExpression.prototype.IsInSPGroup = function () {
-            this.builder.tree.push({
-                Element: 'FieldRef',
-                Name: this.name
-            });
-            this.builder.Membership(this.startIndex, "SPGroup");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "SPGroup");
+            return new QueryToken(this.builder2, this.startIndex2);
         };
         UserFieldExpression.prototype.IsInSPWebGroups = function () {
-            this.builder.tree.push({
-                Element: 'FieldRef',
-                Name: this.name
-            });
-            this.builder.Membership(this.startIndex, "SPWeb.Groups");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "SPWeb.Groups");
+            return new QueryToken(this.builder2, this.startIndex2);
         };
         UserFieldExpression.prototype.IsInSPWebAllUsers = function () {
-            this.builder.tree.push({
-                Element: 'FieldRef',
-                Name: this.name
-            });
-            this.builder.Membership(this.startIndex, "SPWeb.AllUsers");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "SPWeb.AllUsers");
+            return new QueryToken(this.builder2, this.startIndex2);
         };
         UserFieldExpression.prototype.IsInSPWebUsers = function () {
-            this.builder.tree.push({
-                Element: 'FieldRef',
-                Name: name
-            });
-            this.builder.Membership(this.startIndex, "SPWeb.Users");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: name });
+            this.builder2.Membership(this.startIndex2, "SPWeb.Users");
+            return new QueryToken(this.builder2, this.startIndex2);
         };
         return UserFieldExpression;
-    })(LookupFieldExpression);    
+    })(LookupFieldExpression);
+
     var FieldExpressionToken = (function () {
         function FieldExpressionToken(builder, name, valueType, isLookupId) {
             this.builder = builder;
             this.name = name;
             this.startIndex = builder.tree.length;
             this.valueType = valueType;
-            this.builder.tree.push({
-                Element: 'FieldRef',
-                Name: name,
-                LookupId: isLookupId
-            });
+
+            this.builder.tree.push({ Element: 'FieldRef', Name: name, LookupId: isLookupId });
         }
         FieldExpressionToken.prototype.IsTrue = function () {
             this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "1");
@@ -303,6 +285,7 @@ var CamlBuilderInternal;
             this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "0");
             return new QueryToken(this.builder, this.startIndex);
         };
+
         FieldExpressionToken.prototype.IsNull = function () {
             this.builder.UnaryOperator(this.startIndex, "IsNull");
             return new QueryToken(this.builder, this.startIndex);
@@ -352,226 +335,143 @@ var CamlBuilderInternal;
             return new QueryToken(this.builder, this.startIndex);
         };
         FieldExpressionToken.prototype.In = function (arrayOfValues) {
-            this.builder.tree.splice(this.startIndex, 0, {
-                Element: "Start",
-                Name: "In"
-            });
-            this.builder.tree.push({
-                Element: "Start",
-                Name: "Values"
-            });
-            for(var i = 0; i < arrayOfValues.length; i++) {
-                this.builder.tree.push({
-                    Element: "Value",
-                    ValueType: this.valueType,
-                    Value: arrayOfValues[i]
-                });
+            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "In" });
+            this.builder.tree.push({ Element: "Start", Name: "Values" });
+
+            for (var i = 0; i < arrayOfValues.length; i++) {
+                this.builder.tree.push({ Element: "Value", ValueType: this.valueType, Value: arrayOfValues[i] });
             }
-            this.builder.tree.push({
-                Element: "End"
-            });
-            this.builder.tree.push({
-                Element: "End"
-            });
+
+            this.builder.tree.push({ Element: "End" });
+            this.builder.tree.push({ Element: "End" });
+
             return new QueryToken(this.builder, this.startIndex);
         };
         return FieldExpressionToken;
-    })();    
+    })();
+
     var GroupedQuery = (function () {
         function GroupedQuery(builder) {
             this.builder = builder;
         }
         GroupedQuery.prototype.OrderBy = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
         };
+
         GroupedQuery.prototype.OrderByDesc = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName,
-                Descending: true
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
         };
+
         GroupedQuery.prototype.ToString = function () {
             return this.builder.Finalize();
         };
         return GroupedQuery;
-    })();    
+    })();
+
     var SortedQuery = (function () {
         function SortedQuery(builder) {
             this.builder = builder;
         }
         SortedQuery.prototype.ThenBy = function (fieldInternalName, override, useIndexForOrderBy) {
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
         };
+
         SortedQuery.prototype.ThenByDesc = function (fieldInternalName, override, useIndexForOrderBy) {
-            this.builder.tree.push({
-                Element: "FieldRef",
-                Name: fieldInternalName,
-                Descending: true
-            });
+            this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
         };
+
         SortedQuery.prototype.ToString = function () {
             return this.builder.Finalize();
         };
         return SortedQuery;
-    })();    
+    })();
+
     var Builder = (function () {
         function Builder() {
             this.tree = new Array();
             this.unclosedTags = 0;
         }
         Builder.prototype.Membership = function (startIndex, type) {
-            this.tree.splice(startIndex, 0, {
-                Element: "Start",
-                Name: "Membership",
-                Attributes: [
-                    {
-                        Name: "Type",
-                        Value: type
-                    }
-                ]
-            });
-            this.tree.push({
-                Element: "End"
-            });
+            this.tree.splice(startIndex, 0, { Element: "Start", Name: "Membership", Attributes: [{ Name: "Type", Value: type }] });
+            this.tree.push({ Element: "End" });
         };
         Builder.prototype.UnaryOperator = function (startIndex, operation) {
-            this.tree.splice(startIndex, 0, {
-                Element: "Start",
-                Name: operation
-            });
-            this.tree.push({
-                Element: "End"
-            });
+            this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
+            this.tree.push({ Element: "End" });
         };
         Builder.prototype.BinaryOperator = function (startIndex, operation, valueType, value) {
-            this.tree.splice(startIndex, 0, {
-                Element: "Start",
-                Name: operation
-            });
-            this.tree.push({
-                Element: "Value",
-                ValueType: valueType,
-                Value: value
-            });
-            this.tree.push({
-                Element: "End"
-            });
+            this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
+            this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
+            this.tree.push({ Element: "End" });
         };
         Builder.prototype.StartGroupBy = function (groupFieldName, collapse) {
-            if(this.unclosedTags > 0) {
-                this.tree.push({
-                    Element: "End",
-                    Count: this.unclosedTags
-                });
+            if (this.unclosedTags > 1) {
+                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
+                this.unclosedTags = 1;
             }
-            this.unclosedTags = 0;
-            if(collapse) {
-                this.tree.push({
-                    Element: "Start",
-                    Name: "GroupBy",
-                    Attributes: [
-                        {
-                            Name: "Collapse",
-                            Value: "TRUE"
-                        }
-                    ]
-                });
-            } else {
-                this.tree.push({
-                    Element: "Start",
-                    Name: "GroupBy"
-                });
-            }
-            this.tree.push({
-                Element: "FieldRef",
-                Name: groupFieldName
-            });
-            this.tree.push({
-                Element: "End"
-            });
+            if (collapse)
+                this.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE" }] });
+else
+                this.tree.push({ Element: "Start", Name: "GroupBy" });
+            this.tree.push({ Element: "FieldRef", Name: groupFieldName });
+            this.tree.push({ Element: "End" });
         };
         Builder.prototype.StartOrderBy = function (override, useIndexForOrderBy) {
-            if(this.unclosedTags > 0) {
-                this.tree.push({
-                    Element: "End",
-                    Count: this.unclosedTags
-                });
+            if (this.unclosedTags > 1) {
+                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
+                this.unclosedTags = 1;
             }
-            this.unclosedTags = 1;
+
             var attributes = new Array();
-            if(override) {
-                attributes.push({
-                    Name: "Override",
-                    Value: "TRUE"
-                });
-            }
-            if(useIndexForOrderBy) {
-                attributes.push({
-                    Name: "UseIndexForOrderBy",
-                    Value: "TRUE"
-                });
-            }
-            if(attributes.length > 0) {
-                this.tree.push({
-                    Element: "Start",
-                    Name: "OrderBy",
-                    Attributes: attributes
-                });
-            } else {
-                this.tree.push({
-                    Element: "Start",
-                    Name: "OrderBy"
-                });
-            }
+            if (override)
+                attributes.push({ Name: "Override", Value: "TRUE" });
+            if (useIndexForOrderBy)
+                attributes.push({ Name: "UseIndexForOrderBy", Value: "TRUE" });
+            if (attributes.length > 0)
+                this.tree.push({ Element: "Start", Name: "OrderBy", Attributes: attributes });
+else
+                this.tree.push({ Element: "Start", Name: "OrderBy" });
+            this.unclosedTags++;
         };
         Builder.prototype.Finalize = function () {
             var sb = new Sys.StringBuilder();
             var writer = SP.XmlWriter.create(sb);
-            for(var i = 0; i < this.tree.length; i++) {
-                if(this.tree[i].Element == "FieldRef") {
+            for (var i = 0; i < this.tree.length; i++) {
+                if (this.tree[i].Element == "FieldRef") {
                     writer.writeStartElement("FieldRef");
                     writer.writeAttributeString("Name", this.tree[i].Name);
-                    if(this.tree[i].LookupId) {
+                    if (this.tree[i].LookupId)
                         writer.writeAttributeString("LookupId", "True");
-                    }
-                    if(this.tree[i].Descending) {
+                    if (this.tree[i].Descending)
                         writer.writeAttributeString("Ascending", "False");
-                    }
                     writer.writeEndElement();
-                } else if(this.tree[i].Element == "Start") {
+                } else if (this.tree[i].Element == "Start") {
                     writer.writeStartElement(this.tree[i].Name);
-                    if(this.tree[i].Attributes) {
-                        for(var a = 0; a < this.tree[i].Attributes.length; a++) {
+                    if (this.tree[i].Attributes) {
+                        for (var a = 0; a < this.tree[i].Attributes.length; a++) {
                             writer.writeAttributeString(this.tree[i].Attributes[a].Name, this.tree[i].Attributes[a].Value);
                         }
                     }
-                } else if(this.tree[i].Element == "Value") {
+                } else if (this.tree[i].Element == "Value") {
                     writer.writeStartElement("Value");
                     writer.writeAttributeString("Type", this.tree[i].ValueType);
                     var value = this.tree[i].Value.toString();
-                    if(value.slice(0, 1) == "{" && value.slice(-1) == "}") {
+                    if (value.slice(0, 1) == "{" && value.slice(-1) == "}")
                         writer.writeRaw("<" + value.slice(1, value.length - 1) + " />");
-                    } else {
+else
                         writer.writeString(value);
-                    }
+
                     writer.writeEndElement();
-                } else if(this.tree[i].Element == "End") {
+                } else if (this.tree[i].Element == "End") {
                     var count = this.tree[i].Count;
-                    if(count) {
-                        while(count > 0) {
+                    if (count) {
+                        while (count > 0) {
                             count--;
                             writer.writeEndElement();
                         }
@@ -580,15 +480,17 @@ var CamlBuilderInternal;
                     }
                 }
             }
-            while(this.unclosedTags > 0) {
+
+            while (this.unclosedTags > 0) {
                 this.unclosedTags--;
                 writer.writeEndElement();
             }
+
             this.tree = new Array();
             writer.close();
             return sb.toString();
         };
         return Builder;
-    })();    
+    })();
 })(CamlBuilderInternal || (CamlBuilderInternal = {}));
 //@ sourceMappingURL=CamlBuilder.js.map

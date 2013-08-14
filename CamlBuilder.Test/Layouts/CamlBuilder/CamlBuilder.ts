@@ -7,7 +7,7 @@ declare module Sys {
         /** Clears the contents of the string builder */
         clear(): void;
         /** Indicates wherever the string builder is empty */
-        isEmpty(): bool;
+        isEmpty(): boolean;
         /** Gets the contents of the string builder as a string */
         toString(): string;
     }
@@ -43,7 +43,7 @@ class CamlBuilder {
     static Query(): CamlBuilderInternal.IQuery {
         return CamlBuilderInternal.Query.create();
     }
-    static QueryPart(): CamlBuilderInternal.IFieldExpression {
+    static Expression(): CamlBuilderInternal.IFieldExpression {
         return CamlBuilderInternal.QueryPart.create();
     }
 }
@@ -51,7 +51,7 @@ class CamlBuilder {
 module CamlBuilderInternal {
 
     export interface IQuery extends IGroupable {
-        Where(expressionBuilder: { (e: IFieldExpression): IQueryPart; }): IGroupable;
+        Where(): IFieldExpression;
     }
     export interface IFinalizable {
         /** Get the resulting CAML query as string */
@@ -63,13 +63,13 @@ module CamlBuilderInternal {
             @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
             @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
-        OrderBy(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool): ISortedQuery;
+        OrderBy(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean): ISortedQuery;
         /** Adds OrderBy clause to the query (using descending order for the first field).
             @param fieldInternalName Internal field of the first field by that the data will be sorted (descending)
             @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
             @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
-        OrderByDesc(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool): ISortedQuery;
+        OrderByDesc(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean): ISortedQuery;
     }
     export interface IGroupable extends ISortable {
         /** Adds GroupBy clause to the query.
@@ -78,10 +78,6 @@ module CamlBuilderInternal {
     }
 
     export interface IQueryPart {
-        /** Adds And clause to the query. */
-        And(expressionBuilder: { (e: IFieldExpression): IQueryPart; }): IQueryPart;
-        /** Adds Or clause to the query. */
-        Or(expressionBuilder: { (e: IFieldExpression): IQueryPart; }): IQueryPart;
     }
     export interface IGroupedQuery extends ISortable {
     }
@@ -93,6 +89,10 @@ module CamlBuilderInternal {
     }
 
     export interface IFieldExpression {
+        /** Adds And clause to the query. */
+        All(...conditions: IQueryPart[]): IGroupable;
+        /** Adds Or clause to the query. */
+        Any(...conditions: IQueryPart[]): IGroupable;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Text */
         TextField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
@@ -105,6 +105,8 @@ module CamlBuilderInternal {
         LookupField(internalName: string): ILookupFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is LookupMulti */
         LookupMultiField(internalName: string): ILookupMultiFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is UserMulti */
+        UserMultiField(internalName: string): ILookupMultiFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Date */
         DateField(internalName: string): IDateTimeFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is DateTime */
@@ -123,9 +125,9 @@ module CamlBuilderInternal {
         /** Checks whether the value of the field is False */
         IsFalse(): IQueryPart;
         /** Checks whether the value of the field is equal to the specified value */
-        IsEqualTo(value: bool): IQueryPart;
+        IsEqualTo(value: boolean): IQueryPart;
         /** Checks whether the value of the field is not equal to the specified value */
-        IsNotEqualTo(value: bool): IQueryPart;
+        IsNotEqualTo(value: boolean): IQueryPart;
         /** Checks whether the value of the field was specified by user */
         IsNull(): IQueryPart;
         /** Checks whether the value of the field was specified by user */
@@ -177,6 +179,8 @@ module CamlBuilderInternal {
         Value(): ITextFieldExpression;
     }
     export interface ILookupMultiFieldExpression {
+        IsEqualTo(value: string): IQueryPart;
+        IsNotEqualTo(value: string): IQueryPart;
         Includes(value): IQueryPart;
         NotIncludes(value): IQueryPart;
     }
@@ -188,7 +192,7 @@ module CamlBuilderInternal {
     }
     export class QueryPart {
         static create(): IFieldExpression {
-            return new FieldExpression();
+            return new FieldExpression(new Builder());
         }
     }
 
@@ -196,23 +200,20 @@ module CamlBuilderInternal {
     class QueryInternal {
         /** Creates Query CAML element */
         constructor() {
+            this.builder = new Builder();
             this.builder.tree.push({ Element: "Start", Name: "Query" });
             this.builder.unclosedTags++;
-            this.builder = new Builder();
         }
         private builder: Builder;
         /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
-        Where(expressionBuilder: { (e: IFieldExpression): IQueryPart; }): IGroupable {
-            var part = expressionBuilder(new FieldExpression());
+        Where(): IFieldExpression {
             this.builder.tree.push({ Element: "Start", Name: "Where" });
             this.builder.unclosedTags++;
-            var partBuilder = <Builder>part["builder"];
-            this.builder.tree.push(partBuilder.tree);
-            return this;
+            return new FieldExpression(this.builder);
         }
         /** Adds GroupBy clause to the query.
             @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        GroupBy(groupFieldName: string, collapse?: bool): IGroupedQuery {
+        GroupBy(groupFieldName: string, collapse?: boolean): IGroupedQuery {
             this.builder.StartGroupBy(groupFieldName, collapse);
             return new GroupedQuery(this.builder);
         }
@@ -221,7 +222,7 @@ module CamlBuilderInternal {
             @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
             @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
-        OrderBy(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool): ISortedQuery {
+        OrderBy(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean): ISortedQuery {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
@@ -231,7 +232,7 @@ module CamlBuilderInternal {
             @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
             @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
-        OrderByDesc(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool): ISortedQuery {
+        OrderByDesc(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean): ISortedQuery {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
@@ -248,51 +249,50 @@ module CamlBuilderInternal {
         private builder: Builder;
         private startIndex: number;
 
-        And(expressionBuilder: { (e: IFieldExpression): IQueryPart; }): IQueryPart {
-            var part = expressionBuilder(new FieldExpression());
-            var partBuilder = <Builder>part["builder"];
-            partBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
-            partBuilder.tree.push({ Element: "End" });
-            this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-            return this;
-        };
+        //And(): IQueryPart {
+        //    var partBuilder = <Builder>part["builder"];
+        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
+        //    partBuilder.tree.push({ Element: "End" });
+        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
+        //    return this;
+        //}
 
-        Or(expressionBuilder: { (e: IFieldExpression): IQueryPart; }): IQueryPart {
-            var part = expressionBuilder(new FieldExpression());
-            var partBuilder = <Builder>part["builder"];
-            partBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
-            partBuilder.tree.push({ Element: "End" });
-            this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-            return this;
-        };
+        //Or(): IQueryPart {
+        //    var partBuilder = <Builder>part["builder"];
+        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
+        //    partBuilder.tree.push({ Element: "End" });
+        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
+        //    return this;
+        //}
 
-        GroupBy(groupFieldName: string, collapse?: bool) {
+        GroupBy(groupFieldName: string, collapse?: boolean) {
             this.builder.StartGroupBy(groupFieldName, collapse);
             return new GroupedQuery(this.builder);
-        };
+        }
 
-        OrderBy(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool) {
+        OrderBy(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
-        };
+        }
 
-        OrderByDesc(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool) {
+        OrderByDesc(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
-        };
+        }
 
         ToString() {
             return this.builder.Finalize();
-        };
+        }
     }
 
     class FieldExpression implements IFieldExpression {
-        constructor() {
-            this.builder = new Builder();
+        constructor(builder: Builder) {
+            this.builder = builder;
         }
         private builder: Builder;
+
         TextField(internalName: string): ITextFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "Text");
         }
@@ -310,6 +310,9 @@ module CamlBuilderInternal {
         }
         LookupMultiField(internalName: string): ILookupMultiFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "LookupMulti");
+        }
+        UserMultiField(internalName: string): ILookupMultiFieldExpression {
+            return new FieldExpressionToken(this.builder, internalName, "UserMulti");
         }
         DateField(internalName: string): IDateTimeFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "Date");
@@ -333,6 +336,36 @@ module CamlBuilderInternal {
 
             return new QueryToken(this.builder, pos);
         }
+        All(...conditions: IQueryPart[]): IGroupable {
+            var pos = this.builder.tree.length;
+
+            conditions.reverse();
+            for (var i = 0; i < conditions.length; i++)
+            {
+                var conditionBuilder = <Builder>conditions[i]["builder"];
+                if (i > 0) {
+                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
+                    this.builder.tree.push({ Element: "End" });
+                }
+                Array.prototype.splice.apply(this.builder.tree, [pos, 0].concat(conditionBuilder.tree));
+            }
+            return new QueryToken(this.builder, pos);
+        }
+        Any(...conditions: IQueryPart[]): IGroupable {
+            var pos = this.builder.tree.length;
+
+            conditions.reverse();
+            for (var i = 0; i < conditions.length; i++)
+            {
+                var conditionBuilder = <Builder>conditions[i]["builder"];
+                if (i > 0) {
+                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
+                    this.builder.tree.push({ Element: "End" });
+                }
+                Array.prototype.splice.apply(this.builder.tree, [pos, 0].concat(conditionBuilder.tree));
+            }
+            return new QueryToken(this.builder, pos);
+        }
     }
 
     class LookupFieldExpression implements ILookupFieldExpression {
@@ -354,49 +387,49 @@ module CamlBuilderInternal {
 
     class UserFieldExpression extends LookupFieldExpression implements IUserFieldExpression {
         constructor(builder: Builder, name: string) {
-            this.builder = builder;
-            this.name = name;
-            this.startIndex = builder.tree.length;
+            this.builder2 = builder;
+            this.name2 = name;
+            this.startIndex2 = builder.tree.length;
             super(builder, name, "User");
         }
-        private builder: Builder;
-        private name: string;
-        private startIndex: number;
+        private builder2: Builder;
+        private name2: string;
+        private startIndex2: number;
 
         IsEqualToCurrentUser(): IQueryPart {
-            this.builder.tree.push({ Element: 'FieldRef', Name: this.name, LookupId: true });
-            this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "{UserID}");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2, LookupId: true });
+            this.builder2.BinaryOperator(this.startIndex2, "Eq", "Integer", "{UserID}");
+            return new QueryToken(this.builder2, this.startIndex2);
         }
         IsInCurrentUserGroups(): IQueryPart {
-            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
-            this.builder.Membership(this.startIndex, "CurrentUserGroups");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "CurrentUserGroups");
+            return new QueryToken(this.builder2, this.startIndex2);
         }
         IsInSPGroup(): IQueryPart {
-            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
-            this.builder.Membership(this.startIndex, "SPGroup");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "SPGroup");
+            return new QueryToken(this.builder2, this.startIndex2);
         }
         IsInSPWebGroups(): IQueryPart {
-            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
-            this.builder.Membership(this.startIndex, "SPWeb.Groups");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "SPWeb.Groups");
+            return new QueryToken(this.builder2, this.startIndex2);
         }
         IsInSPWebAllUsers(): IQueryPart {
-            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
-            this.builder.Membership(this.startIndex, "SPWeb.AllUsers");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
+            this.builder2.Membership(this.startIndex2, "SPWeb.AllUsers");
+            return new QueryToken(this.builder2, this.startIndex2);
         }
         IsInSPWebUsers(): IQueryPart {
-            this.builder.tree.push({ Element: 'FieldRef', Name: name });
-            this.builder.Membership(this.startIndex, "SPWeb.Users");
-            return new QueryToken(this.builder, this.startIndex);
+            this.builder2.tree.push({ Element: 'FieldRef', Name: name });
+            this.builder2.Membership(this.startIndex2, "SPWeb.Users");
+            return new QueryToken(this.builder2, this.startIndex2);
         }
     }
 
     class FieldExpressionToken implements IBooleanFieldExpression, INumberFieldExpression, ITextFieldExpression, IDateTimeFieldExpression {
-        constructor(builder: Builder, name: string, valueType: string, isLookupId?: bool) {
+        constructor(builder: Builder, name: string, valueType: string, isLookupId?: boolean) {
             this.builder = builder;
             this.name = name;
             this.startIndex = builder.tree.length;
@@ -412,60 +445,60 @@ module CamlBuilderInternal {
         IsTrue(): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "1");
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsFalse(): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "0");
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
 
         IsNull(): IQueryPart {
             this.builder.UnaryOperator(this.startIndex, "IsNull");
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsNotNull(): IQueryPart {
             this.builder.UnaryOperator(this.startIndex, "IsNotNull");
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsEqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsGreaterThan(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Gt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsLessThan(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Lt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsGreaterThanOrEqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Geq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsLessThanOrEqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Leq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         IsNotEqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Neq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         NotIncludes(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "NotIncludes", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         Includes(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Includes", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         Contains(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Contains", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         BeginsWith(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "BeginsWith", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
         In(arrayOfValues: any[]): IQueryPart {
 
             this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "In" });
@@ -479,7 +512,7 @@ module CamlBuilderInternal {
             this.builder.tree.push({ Element: "End" });
 
             return new QueryToken(this.builder, this.startIndex);
-        };
+        }
 
     }
 
@@ -489,21 +522,21 @@ module CamlBuilderInternal {
         }
         private builder: Builder;
 
-        OrderBy(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool) {
+        OrderBy(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
-        };
+        }
 
-        OrderByDesc(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool) {
+        OrderByDesc(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
             this.builder.StartOrderBy(override, useIndexForOrderBy);
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
-        };
+        }
 
         ToString() {
             return this.builder.Finalize();
-        };
+        }
     }
 
     class SortedQuery implements ISortedQuery {
@@ -511,19 +544,19 @@ module CamlBuilderInternal {
             this.builder = builder;
         }
         private builder: Builder;
-        ThenBy(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool) {
+        ThenBy(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName });
             return new SortedQuery(this.builder);
-        };
+        }
 
-        ThenByDesc(fieldInternalName: string, override?: bool, useIndexForOrderBy?: bool) {
+        ThenByDesc(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
-        };
+        }
 
         ToString() {
             return this.builder.Finalize();
-        };
+        }
     }
 
     class Builder {
@@ -547,9 +580,11 @@ module CamlBuilderInternal {
             this.tree.push({ Element: "End" });
         }
         StartGroupBy(groupFieldName, collapse) {
-            if (this.unclosedTags > 0)
-                this.tree.push({ Element: "End", Count: this.unclosedTags });
-            this.unclosedTags = 0;
+            if (this.unclosedTags > 1)
+            {
+                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
+                this.unclosedTags = 1;
+            }
             if (collapse)
                 this.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE" }] });
             else
@@ -558,9 +593,11 @@ module CamlBuilderInternal {
             this.tree.push({ Element: "End" });
         }
         StartOrderBy(override, useIndexForOrderBy) {
-            if (this.unclosedTags > 0)
-                this.tree.push({ Element: "End", Count: this.unclosedTags });
-            this.unclosedTags = 1;
+            if (this.unclosedTags > 1)
+            {
+                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
+                this.unclosedTags = 1;
+            }
 
             var attributes = new Array();
             if (override)
@@ -571,6 +608,7 @@ module CamlBuilderInternal {
                 this.tree.push({ Element: "Start", Name: "OrderBy", Attributes: attributes });
             else
                 this.tree.push({ Element: "Start", Name: "OrderBy" });
+            this.unclosedTags++;
 
         }
         Finalize() {
