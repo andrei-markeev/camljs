@@ -2,6 +2,7 @@
  * Javascript Diff Algorithm
  *  By John Resig (http://ejohn.org/)
  *  Modified by Chu Alan "sprite"
+ *  Modified by Andrei Markeev
  *
  * Released under the MIT license.
  *
@@ -20,69 +21,6 @@ var jsDiff = {};
         n = n.replace(/"/g, "&quot;");
 
         return n;
-    }
-
-    function randomColor() {
-        return "rgb(" + (Math.random() * 100) + "%, " +
-                        (Math.random() * 100) + "%, " +
-                        (Math.random() * 100) + "%)";
-    }
-
-    function spacifySpecSymbols(s) {
-        o = o.replace(/\'$/, ' \' ');
-        o = o.replace(/:$/, ' : ');
-        o = o.replace(/.$/, ' . ');
-        o = o.replace(/,$/, ' , ');
-        o = o.replace(/\"$/, ' " ');
-        o = o.replace(/\{$/, ' { ');
-        o = o.replace(/\}$/, ' } ');
-    }
-
-    function diffString2(o, n) {
-        o = spacifySpecSymbols(o);
-        n = spacifySpecSymbols(n);
-        o = o.replace(/\s+$/, '');
-        n = n.replace(/\s+$/, '');
-
-        var out = diff(o == "" ? [] : o.split(/\s+/), n == "" ? [] : n.split(/\s+/));
-
-        var oSpace = o.match(/\s+/g);
-        if (oSpace == null) {
-            oSpace = ["\n"];
-        } else {
-            oSpace.push("\n");
-        }
-        var nSpace = n.match(/\s+/g);
-        if (nSpace == null) {
-            nSpace = ["\n"];
-        } else {
-            nSpace.push("\n");
-        }
-
-        var os = "";
-        var colors = new Array();
-        for (var i = 0; i < out.o.length; i++) {
-            colors[i] = randomColor();
-
-            if (out.o[i].text != null) {
-                os += '<span style="background-color: ' + colors[i] + '">' +
-                      escape(out.o[i].text) + oSpace[i] + "</span>";
-            } else {
-                os += "<del>" + escape(out.o[i]) + oSpace[i] + "</del>";
-            }
-        }
-
-        var ns = "";
-        for (var i = 0; i < out.n.length; i++) {
-            if (out.n[i].text != null) {
-                ns += '<span style="background-color: ' + colors[out.n[i].row] + '">' +
-                      escape(out.n[i].text) + nSpace[i] + "</span>";
-            } else {
-                ns += "<ins>" + escape(out.n[i]) + nSpace[i] + "</ins>";
-            }
-        }
-
-        return { o: os, n: ns };
     }
 
     function diff(o, n) {
@@ -127,47 +65,73 @@ var jsDiff = {};
         return { o: o, n: n };
     }
 
+    function isSpace(ch)
+    {
+        return (ch==' ' || ch==',' || ch=='"' || ch==':' || ch=='{' || ch=='}' || ch=='\n');
+    }
+
+    function splitString(s)
+    {
+        var sPart='';
+        var sParts=[];
+
+        if (s.length == 0)
+            return sParts;
+
+        var mode = 'letters';
+        for (var i=0;i<s.length;i++)
+        {
+            if (mode == 'space') {
+                if (!isSpace(s[i])) {
+                    sPart = s[i];
+                    mode = 'letters';
+                }
+                else
+                    sParts.push(s[i]);
+            }
+            else {
+                if (isSpace(s[i])) {
+                    sParts.push(sPart);
+                    sParts.push(s[i]);
+                    sPart = '';
+                    mode = 'space';
+                }
+                else
+                    sPart += s[i];
+            }
+        }
+        sParts.push(sPart);
+        return sParts;
+    }
+
     jsDiff.diffString = function(o, n) {
         o = o.replace(/\s+$/, '');
         n = n.replace(/\s+$/, '');
 
-        var out = diff(o == "" ? [] : o.split(/\s+/), n == "" ? [] : n.split(/\s+/));
+        var out = diff(splitString(o), splitString(n));
         var str = "";
-
-        var oSpace = o.match(/\s+/g);
-        if (oSpace == null) {
-            oSpace = ["\n"];
-        } else {
-            oSpace.push("\n");
-        }
-        var nSpace = n.match(/\s+/g);
-        if (nSpace == null) {
-            nSpace = ["\n"];
-        } else {
-            nSpace.push("\n");
-        }
 
         if (out.n.length == 0) {
             for (var i = 0; i < out.o.length; i++) {
-                str += '<del>' + escape(out.o[i]) + oSpace[i] + "</del>";
+                str += '<del>' + escape(out.o[i]) + "</del>";
             }
         } else {
             if (out.n[0].text == null) {
                 for (n = 0; n < out.o.length && out.o[n].text == null; n++) {
-                    str += '<del>' + escape(out.o[n]) + oSpace[n] + "</del>";
+                    str += '<del>' + escape(out.o[n]) + "</del>";
                 }
             }
 
             for (var i = 0; i < out.n.length; i++) {
                 if (out.n[i].text == null) {
-                    str += '<ins>' + escape(out.n[i]) + nSpace[i] + "</ins>";
+                    str += '<ins>' + escape(out.n[i]) + "</ins>";
                 } else {
                     var pre = "";
 
                     for (n = out.n[i].row + 1; n < out.o.length && out.o[n].text == null; n++) {
-                        pre += '<del>' + escape(out.o[n]) + oSpace[n] + "</del>";
+                        pre += '<del>' + escape(out.o[n]) + "</del>";
                     }
-                    str += " " + out.n[i].text + nSpace[i] + pre;
+                    str += out.n[i].text + pre;
                 }
             }
         }

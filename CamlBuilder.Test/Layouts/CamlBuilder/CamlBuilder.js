@@ -219,7 +219,7 @@ var CamlBuilderInternal;
             this.valueType = valueType;
         }
         LookupFieldExpression.prototype.Id = function () {
-            return new FieldExpressionToken(this.builder, this.name, "Integer");
+            return new FieldExpressionToken(this.builder, this.name, "Integer", true);
         };
         LookupFieldExpression.prototype.Value = function () {
             return new FieldExpressionToken(this.builder, this.name, this.valueType);

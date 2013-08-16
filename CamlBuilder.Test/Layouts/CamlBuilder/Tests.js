@@ -14,7 +14,7 @@ var TestsHelper = (function () {
     }
     TestsHelper.XmlToJson = function (xml) {
         function elementToObject(el) {
-            var o = {};
+            var o = [];
             var i = 0;
             if (el.attributes) {
                 for (i; i < el.attributes.length; i++) {
@@ -27,9 +27,12 @@ var TestsHelper = (function () {
                 i = 0;
                 for (i; i < children.length; i++) {
                     if (children[i].nodeName == '#text')
-                        o['#text'] = children[i].nodeValue;
-else
-                        o[children[i].nodeName] = elementToObject(children[i]);
+                        o.push({ '#text': children[i].nodeValue });
+else {
+                        var ch = {};
+                        ch[children[i].nodeName] = elementToObject(children[i]);
+                        o.push(ch);
+                    }
                 }
             }
             return o;
@@ -37,7 +40,7 @@ else
 
         var domElement = CUI.NativeUtility.createXMLDocFromString("<root>" + xml + "</root>");
         var obj = elementToObject(domElement);
-        return JSON.stringify(obj.root);
+        return JSON.stringify(obj.root, undefined, 2);
     };
     return TestsHelper;
 })();

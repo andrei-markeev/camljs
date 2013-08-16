@@ -380,7 +380,7 @@ module CamlBuilderInternal {
         private name: string;
         private valueType: string;
         Id(): INumberFieldExpression {
-            return new FieldExpressionToken(this.builder, this.name, "Integer");
+            return new FieldExpressionToken(this.builder, this.name, "Integer", true);
         }
         Value(): ITextFieldExpression {
             return new FieldExpressionToken(this.builder, this.name, this.valueType);

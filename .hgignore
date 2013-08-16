@@ -5,3 +5,4 @@ pkg
 pkgobj
 *.user
 *.suo
+*.js.map
