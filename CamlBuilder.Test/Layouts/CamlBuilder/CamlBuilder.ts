@@ -40,8 +40,10 @@ declare module SP {
 }
 
 class CamlBuilder {
-    static Query(): CamlBuilderInternal.IQuery {
-        return CamlBuilderInternal.Query.create();
+    constructor() {
+    }
+    Where(): CamlBuilderInternal.IFieldExpression {
+        return CamlBuilderInternal.Query.createWhere();
     }
     static Expression(): CamlBuilderInternal.IFieldExpression {
         return CamlBuilderInternal.QueryPart.create();
@@ -77,7 +79,9 @@ module CamlBuilderInternal {
         GroupBy(fieldInternalName): IGroupedQuery;
     }
 
-    export interface IQueryPart {
+    export interface IQueryPart extends IGroupable {
+        And(): IFieldExpression;
+        Or(): IFieldExpression;
     }
     export interface IGroupedQuery extends ISortable {
     }
@@ -90,9 +94,9 @@ module CamlBuilderInternal {
 
     export interface IFieldExpression {
         /** Adds And clause to the query. */
-        All(...conditions: IQueryPart[]): IGroupable;
+        All(...conditions: IQueryPart[]): IQueryPart;
         /** Adds Or clause to the query. */
-        Any(...conditions: IQueryPart[]): IGroupable;
+        Any(...conditions: IQueryPart[]): IQueryPart;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Text */
         TextField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
@@ -125,39 +129,39 @@ module CamlBuilderInternal {
         /** Checks whether the value of the field is False */
         IsFalse(): IQueryPart;
         /** Checks whether the value of the field is equal to the specified value */
-        IsEqualTo(value: boolean): IQueryPart;
+        EqualTo(value: boolean): IQueryPart;
         /** Checks whether the value of the field is not equal to the specified value */
-        IsNotEqualTo(value: boolean): IQueryPart;
+        NotEqualTo(value: boolean): IQueryPart;
         /** Checks whether the value of the field was specified by user */
         IsNull(): IQueryPart;
         /** Checks whether the value of the field was specified by user */
         IsNotNull(): IQueryPart;
     }
     export interface INumberFieldExpression {
-        IsEqualTo(value: number): IQueryPart;
-        IsNotEqualTo(value: number): IQueryPart;
-        IsGreaterThan(value: number): IQueryPart;
-        IsLessThan(value: number): IQueryPart;
-        IsGreaterThanOrEqualTo(value: number): IQueryPart;
-        IsLessThanOrEqualTo(value: number): IQueryPart;
+        EqualTo(value: number): IQueryPart;
+        NotEqualTo(value: number): IQueryPart;
+        GreaterThan(value: number): IQueryPart;
+        LessThan(value: number): IQueryPart;
+        GreaterThanOrEqualTo(value: number): IQueryPart;
+        LessThanOrEqualTo(value: number): IQueryPart;
         IsNull(): IQueryPart;
         IsNotNull(): IQueryPart;
         In(arrayOfValues: number[]): IQueryPart;
     }
     export interface IDateTimeFieldExpression {
-        IsEqualTo(value: string): IQueryPart;
-        IsNotEqualTo(value: string): IQueryPart;
-        IsGreaterThan(value: string): IQueryPart;
-        IsLessThan(value: string): IQueryPart;
-        IsGreaterThanOrEqualTo(value: string): IQueryPart;
-        IsLessThanOrEqualTo(value: string): IQueryPart;
+        EqualTo(value: string): IQueryPart;
+        NotEqualTo(value: string): IQueryPart;
+        GreaterThan(value: string): IQueryPart;
+        LessThan(value: string): IQueryPart;
+        GreaterThanOrEqualTo(value: string): IQueryPart;
+        LessThanOrEqualTo(value: string): IQueryPart;
         IsNull(): IQueryPart;
         IsNotNull(): IQueryPart;
         In(arrayOfValues: string[]): IQueryPart;
     }
     export interface ITextFieldExpression {
-        IsEqualTo(value: string): IQueryPart;
-        IsNotEqualTo(value: string): IQueryPart;
+        EqualTo(value: string): IQueryPart;
+        NotEqualTo(value: string): IQueryPart;
         Contains(value: string): IQueryPart;
         BeginsWith(value: string): IQueryPart;
         IsNull(): IQueryPart;
@@ -165,7 +169,7 @@ module CamlBuilderInternal {
         In(arrayOfValues: string[]): IQueryPart;
     }
     export interface IUserFieldExpression {
-        IsEqualToCurrentUser(): IQueryPart;
+        EqualToCurrentUser(): IQueryPart;
         IsInCurrentUserGroups(): IQueryPart;
         IsInSPGroup(): IQueryPart;
         IsInSPWebGroups(): IQueryPart;
@@ -179,15 +183,15 @@ module CamlBuilderInternal {
         Value(): ITextFieldExpression;
     }
     export interface ILookupMultiFieldExpression {
-        IsEqualTo(value: string): IQueryPart;
-        IsNotEqualTo(value: string): IQueryPart;
+        EqualTo(value: string): IQueryPart;
+        NotEqualTo(value: string): IQueryPart;
         Includes(value): IQueryPart;
         NotIncludes(value): IQueryPart;
     }
 
     export class Query {
-        static create(): IQuery {
-            return new QueryInternal();
+        static createWhere(): IFieldExpression {
+            return new QueryInternal().Where();
         }
     }
     export class QueryPart {
@@ -201,8 +205,6 @@ module CamlBuilderInternal {
         /** Creates Query CAML element */
         constructor() {
             this.builder = new Builder();
-            this.builder.tree.push({ Element: "Start", Name: "Query" });
-            this.builder.unclosedTags++;
         }
         private builder: Builder;
         /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
@@ -249,21 +251,17 @@ module CamlBuilderInternal {
         private builder: Builder;
         private startIndex: number;
 
-        //And(): IQueryPart {
-        //    var partBuilder = <Builder>part["builder"];
-        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
-        //    partBuilder.tree.push({ Element: "End" });
-        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-        //    return this;
-        //}
+        And(): IFieldExpression {
+            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "And" });
+            this.builder.unclosedTags++;
+            return new FieldExpression(this.builder);
+        }
 
-        //Or(): IQueryPart {
-        //    var partBuilder = <Builder>part["builder"];
-        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
-        //    partBuilder.tree.push({ Element: "End" });
-        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-        //    return this;
-        //}
+        Or(): IFieldExpression {
+            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "Or" });
+            this.builder.unclosedTags++;
+            return new FieldExpression(this.builder);
+        }
 
         GroupBy(groupFieldName: string, collapse?: boolean) {
             this.builder.StartGroupBy(groupFieldName, collapse);
@@ -336,13 +334,15 @@ module CamlBuilderInternal {
 
             return new QueryToken(this.builder, pos);
         }
-        All(...conditions: IQueryPart[]): IGroupable {
+        All(...conditions: IQueryPart[]): IQueryPart {
             var pos = this.builder.tree.length;
 
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++)
             {
                 var conditionBuilder = <Builder>conditions[i]["builder"];
+                if (conditionBuilder.unclosedTags > 0)
+                    conditionBuilder.tree.push({ Element: "End", Count: conditionBuilder.unclosedTags });
                 if (i > 0) {
                     conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
                     this.builder.tree.push({ Element: "End" });
@@ -351,13 +351,15 @@ module CamlBuilderInternal {
             }
             return new QueryToken(this.builder, pos);
         }
-        Any(...conditions: IQueryPart[]): IGroupable {
+        Any(...conditions: IQueryPart[]): IQueryPart {
             var pos = this.builder.tree.length;
 
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++)
             {
                 var conditionBuilder = <Builder>conditions[i]["builder"];
+                if (conditionBuilder.unclosedTags > 0)
+                    conditionBuilder.tree.push({ Element: "End", Count: conditionBuilder.unclosedTags });
                 if (i > 0) {
                     conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
                     this.builder.tree.push({ Element: "End" });
@@ -396,7 +398,7 @@ module CamlBuilderInternal {
         private name2: string;
         private startIndex2: number;
 
-        IsEqualToCurrentUser(): IQueryPart {
+        EqualToCurrentUser(): IQueryPart {
             this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2, LookupId: true });
             this.builder2.BinaryOperator(this.startIndex2, "Eq", "Integer", "{UserID}");
             return new QueryToken(this.builder2, this.startIndex2);
@@ -459,27 +461,27 @@ module CamlBuilderInternal {
             this.builder.UnaryOperator(this.startIndex, "IsNotNull");
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsEqualTo(value): IQueryPart {
+        EqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsGreaterThan(value): IQueryPart {
+        GreaterThan(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Gt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsLessThan(value): IQueryPart {
+        LessThan(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Lt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsGreaterThanOrEqualTo(value): IQueryPart {
+        GreaterThanOrEqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Geq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsLessThanOrEqualTo(value): IQueryPart {
+        LessThanOrEqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Leq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsNotEqualTo(value): IQueryPart {
+        NotEqualTo(value): IQueryPart {
             this.builder.BinaryOperator(this.startIndex, "Neq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
@@ -580,10 +582,15 @@ module CamlBuilderInternal {
             this.tree.push({ Element: "End" });
         }
         StartGroupBy(groupFieldName, collapse) {
-            if (this.unclosedTags > 1)
+            if (this.unclosedTags > 0)
             {
-                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
-                this.unclosedTags = 1;
+                var tagsToClose = this.unclosedTags;
+                if (this.tree[0].Name == "Query")
+                    tagsToClose--;
+                else if (this.tree[0].Name == "View")
+                    tagsToClose -= 2;
+                this.tree.push({ Element: "End", Count: tagsToClose });
+                this.unclosedTags -= tagsToClose;
             }
             if (collapse)
                 this.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE" }] });
@@ -593,10 +600,15 @@ module CamlBuilderInternal {
             this.tree.push({ Element: "End" });
         }
         StartOrderBy(override, useIndexForOrderBy) {
-            if (this.unclosedTags > 1)
+            if (this.unclosedTags > 0)
             {
-                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
-                this.unclosedTags = 1;
+                var tagsToClose = this.unclosedTags;
+                if (this.tree[0].Name == "Query")
+                    tagsToClose--;
+                else if (this.tree[0].Name == "View")
+                    tagsToClose -= 2;
+                this.tree.push({ Element: "End", Count: tagsToClose });
+                this.unclosedTags -= tagsToClose;
             }
 
             var attributes = new Array();

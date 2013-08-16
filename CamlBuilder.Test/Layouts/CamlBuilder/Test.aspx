@@ -2,6 +2,8 @@
 
 <asp:Content ID="PageHead" ContentPlaceHolderID="PlaceHolderAdditionalPageHead" runat="server">
 	<script type="text/javascript" src="CamlBuilder.js"></script>
+	<script type="text/javascript" src="tsUnit.js"></script>
+	<script type="text/javascript" src="jsdiff.js"></script>
 	<script type="text/javascript" src="Tests.js"></script>
 </asp:Content>
 <asp:Content ID="Main" ContentPlaceHolderID="PlaceHolderMain" runat="server">
@@ -13,5 +15,5 @@
 </asp:Content>
 <asp:Content ID="PageTitleInTitleArea" ContentPlaceHolderID="PlaceHolderPageTitleInTitleArea"
     runat="server">
-	Test page 
+	CamlBuilder Tests
 </asp:Content>

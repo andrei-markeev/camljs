@@ -7,8 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var CamlBuilder = (function () {
     function CamlBuilder() {
     }
-    CamlBuilder.Query = function () {
-        return CamlBuilderInternal.Query.create();
+    CamlBuilder.prototype.Where = function () {
+        return CamlBuilderInternal.Query.createWhere();
     };
     CamlBuilder.Expression = function () {
         return CamlBuilderInternal.QueryPart.create();
@@ -21,8 +21,8 @@ var CamlBuilderInternal;
     var Query = (function () {
         function Query() {
         }
-        Query.create = function () {
-            return new QueryInternal();
+        Query.createWhere = function () {
+            return new QueryInternal().Where();
         };
         return Query;
     })();
@@ -42,8 +42,6 @@ var CamlBuilderInternal;
         /** Creates Query CAML element */
         function QueryInternal() {
             this.builder = new Builder();
-            this.builder.tree.push({ Element: "Start", Name: "Query" });
-            this.builder.unclosedTags++;
         }
         /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
         QueryInternal.prototype.Where = function () {
@@ -90,20 +88,18 @@ var CamlBuilderInternal;
             this.builder = builder;
             this.startIndex = startIndex;
         }
-        //And(): IQueryPart {
-        //    var partBuilder = <Builder>part["builder"];
-        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
-        //    partBuilder.tree.push({ Element: "End" });
-        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-        //    return this;
-        //}
-        //Or(): IQueryPart {
-        //    var partBuilder = <Builder>part["builder"];
-        //    partBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
-        //    partBuilder.tree.push({ Element: "End" });
-        //    this.builder.tree.splice(this.startIndex, 0, partBuilder.tree);
-        //    return this;
-        //}
+        QueryToken.prototype.And = function () {
+            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "And" });
+            this.builder.unclosedTags++;
+            return new FieldExpression(this.builder);
+        };
+
+        QueryToken.prototype.Or = function () {
+            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "Or" });
+            this.builder.unclosedTags++;
+            return new FieldExpression(this.builder);
+        };
+
         QueryToken.prototype.GroupBy = function (groupFieldName, collapse) {
             this.builder.StartGroupBy(groupFieldName, collapse);
             return new GroupedQuery(this.builder);
@@ -183,6 +179,8 @@ var CamlBuilderInternal;
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++) {
                 var conditionBuilder = conditions[i]["builder"];
+                if (conditionBuilder.unclosedTags > 0)
+                    conditionBuilder.tree.push({ Element: "End", Count: conditionBuilder.unclosedTags });
                 if (i > 0) {
                     conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
                     this.builder.tree.push({ Element: "End" });
@@ -201,6 +199,8 @@ var CamlBuilderInternal;
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++) {
                 var conditionBuilder = conditions[i]["builder"];
+                if (conditionBuilder.unclosedTags > 0)
+                    conditionBuilder.tree.push({ Element: "End", Count: conditionBuilder.unclosedTags });
                 if (i > 0) {
                     conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
                     this.builder.tree.push({ Element: "End" });
@@ -235,7 +235,7 @@ var CamlBuilderInternal;
             this.startIndex2 = builder.tree.length;
             _super.call(this, builder, name, "User");
         }
-        UserFieldExpression.prototype.IsEqualToCurrentUser = function () {
+        UserFieldExpression.prototype.EqualToCurrentUser = function () {
             this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2, LookupId: true });
             this.builder2.BinaryOperator(this.startIndex2, "Eq", "Integer", "{UserID}");
             return new QueryToken(this.builder2, this.startIndex2);
@@ -294,27 +294,27 @@ var CamlBuilderInternal;
             this.builder.UnaryOperator(this.startIndex, "IsNotNull");
             return new QueryToken(this.builder, this.startIndex);
         };
-        FieldExpressionToken.prototype.IsEqualTo = function (value) {
+        FieldExpressionToken.prototype.EqualTo = function (value) {
             this.builder.BinaryOperator(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
-        FieldExpressionToken.prototype.IsGreaterThan = function (value) {
+        FieldExpressionToken.prototype.GreaterThan = function (value) {
             this.builder.BinaryOperator(this.startIndex, "Gt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
-        FieldExpressionToken.prototype.IsLessThan = function (value) {
+        FieldExpressionToken.prototype.LessThan = function (value) {
             this.builder.BinaryOperator(this.startIndex, "Lt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
-        FieldExpressionToken.prototype.IsGreaterThanOrEqualTo = function (value) {
+        FieldExpressionToken.prototype.GreaterThanOrEqualTo = function (value) {
             this.builder.BinaryOperator(this.startIndex, "Geq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
-        FieldExpressionToken.prototype.IsLessThanOrEqualTo = function (value) {
+        FieldExpressionToken.prototype.LessThanOrEqualTo = function (value) {
             this.builder.BinaryOperator(this.startIndex, "Leq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
-        FieldExpressionToken.prototype.IsNotEqualTo = function (value) {
+        FieldExpressionToken.prototype.NotEqualTo = function (value) {
             this.builder.BinaryOperator(this.startIndex, "Neq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
@@ -411,9 +411,14 @@ var CamlBuilderInternal;
             this.tree.push({ Element: "End" });
         };
         Builder.prototype.StartGroupBy = function (groupFieldName, collapse) {
-            if (this.unclosedTags > 1) {
-                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
-                this.unclosedTags = 1;
+            if (this.unclosedTags > 0) {
+                var tagsToClose = this.unclosedTags;
+                if (this.tree[0].Name == "Query")
+                    tagsToClose--;
+else if (this.tree[0].Name == "View")
+                    tagsToClose -= 2;
+                this.tree.push({ Element: "End", Count: tagsToClose });
+                this.unclosedTags -= tagsToClose;
             }
             if (collapse)
                 this.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE" }] });
@@ -423,9 +428,14 @@ else
             this.tree.push({ Element: "End" });
         };
         Builder.prototype.StartOrderBy = function (override, useIndexForOrderBy) {
-            if (this.unclosedTags > 1) {
-                this.tree.push({ Element: "End", Count: this.unclosedTags - 1 });
-                this.unclosedTags = 1;
+            if (this.unclosedTags > 0) {
+                var tagsToClose = this.unclosedTags;
+                if (this.tree[0].Name == "Query")
+                    tagsToClose--;
+else if (this.tree[0].Name == "View")
+                    tagsToClose -= 2;
+                this.tree.push({ Element: "End", Count: tagsToClose });
+                this.unclosedTags -= tagsToClose;
             }
 
             var attributes = new Array();

@@ -78,9 +78,12 @@
     <Folder Include="Features\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Layouts\CamlBuilder\jsdiff.js" />
     <Content Include="Layouts\CamlBuilder\Tests.js">
       <DependentUpon>Tests.ts</DependentUpon>
     </Content>
+    <Content Include="Layouts\CamlBuilder\tsUnit.js" />
+    <Content Include="Layouts\CamlBuilder\tsUnit.ts" />
     <TypeScriptCompile Include="Layouts\CamlBuilder\Tests.ts" />
     <TypeScriptCompile Include="Layouts\CamlBuilder\CamlBuilder.ts" />
     <Content Include="Layouts\CamlBuilder\CamlBuilder.js">
