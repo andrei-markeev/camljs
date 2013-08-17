@@ -7,35 +7,32 @@ var __extends = this.__extends || function (d, b) {
 var CamlBuilder = (function () {
     function CamlBuilder() {
     }
+    /** Adds Where clause to the query. */
     CamlBuilder.prototype.Where = function () {
-        return CamlBuilderInternal.Query.createWhere();
+        return CamlBuilder.Internal.createWhere();
     };
-    CamlBuilder.Expression = function () {
-        return CamlBuilderInternal.QueryPart.create();
+
+    CamlBuilder.Expression = /** Use for creating partial expressions and in conjunction with Any & All clauses */
+    function () {
+        return CamlBuilder.Internal.createExpression();
     };
     return CamlBuilder;
 })();
 
-var CamlBuilderInternal;
-(function (CamlBuilderInternal) {
-    var Query = (function () {
-        function Query() {
+var CamlBuilder;
+(function (CamlBuilder) {
+    var Internal = (function () {
+        function Internal() {
         }
-        Query.createWhere = function () {
+        Internal.createWhere = function () {
             return new QueryInternal().Where();
         };
-        return Query;
-    })();
-    CamlBuilderInternal.Query = Query;
-    var QueryPart = (function () {
-        function QueryPart() {
-        }
-        QueryPart.create = function () {
+        Internal.createExpression = function () {
             return new FieldExpression(new Builder());
         };
-        return QueryPart;
+        return Internal;
     })();
-    CamlBuilderInternal.QueryPart = QueryPart;
+    CamlBuilder.Internal = Internal;
 
     /** Represents SharePoint CAML Query element */
     var QueryInternal = (function () {
@@ -136,6 +133,12 @@ var CamlBuilderInternal;
         FieldExpression.prototype.NumberField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Number");
         };
+        FieldExpression.prototype.IntegerField = function (internalName) {
+            return new FieldExpressionToken(this.builder, internalName, "Integer");
+        };
+        FieldExpression.prototype.CounterField = function (internalName) {
+            return new FieldExpressionToken(this.builder, internalName, "Counter");
+        };
         FieldExpression.prototype.UserField = function (internalName) {
             return new UserFieldExpression(this.builder, internalName);
         };
@@ -155,9 +158,6 @@ var CamlBuilderInternal;
             return new FieldExpressionToken(this.builder, internalName, "DateTime");
         };
         FieldExpression.prototype.DateRangesOverlap = function (eventDateField, endDateField, recurrenceIDField, dateTimeValue) {
-            /// <summary>
-            /// Used in queries to compare the dates in a recurring event with a specified DateTime value, to determine whether they overlap.
-            /// </summary>
             var pos = this.builder.tree.length;
 
             this.builder.tree.push({ Element: "Start", Name: "DateRangesOverlap" });
@@ -502,5 +502,37 @@ else
         };
         return Builder;
     })();
-})(CamlBuilderInternal || (CamlBuilderInternal = {}));
+    var CamlValues = (function () {
+        function CamlValues() {
+        }
+        CamlValues.UserID = "{UserID}";
+        CamlValues.Today = "{Today}";
+        CamlValues.Now = "{Now}";
+        CamlValues.ListProperty = {
+            Created: "{ListProperty Name=\"Created\"}",
+            DefaultViewUrl: "{ListProperty Name=\"DefaultViewUrl\"}",
+            Description: "{ListProperty Name=\"Description\"}",
+            EnableSyndication: "{ListProperty Name=\"EnableSyndication\"}",
+            ItemCount: "{ListProperty Name=\"ItemCount\"}",
+            LinkTitle: "{ListProperty Name=\"LinkTitle\"}",
+            MajorVersionLimit: "{ListProperty Name=\"MajorVersionLimit\"}",
+            MajorWithMinorVersionsLimit: "{ListProperty Name=\"MajorWithMinorVersionsLimit\"}",
+            RelativeFolderPath: "{ListProperty Name=\"RelativeFolderPath\"}",
+            Title: "{ListProperty Name=\"Title\"}",
+            ViewSelector: "{ListProperty Name=\"ViewSelector\"}"
+        };
+        CamlValues.ProjectProperty = {
+            BlogCategoryTitle: "{ProjectProperty Name=\"BlogCategoryTitle\"}",
+            BlogPostTitle: "{ProjectProperty Name=\"BlogPostTitle\"}",
+            Description: "{ProjectProperty Name=\"Description\"}",
+            RecycleBinEnabled: "{ProjectProperty Name=\"RecycleBinEnabled\"}",
+            SiteOwnerName: "{ProjectProperty Name=\"SiteOwnerName\"}",
+            SiteUrl: "{ProjectProperty Name=\"SiteUrl\"}",
+            Title: "{ProjectProperty Name=\"Title\"}",
+            Url: "{ProjectProperty Name=\"Url\"}"
+        };
+        return CamlValues;
+    })();
+    CamlBuilder.CamlValues = CamlValues;
+})(CamlBuilder || (CamlBuilder = {}));
 //@ sourceMappingURL=CamlBuilder.js.map

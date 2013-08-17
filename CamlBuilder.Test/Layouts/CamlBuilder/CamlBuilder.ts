@@ -42,15 +42,17 @@ declare module SP {
 class CamlBuilder {
     constructor() {
     }
-    Where(): CamlBuilderInternal.IFieldExpression {
-        return CamlBuilderInternal.Query.createWhere();
+    /** Adds Where clause to the query. */
+    Where(): CamlBuilder.IFieldExpression {
+        return CamlBuilder.Internal.createWhere();
     }
-    static Expression(): CamlBuilderInternal.IFieldExpression {
-        return CamlBuilderInternal.QueryPart.create();
+    /** Use for creating partial expressions and in conjunction with Any & All clauses */
+    static Expression(): CamlBuilder.IFieldExpression {
+        return CamlBuilder.Internal.createExpression();
     }
 }
 
-module CamlBuilderInternal {
+module CamlBuilder {
 
     export interface IQuery extends IGroupable {
         Where(): IFieldExpression;
@@ -79,8 +81,10 @@ module CamlBuilderInternal {
         GroupBy(fieldInternalName): IGroupedQuery;
     }
 
-    export interface IQueryPart extends IGroupable {
+    export interface IExpression extends IGroupable {
+        /** Adds And clause to the query. */
         And(): IFieldExpression;
+        /** Adds Or clause to the query. */
         Or(): IFieldExpression;
     }
     export interface IGroupedQuery extends ISortable {
@@ -93,16 +97,20 @@ module CamlBuilderInternal {
     }
 
     export interface IFieldExpression {
-        /** Adds And clause to the query. */
-        All(...conditions: IQueryPart[]): IQueryPart;
-        /** Adds Or clause to the query. */
-        Any(...conditions: IQueryPart[]): IQueryPart;
+        /** Adds And clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
+        All(...conditions: IExpression[]): IExpression;
+        /** Adds Or clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
+        Any(...conditions: IExpression[]): IExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Text */
         TextField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         BooleanField(internalName: string): IBooleanFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Number */
         NumberField(internalName: string): INumberFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Counter (usually ID fields) */
+        CounterField(internalName: string): INumberFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Integer */
+        IntegerField(internalName: string): INumberFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is User */
         UserField(internalName: string): IUserFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Lookup */
@@ -121,60 +129,60 @@ module CamlBuilderInternal {
             @param endDateField Internal name of "End Time" field ("EndDate" for Calendar lists)
             @param recurrenceIDField Internal name of "Recurrence ID" field ("RecurrenceID" for Calendar lists)
          */
-        DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, dateTimeValue: string): IQueryPart;
+        DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, dateTimeValue: string): IExpression;
     }
     export interface IBooleanFieldExpression {
         /** Checks whether the value of the field is True */
-        IsTrue(): IQueryPart;
+        IsTrue(): IExpression;
         /** Checks whether the value of the field is False */
-        IsFalse(): IQueryPart;
+        IsFalse(): IExpression;
         /** Checks whether the value of the field is equal to the specified value */
-        EqualTo(value: boolean): IQueryPart;
+        EqualTo(value: boolean): IExpression;
         /** Checks whether the value of the field is not equal to the specified value */
-        NotEqualTo(value: boolean): IQueryPart;
+        NotEqualTo(value: boolean): IExpression;
         /** Checks whether the value of the field was specified by user */
-        IsNull(): IQueryPart;
+        IsNull(): IExpression;
         /** Checks whether the value of the field was specified by user */
-        IsNotNull(): IQueryPart;
+        IsNotNull(): IExpression;
     }
     export interface INumberFieldExpression {
-        EqualTo(value: number): IQueryPart;
-        NotEqualTo(value: number): IQueryPart;
-        GreaterThan(value: number): IQueryPart;
-        LessThan(value: number): IQueryPart;
-        GreaterThanOrEqualTo(value: number): IQueryPart;
-        LessThanOrEqualTo(value: number): IQueryPart;
-        IsNull(): IQueryPart;
-        IsNotNull(): IQueryPart;
-        In(arrayOfValues: number[]): IQueryPart;
+        EqualTo(value: number): IExpression;
+        NotEqualTo(value: number): IExpression;
+        GreaterThan(value: number): IExpression;
+        LessThan(value: number): IExpression;
+        GreaterThanOrEqualTo(value: number): IExpression;
+        LessThanOrEqualTo(value: number): IExpression;
+        IsNull(): IExpression;
+        IsNotNull(): IExpression;
+        In(arrayOfValues: number[]): IExpression;
     }
     export interface IDateTimeFieldExpression {
-        EqualTo(value: string): IQueryPart;
-        NotEqualTo(value: string): IQueryPart;
-        GreaterThan(value: string): IQueryPart;
-        LessThan(value: string): IQueryPart;
-        GreaterThanOrEqualTo(value: string): IQueryPart;
-        LessThanOrEqualTo(value: string): IQueryPart;
-        IsNull(): IQueryPart;
-        IsNotNull(): IQueryPart;
-        In(arrayOfValues: string[]): IQueryPart;
+        EqualTo(value: string): IExpression;
+        NotEqualTo(value: string): IExpression;
+        GreaterThan(value: string): IExpression;
+        LessThan(value: string): IExpression;
+        GreaterThanOrEqualTo(value: string): IExpression;
+        LessThanOrEqualTo(value: string): IExpression;
+        IsNull(): IExpression;
+        IsNotNull(): IExpression;
+        In(arrayOfValues: string[]): IExpression;
     }
     export interface ITextFieldExpression {
-        EqualTo(value: string): IQueryPart;
-        NotEqualTo(value: string): IQueryPart;
-        Contains(value: string): IQueryPart;
-        BeginsWith(value: string): IQueryPart;
-        IsNull(): IQueryPart;
-        IsNotNull(): IQueryPart;
-        In(arrayOfValues: string[]): IQueryPart;
+        EqualTo(value: string): IExpression;
+        NotEqualTo(value: string): IExpression;
+        Contains(value: string): IExpression;
+        BeginsWith(value: string): IExpression;
+        IsNull(): IExpression;
+        IsNotNull(): IExpression;
+        In(arrayOfValues: string[]): IExpression;
     }
     export interface IUserFieldExpression {
-        EqualToCurrentUser(): IQueryPart;
-        IsInCurrentUserGroups(): IQueryPart;
-        IsInSPGroup(): IQueryPart;
-        IsInSPWebGroups(): IQueryPart;
-        IsInSPWebAllUsers(): IQueryPart;
-        IsInSPWebUsers(): IQueryPart;
+        EqualToCurrentUser(): IExpression;
+        IsInCurrentUserGroups(): IExpression;
+        IsInSPGroup(): IExpression;
+        IsInSPWebGroups(): IExpression;
+        IsInSPWebAllUsers(): IExpression;
+        IsInSPWebUsers(): IExpression;
         Id(): INumberFieldExpression;
         Value(): ITextFieldExpression;
     }
@@ -183,19 +191,17 @@ module CamlBuilderInternal {
         Value(): ITextFieldExpression;
     }
     export interface ILookupMultiFieldExpression {
-        EqualTo(value: string): IQueryPart;
-        NotEqualTo(value: string): IQueryPart;
-        Includes(value): IQueryPart;
-        NotIncludes(value): IQueryPart;
+        EqualTo(value: string): IExpression;
+        NotEqualTo(value: string): IExpression;
+        Includes(value): IExpression;
+        NotIncludes(value): IExpression;
     }
 
-    export class Query {
+    export class Internal {
         static createWhere(): IFieldExpression {
             return new QueryInternal().Where();
         }
-    }
-    export class QueryPart {
-        static create(): IFieldExpression {
+        static createExpression(): IFieldExpression {
             return new FieldExpression(new Builder());
         }
     }
@@ -243,7 +249,7 @@ module CamlBuilderInternal {
             return this.builder.Finalize();
         }
     }
-    class QueryToken implements IQueryPart {
+    class QueryToken implements IExpression {
         constructor(builder: Builder, startIndex: number) {
             this.builder = builder;
             this.startIndex = startIndex;
@@ -300,6 +306,12 @@ module CamlBuilderInternal {
         NumberField(internalName: string): INumberFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "Number");
         }
+        IntegerField(internalName: string): INumberFieldExpression {
+            return new FieldExpressionToken(this.builder, internalName, "Integer");
+        }
+        CounterField(internalName: string): INumberFieldExpression {
+            return new FieldExpressionToken(this.builder, internalName, "Counter");
+        }
         UserField(internalName: string): IUserFieldExpression {
             return new UserFieldExpression(this.builder, internalName);
         }
@@ -318,11 +330,7 @@ module CamlBuilderInternal {
         DateTimeField(internalName: string): IDateTimeFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "DateTime");
         }
-        DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, dateTimeValue: string): IQueryPart {
-            /// <summary>
-            /// Used in queries to compare the dates in a recurring event with a specified DateTime value, to determine whether they overlap.
-            /// </summary>
-
+        DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, dateTimeValue: string): IExpression {
             var pos = this.builder.tree.length;
 
             this.builder.tree.push({ Element: "Start", Name: "DateRangesOverlap" });
@@ -334,7 +342,7 @@ module CamlBuilderInternal {
 
             return new QueryToken(this.builder, pos);
         }
-        All(...conditions: IQueryPart[]): IQueryPart {
+        All(...conditions: IExpression[]): IExpression {
             var pos = this.builder.tree.length;
 
             conditions.reverse();
@@ -351,7 +359,7 @@ module CamlBuilderInternal {
             }
             return new QueryToken(this.builder, pos);
         }
-        Any(...conditions: IQueryPart[]): IQueryPart {
+        Any(...conditions: IExpression[]): IExpression {
             var pos = this.builder.tree.length;
 
             conditions.reverse();
@@ -398,32 +406,32 @@ module CamlBuilderInternal {
         private name2: string;
         private startIndex2: number;
 
-        EqualToCurrentUser(): IQueryPart {
+        EqualToCurrentUser(): IExpression {
             this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2, LookupId: true });
             this.builder2.BinaryOperator(this.startIndex2, "Eq", "Integer", "{UserID}");
             return new QueryToken(this.builder2, this.startIndex2);
         }
-        IsInCurrentUserGroups(): IQueryPart {
+        IsInCurrentUserGroups(): IExpression {
             this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
             this.builder2.Membership(this.startIndex2, "CurrentUserGroups");
             return new QueryToken(this.builder2, this.startIndex2);
         }
-        IsInSPGroup(): IQueryPart {
+        IsInSPGroup(): IExpression {
             this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
             this.builder2.Membership(this.startIndex2, "SPGroup");
             return new QueryToken(this.builder2, this.startIndex2);
         }
-        IsInSPWebGroups(): IQueryPart {
+        IsInSPWebGroups(): IExpression {
             this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
             this.builder2.Membership(this.startIndex2, "SPWeb.Groups");
             return new QueryToken(this.builder2, this.startIndex2);
         }
-        IsInSPWebAllUsers(): IQueryPart {
+        IsInSPWebAllUsers(): IExpression {
             this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
             this.builder2.Membership(this.startIndex2, "SPWeb.AllUsers");
             return new QueryToken(this.builder2, this.startIndex2);
         }
-        IsInSPWebUsers(): IQueryPart {
+        IsInSPWebUsers(): IExpression {
             this.builder2.tree.push({ Element: 'FieldRef', Name: name });
             this.builder2.Membership(this.startIndex2, "SPWeb.Users");
             return new QueryToken(this.builder2, this.startIndex2);
@@ -444,64 +452,64 @@ module CamlBuilderInternal {
         private startIndex: number;
         private valueType: string;
 
-        IsTrue(): IQueryPart {
+        IsTrue(): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "1");
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsFalse(): IQueryPart {
+        IsFalse(): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "0");
             return new QueryToken(this.builder, this.startIndex);
         }
 
-        IsNull(): IQueryPart {
+        IsNull(): IExpression {
             this.builder.UnaryOperator(this.startIndex, "IsNull");
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsNotNull(): IQueryPart {
+        IsNotNull(): IExpression {
             this.builder.UnaryOperator(this.startIndex, "IsNotNull");
             return new QueryToken(this.builder, this.startIndex);
         }
-        EqualTo(value): IQueryPart {
+        EqualTo(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        GreaterThan(value): IQueryPart {
+        GreaterThan(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Gt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        LessThan(value): IQueryPart {
+        LessThan(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Lt", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        GreaterThanOrEqualTo(value): IQueryPart {
+        GreaterThanOrEqualTo(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Geq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        LessThanOrEqualTo(value): IQueryPart {
+        LessThanOrEqualTo(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Leq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        NotEqualTo(value): IQueryPart {
+        NotEqualTo(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Neq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        NotIncludes(value): IQueryPart {
+        NotIncludes(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "NotIncludes", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        Includes(value): IQueryPart {
+        Includes(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Includes", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        Contains(value): IQueryPart {
+        Contains(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "Contains", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        BeginsWith(value): IQueryPart {
+        BeginsWith(value): IExpression {
             this.builder.BinaryOperator(this.startIndex, "BeginsWith", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
-        In(arrayOfValues: any[]): IQueryPart {
+        In(arrayOfValues: any[]): IExpression {
 
             this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "In" });
             this.builder.tree.push({ Element: "Start", Name: "Values" });
@@ -677,6 +685,33 @@ module CamlBuilderInternal {
             return sb.toString();
         }
     }
-
+    export class CamlValues {
+        static UserID: string = "{UserID}";
+        static Today: string = "{Today}";
+        static Now: string = "{Now}";
+        static ListProperty = {
+            Created: "{ListProperty Name=\"Created\"}",
+            DefaultViewUrl: "{ListProperty Name=\"DefaultViewUrl\"}",
+            Description: "{ListProperty Name=\"Description\"}",
+            EnableSyndication: "{ListProperty Name=\"EnableSyndication\"}",
+            ItemCount: "{ListProperty Name=\"ItemCount\"}",
+            LinkTitle: "{ListProperty Name=\"LinkTitle\"}",
+            MajorVersionLimit: "{ListProperty Name=\"MajorVersionLimit\"}",
+            MajorWithMinorVersionsLimit: "{ListProperty Name=\"MajorWithMinorVersionsLimit\"}",
+            RelativeFolderPath: "{ListProperty Name=\"RelativeFolderPath\"}",
+            Title: "{ListProperty Name=\"Title\"}",
+            ViewSelector: "{ListProperty Name=\"ViewSelector\"}"
+        };
+        static ProjectProperty = {
+            BlogCategoryTitle: "{ProjectProperty Name=\"BlogCategoryTitle\"}",
+            BlogPostTitle: "{ProjectProperty Name=\"BlogPostTitle\"}",
+            Description: "{ProjectProperty Name=\"Description\"}",
+            RecycleBinEnabled: "{ProjectProperty Name=\"RecycleBinEnabled\"}",
+            SiteOwnerName: "{ProjectProperty Name=\"SiteOwnerName\"}",
+            SiteUrl: "{ProjectProperty Name=\"SiteUrl\"}",
+            Title: "{ProjectProperty Name=\"Title\"}",
+            Url: "{ProjectProperty Name=\"Url\"}"
+        }
+    }
 }
 

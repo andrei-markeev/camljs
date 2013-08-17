@@ -108,7 +108,7 @@ var Tests = (function (_super) {
     };
 
     Tests.prototype.Test4 = function () {
-        var caml = new CamlBuilder().Where().LookupField("Category").Id().In([2, 3, 10]).And().DateField("ExpirationDate").LessThanOrEqualTo("{Now}").OrderByDesc("ExpirationDate").ToString();
+        var caml = new CamlBuilder().Where().LookupField("Category").Id().In([2, 3, 10]).And().DateField("ExpirationDate").LessThanOrEqualTo(CamlBuilder.CamlValues.Now).OrderByDesc("ExpirationDate").ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
                   <And>\
@@ -131,6 +131,21 @@ var Tests = (function (_super) {
                 <OrderBy>\
                   <FieldRef Name="ExpirationDate" Ascending="False" />\
                 </OrderBy>'), TestsHelper.XmlToJson(caml));
+    };
+
+    Tests.prototype.Test5 = function () {
+        var caml = new CamlBuilder().Where().NumberField("ID").In([1, 2, 3]).ToString();
+
+        this.areIdentical(TestsHelper.XmlToJson('<Where>\
+                <In>\
+                    <FieldRef Name="ID" />\
+                    <Values>\
+                        <Value Type="Integer">1</Value>\
+                        <Value Type="Integer">2</Value>\
+                        <Value Type="Integer">3</Value>\
+                    </Values>\
+                </In>\
+            </Where>'), TestsHelper.XmlToJson(caml));
     };
     return Tests;
 })(tsUnit.TestClass);
