@@ -1,9 +1,3 @@
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
 var CamlBuilder = (function () {
     function CamlBuilder() {
     }
@@ -21,6 +15,15 @@ var CamlBuilder = (function () {
 
 var CamlBuilder;
 (function (CamlBuilder) {
+    (function (DateRangesOverlapType) {
+        DateRangesOverlapType[DateRangesOverlapType["Now"] = 0] = "Now";
+        DateRangesOverlapType[DateRangesOverlapType["Day"] = 1] = "Day";
+        DateRangesOverlapType[DateRangesOverlapType["Week"] = 2] = "Week";
+        DateRangesOverlapType[DateRangesOverlapType["Month"] = 3] = "Month";
+        DateRangesOverlapType[DateRangesOverlapType["Year"] = 4] = "Year";
+    })(CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
+    var DateRangesOverlapType = CamlBuilder.DateRangesOverlapType;
+
     var Internal = (function () {
         function Internal() {
         }
@@ -36,7 +39,6 @@ var CamlBuilder;
 
     /** Represents SharePoint CAML Query element */
     var QueryInternal = (function () {
-        /** Creates Query CAML element */
         function QueryInternal() {
             this.builder = new Builder();
         }
@@ -75,6 +77,9 @@ var CamlBuilder;
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
         };
+
+        /** Returns the XML string representing the generated CAML
+        */
         QueryInternal.prototype.ToString = function () {
             return this.builder.Finalize();
         };
@@ -130,6 +135,9 @@ var CamlBuilder;
         FieldExpression.prototype.BooleanField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Integer");
         };
+        FieldExpression.prototype.UrlField = function (internalName) {
+            return new FieldExpressionToken(this.builder, internalName, "URL");
+        };
         FieldExpression.prototype.NumberField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Number");
         };
@@ -145,6 +153,9 @@ var CamlBuilder;
         FieldExpression.prototype.LookupField = function (internalName) {
             return new LookupFieldExpression(this.builder, internalName, "Lookup");
         };
+        FieldExpression.prototype.LookupIdField = function (internalName) {
+            return new LookupFieldExpression(this.builder, internalName, "Lookup").Id();
+        };
         FieldExpression.prototype.LookupMultiField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "LookupMulti");
         };
@@ -157,14 +168,37 @@ var CamlBuilder;
         FieldExpression.prototype.DateTimeField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "DateTime");
         };
-        FieldExpression.prototype.DateRangesOverlap = function (eventDateField, endDateField, recurrenceIDField, dateTimeValue) {
+        FieldExpression.prototype.DateRangesOverlap = function (eventDateField, endDateField, recurrenceIDField, matchType) {
             var pos = this.builder.tree.length;
 
             this.builder.tree.push({ Element: "Start", Name: "DateRangesOverlap" });
             this.builder.tree.push({ Element: "FieldRef", Name: eventDateField });
             this.builder.tree.push({ Element: "FieldRef", Name: endDateField });
             this.builder.tree.push({ Element: "FieldRef", Name: recurrenceIDField });
-            this.builder.tree.push({ Element: "Value", ValueType: "DateTime", Value: dateTimeValue });
+
+            var value;
+            if (typeof matchType == typeof DateRangesOverlapType) {
+                switch (matchType) {
+                    case DateRangesOverlapType.Now:
+                        value = CamlValues.Now;
+                        break;
+                    case DateRangesOverlapType.Day:
+                        value = CamlValues.Today;
+                        break;
+                    case DateRangesOverlapType.Week:
+                        value = "{Week}";
+                        break;
+                    case DateRangesOverlapType.Month:
+                        value = "{Month}";
+                        break;
+                    case DateRangesOverlapType.Year:
+                        value = "{Year}";
+                        break;
+                }
+            } else
+                value = matchType;
+
+            this.builder.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
             this.builder.tree.push({ Element: "End" });
 
             return new QueryToken(this.builder, pos);
@@ -224,49 +258,71 @@ var CamlBuilder;
         LookupFieldExpression.prototype.Value = function () {
             return new FieldExpressionToken(this.builder, this.name, this.valueType);
         };
+        LookupFieldExpression.prototype.ValueAsText = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Text");
+        };
+        LookupFieldExpression.prototype.ValueAsNumber = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Number");
+        };
+        LookupFieldExpression.prototype.ValueAsCounter = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Number");
+        };
+        LookupFieldExpression.prototype.ValueAsDateTime = function () {
+            return new FieldExpressionToken(this.builder, this.name, "DateTime");
+        };
+        LookupFieldExpression.prototype.ValueAsDate = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Date");
+        };
+        LookupFieldExpression.prototype.ValueAsBoolean = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Integer");
+        };
         return LookupFieldExpression;
     })();
 
-    var UserFieldExpression = (function (_super) {
-        __extends(UserFieldExpression, _super);
+    var UserFieldExpression = (function () {
         function UserFieldExpression(builder, name) {
-            this.builder2 = builder;
-            this.name2 = name;
-            this.startIndex2 = builder.tree.length;
-            _super.call(this, builder, name, "User");
+            this.builder = builder;
+            this.name = name;
+            this.startIndex = builder.tree.length;
         }
+        UserFieldExpression.prototype.Id = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Integer", true);
+        };
+        UserFieldExpression.prototype.ValueAsText = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Text");
+        };
         UserFieldExpression.prototype.EqualToCurrentUser = function () {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2, LookupId: true });
-            this.builder2.BinaryOperator(this.startIndex2, "Eq", "Integer", "{UserID}");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name, LookupId: true });
+            this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "{UserID}");
+            return new QueryToken(this.builder, this.startIndex);
         };
         UserFieldExpression.prototype.IsInCurrentUserGroups = function () {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "CurrentUserGroups");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "CurrentUserGroups");
+            return new QueryToken(this.builder, this.startIndex);
         };
         UserFieldExpression.prototype.IsInSPGroup = function () {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "SPGroup");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "SPGroup");
+            return new QueryToken(this.builder, this.startIndex);
         };
         UserFieldExpression.prototype.IsInSPWebGroups = function () {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "SPWeb.Groups");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "SPWeb.Groups");
+            return new QueryToken(this.builder, this.startIndex);
         };
         UserFieldExpression.prototype.IsInSPWebAllUsers = function () {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "SPWeb.AllUsers");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "SPWeb.AllUsers");
+            return new QueryToken(this.builder, this.startIndex);
         };
         UserFieldExpression.prototype.IsInSPWebUsers = function () {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: name });
-            this.builder2.Membership(this.startIndex2, "SPWeb.Users");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: name });
+            this.builder.Membership(this.startIndex, "SPWeb.Users");
+            return new QueryToken(this.builder, this.startIndex);
         };
         return UserFieldExpression;
-    })(LookupFieldExpression);
+    })();
 
     var FieldExpressionToken = (function () {
         function FieldExpressionToken(builder, name, valueType, isLookupId) {

@@ -105,6 +105,8 @@ module CamlBuilder {
         TextField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         BooleanField(internalName: string): IBooleanFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is URL */
+        UrlField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Number */
         NumberField(internalName: string): INumberFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Counter (usually ID fields) */
@@ -115,6 +117,8 @@ module CamlBuilder {
         UserField(internalName: string): IUserFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Lookup */
         LookupField(internalName: string): ILookupFieldExpression;
+        /** DEPRECATED. Please use LookupField(...).Id() instead */
+        LookupIdField(internalName: string): INumberFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is LookupMulti */
         LookupMultiField(internalName: string): ILookupMultiFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is UserMulti */
@@ -123,11 +127,14 @@ module CamlBuilder {
         DateField(internalName: string): IDateTimeFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is DateTime */
         DateTimeField(internalName: string): IDateTimeFieldExpression;
-        /** Used in queries to compare the dates in a recurring event with a specified DateTime value, to determine whether they overlap.
-            Usually necessary in Calendar lists or Calendar views.
+        /** Used in queries for retrieving recurring calendar events.
+            Should be used in conjunction with QueryOptions/CalendarDate, which defines datetime for comparison.
             @param eventDateField Internal name of "Start Time" field ("EventDate" for Calendar lists)
             @param endDateField Internal name of "End Time" field ("EndDate" for Calendar lists)
             @param recurrenceIDField Internal name of "Recurrence ID" field ("RecurrenceID" for Calendar lists)
+         */
+        DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, recurrenceType: DateRangesOverlapType): IExpression;
+        /** DEPRECATED. Please use overload with the recurrenceType parameter instead.
          */
         DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, dateTimeValue: string): IExpression;
     }
@@ -184,17 +191,30 @@ module CamlBuilder {
         IsInSPWebAllUsers(): IExpression;
         IsInSPWebUsers(): IExpression;
         Id(): INumberFieldExpression;
-        Value(): ITextFieldExpression;
+        ValueAsText(): ITextFieldExpression;
     }
     export interface ILookupFieldExpression {
         Id(): INumberFieldExpression;
-        Value(): ITextFieldExpression;
+        ValueAsText(): ITextFieldExpression;
+        ValueAsCounter(): INumberFieldExpression;
+        ValueAsNumber(): INumberFieldExpression;
+        ValueAsDate(): IDateTimeFieldExpression;
+        ValueAsDateTime(): IDateTimeFieldExpression;
+        ValueAsBoolean(): IBooleanFieldExpression;
     }
     export interface ILookupMultiFieldExpression {
         EqualTo(value: string): IExpression;
         NotEqualTo(value: string): IExpression;
         Includes(value): IExpression;
         NotIncludes(value): IExpression;
+    }
+
+    export enum DateRangesOverlapType {
+        Now,
+        Day,
+        Week,
+        Month,
+        Year
     }
 
     export class Internal {
@@ -208,7 +228,6 @@ module CamlBuilder {
 
     /** Represents SharePoint CAML Query element */
     class QueryInternal {
-        /** Creates Query CAML element */
         constructor() {
             this.builder = new Builder();
         }
@@ -245,6 +264,8 @@ module CamlBuilder {
             this.builder.tree.push({ Element: "FieldRef", Name: fieldInternalName, Descending: true });
             return new SortedQuery(this.builder);
         }
+        /** Returns the XML string representing the generated CAML
+        */
         ToString() {
             return this.builder.Finalize();
         }
@@ -303,6 +324,9 @@ module CamlBuilder {
         BooleanField(internalName: string): IBooleanFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "Integer");
         }
+        UrlField(internalName: string): ITextFieldExpression {
+            return new FieldExpressionToken(this.builder, internalName, "URL");
+        }
         NumberField(internalName: string): INumberFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "Number");
         }
@@ -318,6 +342,9 @@ module CamlBuilder {
         LookupField(internalName: string): ILookupFieldExpression {
             return new LookupFieldExpression(this.builder, internalName, "Lookup");
         }
+        LookupIdField(internalName: string): INumberFieldExpression {
+            return new LookupFieldExpression(this.builder, internalName, "Lookup").Id();
+        }
         LookupMultiField(internalName: string): ILookupMultiFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "LookupMulti");
         }
@@ -330,14 +357,39 @@ module CamlBuilder {
         DateTimeField(internalName: string): IDateTimeFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "DateTime");
         }
-        DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, dateTimeValue: string): IExpression {
+        DateRangesOverlap(eventDateField: string, endDateField: string, recurrenceIDField: string, matchType: any): IExpression {
             var pos = this.builder.tree.length;
 
             this.builder.tree.push({ Element: "Start", Name: "DateRangesOverlap" });
             this.builder.tree.push({ Element: "FieldRef", Name: eventDateField });
             this.builder.tree.push({ Element: "FieldRef", Name: endDateField });
             this.builder.tree.push({ Element: "FieldRef", Name: recurrenceIDField });
-            this.builder.tree.push({ Element: "Value", ValueType: "DateTime", Value: dateTimeValue });
+
+            var value;
+            if (typeof matchType == typeof DateRangesOverlapType)
+            {
+                switch (matchType) {
+                    case DateRangesOverlapType.Now:
+                        value = CamlValues.Now;
+                        break;
+                    case DateRangesOverlapType.Day:
+                        value = CamlValues.Today;
+                        break;
+                    case DateRangesOverlapType.Week:
+                        value = "{Week}";
+                        break;
+                    case DateRangesOverlapType.Month:
+                        value = "{Month}";
+                        break;
+                    case DateRangesOverlapType.Year:
+                        value = "{Year}";
+                        break;
+                }
+            }
+            else
+                value = matchType;
+
+            this.builder.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
             this.builder.tree.push({ Element: "End" });
 
             return new QueryToken(this.builder, pos);
@@ -393,48 +445,71 @@ module CamlBuilder {
         Value(): ITextFieldExpression {
             return new FieldExpressionToken(this.builder, this.name, this.valueType);
         }
+        ValueAsText(): ITextFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "Text");
+        }
+        ValueAsNumber(): INumberFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "Number");
+        }
+        ValueAsCounter(): INumberFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "Number");
+        }
+        ValueAsDateTime(): IDateTimeFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "DateTime");
+        }
+        ValueAsDate(): IDateTimeFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "Date");
+        }
+        ValueAsBoolean(): IBooleanFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "Integer");
+        }
     }
 
-    class UserFieldExpression extends LookupFieldExpression implements IUserFieldExpression {
+    class UserFieldExpression implements IUserFieldExpression {
         constructor(builder: Builder, name: string) {
-            this.builder2 = builder;
-            this.name2 = name;
-            this.startIndex2 = builder.tree.length;
-            super(builder, name, "User");
+            this.builder = builder;
+            this.name = name;
+            this.startIndex = builder.tree.length;
         }
-        private builder2: Builder;
-        private name2: string;
-        private startIndex2: number;
+        private builder: Builder;
+        private name: string;
+        private startIndex: number;
 
+        Id(): INumberFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "Integer", true);
+        }
+        ValueAsText(): ITextFieldExpression {
+            return new FieldExpressionToken(this.builder, this.name, "Text");
+        }
         EqualToCurrentUser(): IExpression {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2, LookupId: true });
-            this.builder2.BinaryOperator(this.startIndex2, "Eq", "Integer", "{UserID}");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name, LookupId: true });
+            this.builder.BinaryOperator(this.startIndex, "Eq", "Integer", "{UserID}");
+            return new QueryToken(this.builder, this.startIndex);
         }
         IsInCurrentUserGroups(): IExpression {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "CurrentUserGroups");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "CurrentUserGroups");
+            return new QueryToken(this.builder, this.startIndex);
         }
         IsInSPGroup(): IExpression {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "SPGroup");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "SPGroup");
+            return new QueryToken(this.builder, this.startIndex);
         }
         IsInSPWebGroups(): IExpression {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "SPWeb.Groups");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "SPWeb.Groups");
+            return new QueryToken(this.builder, this.startIndex);
         }
         IsInSPWebAllUsers(): IExpression {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: this.name2 });
-            this.builder2.Membership(this.startIndex2, "SPWeb.AllUsers");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: this.name });
+            this.builder.Membership(this.startIndex, "SPWeb.AllUsers");
+            return new QueryToken(this.builder, this.startIndex);
         }
         IsInSPWebUsers(): IExpression {
-            this.builder2.tree.push({ Element: 'FieldRef', Name: name });
-            this.builder2.Membership(this.startIndex2, "SPWeb.Users");
-            return new QueryToken(this.builder2, this.startIndex2);
+            this.builder.tree.push({ Element: 'FieldRef', Name: name });
+            this.builder.Membership(this.startIndex, "SPWeb.Users");
+            return new QueryToken(this.builder, this.startIndex);
         }
     }
 

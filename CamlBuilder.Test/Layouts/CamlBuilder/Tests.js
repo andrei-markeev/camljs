@@ -147,6 +147,41 @@ var Tests = (function (_super) {
                 </In>\
             </Where>'), TestsHelper.XmlToJson(caml));
     };
+
+    Tests.prototype.Test6 = function () {
+        var caml = new CamlBuilder().Where().DateRangesOverlap("EventDate", "EndDate", "RecurrenceID", CamlBuilder.CamlValues.Today).And().UserField("BroadcastTo").IsInCurrentUserGroups().Or().UserField("BroadcastTo").EqualToCurrentUser().OrderByDesc("EventDate").ToString();
+
+        this.areIdentical(TestsHelper.XmlToJson('<Where>\
+                 <And>\
+                   <Geq>\
+                     <FieldRef Name="BroadcastExpires"/>\
+                     <Value IncludeTimeValue="FALSE" Type="DateTime">\
+                       <Today/>\
+                     </Value>\
+                   </Geq>\
+                   <Or>\
+                     <Membership Type = "CurrentUserGroups" >\
+                       <FieldRef Name="BroadcastTo"/>\
+                     </Membership>\
+                     <Eq>\
+                       <FieldRef Name="BroadcastTo"></FieldRef>\
+                       <Value Type="User">UserName</Value>\
+                     </Eq>\
+                   </Or>\
+                </And>\
+                <DateRangesOverlap>\
+                 <FieldRef Name="EventDate"/>\
+                 <FieldRef Name="EndDate"/>\
+                 <FieldRef Name="RecurrenceID"/>\
+                 <Value Type="DateTime">\
+                   <Today/>\
+                 </Value>\
+               </DateRangesOverlap>\
+           </Where>\
+           <OrderBy>\
+             <FieldRef Name="Created" Ascending="FALSE" />\
+           </OrderBy>'), TestsHelper.XmlToJson(caml));
+    };
     return Tests;
 })(tsUnit.TestClass);
 
