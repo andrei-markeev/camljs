@@ -149,6 +149,31 @@ var Tests = (function (_super) {
     };
 
     Tests.prototype.Test6 = function () {
+        var caml = new CamlBuilder().Where().LookupIdField("Category").In([2, 3, 10]).And().DateField("ExpirationDate").LessThanOrEqualTo("{Now}").OrderByDesc("ExpirationDate").ToString();
+
+        this.areIdentical(TestsHelper.XmlToJson('<Where>\
+                  <And>\
+                    <In>\
+                      <FieldRef Name="Category" LookupId="True" />\
+                      <Values>\
+                        <Value Type="Integer">2</Value>\
+                        <Value Type="Integer">3</Value>\
+                        <Value Type="Integer">10</Value>\
+                      </Values>\
+                    </In>\
+                    <Leq>\
+                      <FieldRef Name="ExpirationDate" />\
+                      <Value Type="Date">\
+                        <Now />\
+                      </Value>\
+                    </Leq>\
+                  </And>\
+                </Where><OrderBy>\
+                  <FieldRef Name="ExpirationDate" Ascending="False" />\
+                </OrderBy>'), TestsHelper.XmlToJson(caml));
+    };
+
+    Tests.prototype.Test7 = function () {
         var caml = new CamlBuilder().Where().DateRangesOverlap("EventDate", "EndDate", "RecurrenceID", CamlBuilder.CamlValues.Today).And().UserField("BroadcastTo").IsInCurrentUserGroups().Or().UserField("BroadcastTo").EqualToCurrentUser().OrderByDesc("EventDate").ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
