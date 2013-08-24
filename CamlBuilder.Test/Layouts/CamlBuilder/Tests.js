@@ -13,21 +13,23 @@ var TestsHelper = (function () {
     function TestsHelper() {
     }
     TestsHelper.XmlToJson = function (xml) {
-        function elementToObject(el) {
+        function elementToObject(element) {
             var o = [];
             var i = 0;
-            if (el.attributes) {
-                for (i; i < el.attributes.length; i++) {
-                    o[el.attributes[i].name] = el.attributes[i].value;
+            if (element.attributes) {
+                for (i; i < element.attributes.length; i++) {
+                    var attr = {};
+                    attr[element.attributes[i].name] = element.attributes[i].value;
+                    o.push(attr);
                 }
             }
 
-            var children = el.childNodes;
+            var children = element.childNodes;
             if (children.length) {
                 i = 0;
                 for (i; i < children.length; i++) {
                     if (children[i].nodeName == '#text')
-                        o.push({ '#text': children[i].nodeValue });
+                        o.push(children[i].nodeValue);
 else {
                         var ch = {};
                         ch[children[i].nodeName] = elementToObject(children[i]);
@@ -38,9 +40,9 @@ else {
             return o;
         }
 
-        var domElement = CUI.NativeUtility.createXMLDocFromString("<root>" + xml + "</root>");
+        var domElement = CUI.NativeUtility.createXMLDocFromString('<root>' + xml + '</root>');
         var obj = elementToObject(domElement);
-        return JSON.stringify(obj.root, undefined, 2);
+        return JSON.stringify(obj[0].root, undefined, 2);
     };
     return TestsHelper;
 })();
@@ -50,7 +52,7 @@ var Tests = (function (_super) {
     function Tests() {
         _super.apply(this, arguments);
     }
-    Tests.prototype.Test1 = function () {
+    Tests.prototype.TestAny = function () {
         var caml = new CamlBuilder().Where().Any(CamlBuilder.Expression().TextField("Email").EqualTo("support@google.com"), CamlBuilder.Expression().TextField("Email").EqualTo("plus@google.com"), CamlBuilder.Expression().TextField("Title").BeginsWith("[Google]"), CamlBuilder.Expression().TextField("Content").Contains("Google")).ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
@@ -67,8 +69,8 @@ var Tests = (function (_super) {
                 </Where>'), TestsHelper.XmlToJson(caml));
     };
 
-    Tests.prototype.Test2 = function () {
-        var caml = new CamlBuilder().Where().UserField("AssignedTo").EqualToCurrentUser().Or().UserField("AssignedTo").IsInCurrentUserGroups().GroupBy("Category").OrderBy("Priority").ThenBy("Title").ToString();
+    Tests.prototype.TestMembership = function () {
+        var caml = new CamlBuilder().Where().UserField("AssignedTo").EqualToCurrentUser().Or().UserField("AssignedTo").Membership.CurrentUserGroups().GroupBy("Category").OrderBy("Priority").ThenBy("Title").ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
                     <Or>\
@@ -84,7 +86,7 @@ var Tests = (function (_super) {
                 </OrderBy>'), TestsHelper.XmlToJson(caml));
     };
 
-    Tests.prototype.Test3 = function () {
+    Tests.prototype.TestNestedBracketExpressions = function () {
         var caml = new CamlBuilder().Where().All(CamlBuilder.Expression().All(CamlBuilder.Expression().BooleanField("Enabled").IsTrue(), CamlBuilder.Expression().UserMultiField("TargetAudience").EqualTo("55").Or().UserMultiField("TargetAudience").EqualTo("66")), CamlBuilder.Expression().Any(CamlBuilder.Expression().TextField("NotificationScope").EqualTo("77"), CamlBuilder.Expression().TextField("NotificationScope").EqualTo("88").And().TextField("ScopeWebRelativeUrl").EqualTo("99"))).ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
@@ -107,8 +109,8 @@ var Tests = (function (_super) {
                 </Where>'), TestsHelper.XmlToJson(caml));
     };
 
-    Tests.prototype.Test4 = function () {
-        var caml = new CamlBuilder().Where().LookupField("Category").Id().In([2, 3, 10]).And().DateField("ExpirationDate").LessThanOrEqualTo(CamlBuilder.CamlValues.Now).OrderByDesc("ExpirationDate").ToString();
+    Tests.prototype.TestLookupIdAndOrderBy = function () {
+        var caml = new CamlBuilder().Where().LookupIdField("Category").In([2, 3, 10]).And().DateField("ExpirationDate").GreaterThan(CamlBuilder.CamlValues.Now).OrderBy("ExpirationDate").ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
                   <And>\
@@ -120,92 +122,84 @@ var Tests = (function (_super) {
                         <Value Type="Integer">10</Value>\
                       </Values>\
                     </In>\
-                    <Leq>\
+                    <Gt>\
                       <FieldRef Name="ExpirationDate" />\
-                      <Value Type="Date">\
+                      <Value IncludeTimeValue="False" Type="DateTime">\
                         <Now />\
                       </Value>\
-                    </Leq>\
+                    </Gt>\
                   </And>\
                 </Where>\
                 <OrderBy>\
-                  <FieldRef Name="ExpirationDate" Ascending="False" />\
+                  <FieldRef Name="ExpirationDate" />\
                 </OrderBy>'), TestsHelper.XmlToJson(caml));
     };
 
-    Tests.prototype.Test5 = function () {
-        var caml = new CamlBuilder().Where().NumberField("ID").In([1, 2, 3]).ToString();
+    Tests.prototype.TestIdInValues = function () {
+        var caml = new CamlBuilder().Where().CounterField("ID").In([1, 2, 3]).ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
                 <In>\
                     <FieldRef Name="ID" />\
                     <Values>\
-                        <Value Type="Integer">1</Value>\
-                        <Value Type="Integer">2</Value>\
-                        <Value Type="Integer">3</Value>\
+                        <Value Type="Counter">1</Value>\
+                        <Value Type="Counter">2</Value>\
+                        <Value Type="Counter">3</Value>\
                     </Values>\
                 </In>\
             </Where>'), TestsHelper.XmlToJson(caml));
     };
 
-    Tests.prototype.Test6 = function () {
-        var caml = new CamlBuilder().Where().LookupIdField("Category").In([2, 3, 10]).And().DateField("ExpirationDate").LessThanOrEqualTo("{Now}").OrderByDesc("ExpirationDate").ToString();
+    Tests.prototype.TestDateRangesOverlap = function () {
+        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(CamlBuilder.DateRangesOverlapType.Year, new Date().toISOString())).OrderByDesc("Created").ToString();
 
-        this.areIdentical(TestsHelper.XmlToJson('<Where>\
-                  <And>\
-                    <In>\
-                      <FieldRef Name="Category" LookupId="True" />\
-                      <Values>\
-                        <Value Type="Integer">2</Value>\
-                        <Value Type="Integer">3</Value>\
-                        <Value Type="Integer">10</Value>\
-                      </Values>\
-                    </In>\
-                    <Leq>\
-                      <FieldRef Name="ExpirationDate" />\
-                      <Value Type="Date">\
-                        <Now />\
-                      </Value>\
-                    </Leq>\
-                  </And>\
-                </Where><OrderBy>\
-                  <FieldRef Name="ExpirationDate" Ascending="False" />\
-                </OrderBy>'), TestsHelper.XmlToJson(caml));
+        this.areIdentical(TestsHelper.XmlToJson('<View>\
+                <Query>\
+                    <Where>\
+                       <And>\
+                         <Geq>\
+                            <FieldRef Name="BroadcastExpires"/>\
+                            <Value IncludeTimeValue="False" Type="DateTime">\
+                            <Today/>\
+                            </Value>\
+                         </Geq>\
+                         <And>\
+                           <Or>\
+                             <Membership Type="CurrentUserGroups" >\
+                               <FieldRef Name="BroadcastTo"/>\
+                             </Membership>\
+                             <Eq>\
+                               <FieldRef Name="BroadcastTo" LookupId="True" />\
+                               <Value Type="Integer"><UserID /></Value>\
+                             </Eq>\
+                           </Or>\
+                            <DateRangesOverlap>\
+                             <FieldRef Name="EventDate"/>\
+                             <FieldRef Name="EndDate"/>\
+                             <FieldRef Name="RecurrenceID"/>\
+                             <Value Type="DateTime">\
+                               <Today />\
+                             </Value>\
+                           </DateRangesOverlap>\
+                        </And>\
+                      </And>\
+                   </Where>\
+                   <OrderBy>\
+                     <FieldRef Name="Created" Ascending="False" />\
+                   </OrderBy>\
+               </Query>\
+            </View>'), TestsHelper.XmlToJson(caml));
     };
 
-    Tests.prototype.Test7 = function () {
-        var caml = new CamlBuilder().Where().DateRangesOverlap("EventDate", "EndDate", "RecurrenceID", CamlBuilder.CamlValues.Today).And().UserField("BroadcastTo").IsInCurrentUserGroups().Or().UserField("BroadcastTo").EqualToCurrentUser().OrderByDesc("EventDate").ToString();
+    Tests.prototype.TestJsDateFormat = function () {
+        var caml = new CamlBuilder().Where().DateTimeField("Created").GreaterThan(new Date(Date.UTC(2013, 0, 1))).ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
-                 <And>\
-                   <Geq>\
-                     <FieldRef Name="BroadcastExpires"/>\
-                     <Value IncludeTimeValue="FALSE" Type="DateTime">\
-                       <Today/>\
-                     </Value>\
-                   </Geq>\
-                   <Or>\
-                     <Membership Type = "CurrentUserGroups" >\
-                       <FieldRef Name="BroadcastTo"/>\
-                     </Membership>\
-                     <Eq>\
-                       <FieldRef Name="BroadcastTo"></FieldRef>\
-                       <Value Type="User">UserName</Value>\
-                     </Eq>\
-                   </Or>\
-                </And>\
-                <DateRangesOverlap>\
-                 <FieldRef Name="EventDate"/>\
-                 <FieldRef Name="EndDate"/>\
-                 <FieldRef Name="RecurrenceID"/>\
-                 <Value Type="DateTime">\
-                   <Today/>\
-                 </Value>\
-               </DateRangesOverlap>\
-           </Where>\
-           <OrderBy>\
-             <FieldRef Name="Created" Ascending="FALSE" />\
-           </OrderBy>'), TestsHelper.XmlToJson(caml));
+                <Gt>\
+                    <FieldRef Name="Created" />\
+                    <Value Type="DateTime">2013-01-01T00:00:00.000Z</Value>\
+                </Gt>\
+            </Where>'), TestsHelper.XmlToJson(caml));
     };
     return Tests;
 })(tsUnit.TestClass);
@@ -215,4 +209,4 @@ ExecuteOrDelayUntilScriptLoaded(function () {
     test.addTestClass(new Tests());
     test.showResults(document.getElementById('caml'), test.run());
 }, 'sp.runtime.js');
-//@ sourceMappingURL=Tests.js.map
+//# sourceMappingURL=Tests.js.map
