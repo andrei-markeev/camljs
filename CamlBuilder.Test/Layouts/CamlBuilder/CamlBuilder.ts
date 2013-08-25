@@ -246,13 +246,21 @@ module CamlBuilder {
     export interface IUserFieldExpression {
         /** DEPRECATED. Please use IsIn* methods instead. This property will be removed in next release(!!) */
         Membership: IMembership;
+        /** Checks whether the value of the User field is equal to id of the current user */
         EqualToCurrentUser(): IExpression;
+        /** Checks whether the group specified by the value of the field includes the current user. */
         IsInCurrentUserGroups(): IExpression;
-        IsInSPGroup(): IExpression;
+        /** Checks whether the user specified by the value of the field is member of the specified SharePoint Group. */
+        IsInSPGroup(groupId: number): IExpression;
+        /** Checks whether the user specified by the value of the field is member of current SPWeb groups. */
         IsInSPWebGroups(): IExpression;
+        /** Checks whether the user specified by the value of the field is in current SPWeb users. */
         IsInSPWebAllUsers(): IExpression;
+        /** Checks whether the user specified by the value of the field has received the rights to the site directly (not through a group). */
         IsInSPWebUsers(): IExpression;
+        /** Specifies that id of the user will be used for further comparisons. */
         Id(): INumberFieldExpression;
+        /** Specifies that lookup target field value will be used for further comparisons. */
         ValueAsText(): ITextFieldExpression;
     }
     /** DEPRECATED!! Please use UserField(...).IsIn* methods instead. This interface will be removed in the next release */
@@ -260,7 +268,7 @@ module CamlBuilder {
         /** DEPRECATED. Please use UserField(...).IsInCurrentUserGroups() instead */
         CurrentUserGroups(): IExpression;
         /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
-        SPGroup(): IExpression;
+        SPGroup(groupId: number): IExpression;
         /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
         SPWeb: IMembershipSPWeb;
     }
@@ -275,26 +283,41 @@ module CamlBuilder {
     }
 
     export interface ILookupFieldExpression {
+        /** Specifies that lookup id value will be used. */
         Id(): INumberFieldExpression;
+        /** Specifies that lookup value will be used and this value is of type Text */
         ValueAsText(): ITextFieldExpression;
-        ValueAsCounter(): INumberFieldExpression;
+        /** Specifies that lookup value will be used and this value is of type Number */
         ValueAsNumber(): INumberFieldExpression;
+        /** Specifies that lookup value will be used and this value is of type Date */
         ValueAsDate(): IDateTimeFieldExpression;
+        /** Specifies that lookup value will be used and this value is of type DateTime */
         ValueAsDateTime(): IDateTimeFieldExpression;
+        /** Specifies that lookup value will be used and this value is of type Boolean */
         ValueAsBoolean(): IBooleanFieldExpression;
     }
     export interface ILookupMultiFieldExpression {
+        /** Checks whether the value of the field is equal to the specified value */
         EqualTo(value: string): IExpression;
+        /** Checks whether the value of the field is not equal to the specified value */
         NotEqualTo(value: string): IExpression;
+        /** Checks whether the values of the field includes the specified value */
         Includes(value): IExpression;
+        /** Checks whether the values of the field not includes the specified value */
         NotIncludes(value): IExpression;
     }
 
     export enum DateRangesOverlapType {
+        /** Returns events for today */
         Now,
+        /** Returns events for one day, specified by CalendarDate in QueryOptions */
         Day,
+        /** Returns events for one week, specified by CalendarDate in QueryOptions */
         Week,
+        /** Returns events for one month, specified by CalendarDate in QueryOptions.
+            Caution: usually also returns few days from previous and next months */
         Month,
+        /** Returns events for one year, specified by CalendarDate in QueryOptions */
         Year
     }
 
@@ -553,9 +576,6 @@ module CamlBuilder {
         ValueAsNumber(): INumberFieldExpression {
             return new FieldExpressionToken(this.builder, this.name, "Number");
         }
-        ValueAsCounter(): INumberFieldExpression {
-            return new FieldExpressionToken(this.builder, this.name, "Number");
-        }
         ValueAsDateTime(): IDateTimeFieldExpression {
             return new FieldExpressionToken(this.builder, this.name, "DateTime");
         }
@@ -579,8 +599,8 @@ module CamlBuilder {
                     return self.IsInCurrentUserGroups();
                 },
                 /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
-                SPGroup(): IExpression {
-                    return self.IsInSPGroup();
+                SPGroup(groupId: number): IExpression {
+                    return self.IsInSPGroup(groupId);
                 },
                 /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
                 SPWeb: {
@@ -622,9 +642,9 @@ module CamlBuilder {
             this.builder.WriteMembership(this.startIndex, "CurrentUserGroups");
             return new QueryToken(this.builder, this.startIndex);
         }
-        IsInSPGroup(): IExpression {
+        IsInSPGroup(groupId: number): IExpression {
             this.builder.WriteFieldRef(this.name);
-            this.builder.WriteMembership(this.startIndex, "SPGroup");
+            this.builder.WriteMembership(this.startIndex, "SPGroup", groupId);
             return new QueryToken(this.builder, this.startIndex);
         }
         IsInSPWebGroups(): IExpression {
@@ -712,11 +732,18 @@ module CamlBuilder {
             return new QueryToken(this.builder, this.startIndex);
         }
         NotIncludes(value): IExpression {
+            if (value instanceof Date)
+                value = value.toISOString();
             this.builder.WriteBinaryOperation(this.startIndex, "NotIncludes", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
         Includes(value): IExpression {
-            this.builder.WriteBinaryOperation(this.startIndex, "Includes", this.valueType, value);
+            if (value instanceof Date)
+                value = value.toISOString();
+
+            // Using Eq instead of Includes due to a notorious bug:
+            // if LookupMulti field points to DateTime target field, Includes causes exception
+            this.builder.WriteBinaryOperation(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
         Contains(value): IExpression {
@@ -820,8 +847,12 @@ module CamlBuilder {
             else
                 this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
         }
-        WriteMembership(startIndex: number, type) {
-            this.tree.splice(startIndex, 0, { Element: "Start", Name: "Membership", Attributes: [{ Name: "Type", Value: type }] });
+        WriteMembership(startIndex: number, type, groupId?: number) {
+            var attributes = [{ Name: "Type", Value: type }];
+            if (groupId) {
+                attributes.push({ Name: "ID", Value: groupId });
+            }
+            this.tree.splice(startIndex, 0, { Element: "Start", Name: "Membership", Attributes: attributes });
             this.WriteEnd();
         }
         WriteUnaryOperation(startIndex, operation) {
@@ -932,30 +963,57 @@ module CamlBuilder {
         }
     }
     export class CamlValues {
+        /** Dynamic value that represents Id of the current user */
         static UserID: string = "{UserID}";
+        /** Dynamic value that represents current date */
         static Today: string = "{Today}";
+        /** Dynamic value that represents current date with specified offset (may be negative) */
+        static TodayWithOffset(offsetDays: number): string {
+            return "{Today OffsetDays=\"" + offsetDays + "\"}";
+        }
         static Now: string = "{Now}";
+        /** Dynamic value that represents a property of the current list */
         static ListProperty = {
+            /** Date and time the list was created. */
             Created: "{ListProperty Name=\"Created\"}",
+            /** Server-relative URL of the default list view. */
             DefaultViewUrl: "{ListProperty Name=\"DefaultViewUrl\"}",
+            /** Description of the list. */
             Description: "{ListProperty Name=\"Description\"}",
+            /** Determines if RSS syndication is enabled for the list */
             EnableSyndication: "{ListProperty Name=\"EnableSyndication\"}",
+            /** Number of items in the list */
             ItemCount: "{ListProperty Name=\"ItemCount\"}",
+            /** Title linked to the list */
             LinkTitle: "{ListProperty Name=\"LinkTitle\"}",
+            /** For a document library that uses version control with major versions only, maximum number of major versions allowed for items. */
             MajorVersionLimit: "{ListProperty Name=\"MajorVersionLimit\"}",
+            /** For a document library that uses version control with both major and minor versions, maximum number of major versions allowed for items. */
             MajorWithMinorVersionsLimit: "{ListProperty Name=\"MajorWithMinorVersionsLimit\"}",
+            /** Site-relative URL for the list. */
             RelativeFolderPath: "{ListProperty Name=\"RelativeFolderPath\"}",
+            /** Title of the list. */
             Title: "{ListProperty Name=\"Title\"}",
+            /** View selector with links to views for the list. */
             ViewSelector: "{ListProperty Name=\"ViewSelector\"}"
         };
+        /** Dynamic value that represents a property of the current SPWeb */
         static ProjectProperty = {
+            /** Category of the current post item. */
             BlogCategoryTitle: "{ProjectProperty Name=\"BlogCategoryTitle\"}",
+            /** Title of the current post item. */
             BlogPostTitle: "{ProjectProperty Name=\"BlogPostTitle\"}",
+            /** Represents a description for the current website. */
             Description: "{ProjectProperty Name=\"Description\"}",
+            /** Represents a value that determines whether the recycle bin is enabled for the current website. */
             RecycleBinEnabled: "{ProjectProperty Name=\"RecycleBinEnabled\"}",
+            /** User name of the owner for the current site collection. */
             SiteOwnerName: "{ProjectProperty Name=\"SiteOwnerName\"}",
+            /** Full URL of the current site collection. */
             SiteUrl: "{ProjectProperty Name=\"SiteUrl\"}",
+            /** Title of the current Web site. */
             Title: "{ProjectProperty Name=\"Title\"}",
+            /** Full URL of the current Web site. */
             Url: "{ProjectProperty Name=\"Url\"}"
         }
     }

@@ -151,44 +151,35 @@ var Tests = (function (_super) {
     };
 
     Tests.prototype.TestDateRangesOverlap = function () {
-        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(CamlBuilder.DateRangesOverlapType.Year, new Date().toISOString())).OrderByDesc("Created").ToString();
+        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(CamlBuilder.DateRangesOverlapType.Year, new Date().toISOString())).ToString();
 
-        this.areIdentical(TestsHelper.XmlToJson('<View>\
-                <Query>\
-                    <Where>\
-                       <And>\
-                         <Geq>\
-                            <FieldRef Name="BroadcastExpires"/>\
-                            <Value IncludeTimeValue="False" Type="DateTime">\
-                            <Today/>\
-                            </Value>\
-                         </Geq>\
-                         <And>\
-                           <Or>\
-                             <Membership Type="CurrentUserGroups" >\
-                               <FieldRef Name="BroadcastTo"/>\
-                             </Membership>\
-                             <Eq>\
-                               <FieldRef Name="BroadcastTo" LookupId="True" />\
-                               <Value Type="Integer"><UserID /></Value>\
-                             </Eq>\
-                           </Or>\
-                            <DateRangesOverlap>\
-                             <FieldRef Name="EventDate"/>\
-                             <FieldRef Name="EndDate"/>\
-                             <FieldRef Name="RecurrenceID"/>\
-                             <Value Type="DateTime">\
-                               <Today />\
-                             </Value>\
-                           </DateRangesOverlap>\
-                        </And>\
-                      </And>\
-                   </Where>\
-                   <OrderBy>\
-                     <FieldRef Name="Created" Ascending="False" />\
-                   </OrderBy>\
-               </Query>\
-            </View>'), TestsHelper.XmlToJson(caml));
+        this.areIdentical(TestsHelper.XmlToJson('<And>\
+                <Geq>\
+                    <FieldRef Name="BroadcastExpires"/>\
+                    <Value IncludeTimeValue="False" Type="DateTime">\
+                        <Today/>\
+                    </Value>\
+                </Geq>\
+                <And>\
+                    <Or>\
+                        <Membership Type="CurrentUserGroups" >\
+                        <FieldRef Name="BroadcastTo"/>\
+                        </Membership>\
+                        <Eq>\
+                        <FieldRef Name="BroadcastTo" LookupId="True" />\
+                        <Value Type="Integer"><UserID /></Value>\
+                        </Eq>\
+                    </Or>\
+                    <DateRangesOverlap>\
+                        <FieldRef Name="EventDate"/>\
+                        <FieldRef Name="EndDate"/>\
+                        <FieldRef Name="RecurrenceID"/>\
+                        <Value Type="DateTime">\
+                        <Today />\
+                        </Value>\
+                    </DateRangesOverlap>\
+                </And>\
+            </And>'), TestsHelper.XmlToJson(caml));
     };
 
     Tests.prototype.TestJsDateFormat = function () {
