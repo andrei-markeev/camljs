@@ -312,9 +312,6 @@ var CamlBuilder;
         LookupFieldExpression.prototype.ValueAsNumber = function () {
             return new FieldExpressionToken(this.builder, this.name, "Number");
         };
-        LookupFieldExpression.prototype.ValueAsCounter = function () {
-            return new FieldExpressionToken(this.builder, this.name, "Number");
-        };
         LookupFieldExpression.prototype.ValueAsDateTime = function () {
             return new FieldExpressionToken(this.builder, this.name, "DateTime");
         };

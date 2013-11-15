@@ -103,6 +103,66 @@ class Tests extends tsUnit.TestClass {
 
     }
 
+    TestDynamicBracketExpressions() {
+        var categories = ["Platform Support", "Research and Strategy"];
+        var purposes = ["How To", "Support Information", "Application and User Lists"];
+
+        var categoriesExpressions = [];
+        for (var i = 0; i < categories.length; i++) {
+            categoriesExpressions.push(CamlBuilder.Expression().TextField("ContentCategory").EqualTo(categories[i]));
+        }
+        var purposesExpressions = [];
+        for (var i = 0; i < purposes.length; i++) {
+            purposesExpressions.push(CamlBuilder.Expression().TextField("ContentPurpose").EqualTo(purposes[i]));
+        }
+
+        var categoriesBuilder = CamlBuilder.Expression();
+        var purposesBuilder = CamlBuilder.Expression();
+
+        var caml = new CamlBuilder().Where()
+            .All(
+            categoriesBuilder.Any.apply(categoriesBuilder, categoriesExpressions),
+            purposesBuilder.Any.apply(purposesBuilder, purposesExpressions)
+            )
+            .ToString();
+
+        this.areIdentical(
+            TestsHelper.XmlToJson(
+                '<Where>\
+                    <And>\
+                        <Or>\
+                            <Eq>\
+                                <FieldRef Name="ContentCategory"/>\
+                                <Value Type="Text">Platform Support</Value>\
+                            </Eq>\
+                            <Eq>\
+                                <FieldRef Name="ContentCategory"/>\
+                                <Value Type="Text">Research and Strategy</Value>\
+                            </Eq>\
+                        </Or>\
+                        <Or>\
+                            <Eq>\
+                                <FieldRef Name="ContentPurpose"/>\
+                                <Value Type="Text">Application and User Lists</Value>\
+                            </Eq>\
+                            <Or>\
+                                <Eq>\
+                                    <FieldRef Name="ContentPurpose"/>\
+                                    <Value Type="Text">How To</Value>\
+                                </Eq>\
+                                <Eq>\
+                                    <FieldRef Name="ContentPurpose"/>\
+                                    <Value Type="Text">Support Information</Value>\
+                                </Eq>\
+                            </Or>\
+                        </Or>\
+                    </And>\
+                </Where>'),
+            TestsHelper.XmlToJson(caml)
+            );
+
+    }
+
     TestNestedBracketExpressions() {
 
         var caml = new CamlBuilder().Where()
@@ -233,7 +293,7 @@ class Tests extends tsUnit.TestClass {
                         <FieldRef Name="EndDate"/>\
                         <FieldRef Name="RecurrenceID"/>\
                         <Value Type="DateTime">\
-                        <Today />\
+                        <Year />\
                         </Value>\
                     </DateRangesOverlap>\
                 </And>\

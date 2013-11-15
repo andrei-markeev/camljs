@@ -86,6 +86,56 @@ var Tests = (function (_super) {
                 </OrderBy>'), TestsHelper.XmlToJson(caml));
     };
 
+    Tests.prototype.TestDynamicBracketExpressions = function () {
+        var categories = ["Platform Support", "Research and Strategy"];
+        var purposes = ["How To", "Support Information", "Application and User Lists"];
+
+        var categoriesExpressions = [];
+        for (var i = 0; i < categories.length; i++) {
+            categoriesExpressions.push(CamlBuilder.Expression().TextField("ContentCategory").EqualTo(categories[i]));
+        }
+        var purposesExpressions = [];
+        for (var i = 0; i < purposes.length; i++) {
+            purposesExpressions.push(CamlBuilder.Expression().TextField("ContentPurpose").EqualTo(purposes[i]));
+        }
+
+        var categoriesBuilder = CamlBuilder.Expression();
+        var purposesBuilder = CamlBuilder.Expression();
+
+        var caml = new CamlBuilder().Where().All(categoriesBuilder.Any.apply(categoriesBuilder, categoriesExpressions), purposesBuilder.Any.apply(purposesBuilder, purposesExpressions)).ToString();
+
+        this.areIdentical(TestsHelper.XmlToJson('<Where>\
+                    <And>\
+                        <Or Group="true">\
+                            <Eq>\
+                                <FieldRef Name="ContentCategory"/>\
+                                <Value Type="Text">Platform Support</Value>\
+                            </Eq>\
+                            <Eq>\
+                                <FieldRef Name="ContentCategory"/>\
+                                <Value Type="Text">Research and Strategy</Value>\
+                            </Eq>\
+                        </Or>\
+                        <Or Group="true">\
+                            <Or>\
+                                <Eq>\
+                                    <FieldRef Name="ContentPurpose"/>\
+                                    <Value Type="Text">How To</Value>\
+                                </Eq>\
+                                <Eq>\
+                                    <FieldRef Name="ContentPurpose"/>\
+                                    <Value Type="Text">Support Information</Value>\
+                                </Eq>\
+                            </Or>\
+                            <Eq>\
+                                <FieldRef Name="ContentPurpose"/>\
+                                <Value Type="Text">Application and User Lists</Value>\
+                            </Eq>\
+                        </Or>\
+                    </And>\
+                </Where>'), TestsHelper.XmlToJson(caml));
+    };
+
     Tests.prototype.TestNestedBracketExpressions = function () {
         var caml = new CamlBuilder().Where().All(CamlBuilder.Expression().All(CamlBuilder.Expression().BooleanField("Enabled").IsTrue(), CamlBuilder.Expression().UserMultiField("TargetAudience").EqualTo("55").Or().UserMultiField("TargetAudience").EqualTo("66")), CamlBuilder.Expression().Any(CamlBuilder.Expression().TextField("NotificationScope").EqualTo("77"), CamlBuilder.Expression().TextField("NotificationScope").EqualTo("88").And().TextField("ScopeWebRelativeUrl").EqualTo("99"))).ToString();
 
@@ -175,7 +225,7 @@ var Tests = (function (_super) {
                         <FieldRef Name="EndDate"/>\
                         <FieldRef Name="RecurrenceID"/>\
                         <Value Type="DateTime">\
-                        <Today />\
+                        <Year />\
                         </Value>\
                     </DateRangesOverlap>\
                 </And>\
