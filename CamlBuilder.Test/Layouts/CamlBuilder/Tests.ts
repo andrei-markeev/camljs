@@ -105,7 +105,7 @@ class Tests extends tsUnit.TestClass {
 
     TestDynamicBracketExpressions() {
         var categories = ["Platform Support", "Research and Strategy"];
-        var purposes = ["How To", "Support Information", "Application and User Lists"];
+        var purposes = ["Application and User Lists", "How To", "Support Information"];
 
         var categoriesExpressions = [];
         for (var i = 0; i < categories.length; i++) {
@@ -116,13 +116,10 @@ class Tests extends tsUnit.TestClass {
             purposesExpressions.push(CamlBuilder.Expression().TextField("ContentPurpose").EqualTo(purposes[i]));
         }
 
-        var categoriesBuilder = CamlBuilder.Expression();
-        var purposesBuilder = CamlBuilder.Expression();
-
         var caml = new CamlBuilder().Where()
             .All(
-            categoriesBuilder.Any.apply(categoriesBuilder, categoriesExpressions),
-            purposesBuilder.Any.apply(purposesBuilder, purposesExpressions)
+                CamlBuilder.Expression().Any(categoriesExpressions),
+                CamlBuilder.Expression().Any(purposesExpressions)
             )
             .ToString();
 

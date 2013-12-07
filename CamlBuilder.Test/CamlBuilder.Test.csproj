@@ -78,21 +78,23 @@
     <Folder Include="Features\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Layouts\CamlBuilder\CamlBuilder.js">
+      <DependentUpon>CamlBuilder.ts</DependentUpon>
+    </Content>
     <Content Include="Layouts\CamlBuilder\jsdiff.js" />
     <Content Include="Layouts\CamlBuilder\Tests.js">
       <DependentUpon>Tests.ts</DependentUpon>
     </Content>
+    <TypeScriptCompile Include="Layouts\CamlBuilder\Tests.ts" />
     <Content Include="Layouts\CamlBuilder\tsUnit.js" />
     <Content Include="Layouts\CamlBuilder\tsUnit.ts" />
-    <TypeScriptCompile Include="Layouts\CamlBuilder\Tests.ts" />
-    <TypeScriptCompile Include="Layouts\CamlBuilder\CamlBuilder.ts" />
-    <Content Include="Layouts\CamlBuilder\CamlBuilder.js">
-      <DependentUpon>CamlBuilder.ts</DependentUpon>
-    </Content>
     <Content Include="Layouts\CamlBuilder\CamlBuilderOld.js" />
     <Content Include="Layouts\CamlBuilder\Test.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="Layouts\CamlBuilder\CamlBuilder.ts" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

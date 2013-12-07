@@ -5,12 +5,12 @@ var CamlBuilder = (function () {
         return CamlBuilder.Internal.createWhere();
     };
 
-    CamlBuilder.Expression = /** Use for:
+    /** Use for:
     1. SPServices CAMLQuery attribute
     2. Creating partial expressions
     3. In conjunction with Any & All clauses
     */
-    function () {
+    CamlBuilder.Expression = function () {
         return CamlBuilder.Internal.createExpression();
     };
     return CamlBuilder;
@@ -18,6 +18,10 @@ var CamlBuilder = (function () {
 
 var CamlBuilder;
 (function (CamlBuilder) {
+    
+
+    
+
     (function (DateRangesOverlapType) {
         /** Returns events for today */
         DateRangesOverlapType[DateRangesOverlapType["Now"] = 0] = "Now";
@@ -224,19 +228,19 @@ var CamlBuilder;
 
             var value;
             switch (overlapType) {
-                case DateRangesOverlapType.Now:
+                case 0 /* Now */:
                     value = CamlValues.Now;
                     break;
-                case DateRangesOverlapType.Day:
+                case 1 /* Day */:
                     value = CamlValues.Today;
                     break;
-                case DateRangesOverlapType.Week:
+                case 2 /* Week */:
                     value = "{Week}";
                     break;
-                case DateRangesOverlapType.Month:
+                case 3 /* Month */:
                     value = "{Month}";
                     break;
-                case DateRangesOverlapType.Year:
+                case 4 /* Year */:
                     value = "{Year}";
                     break;
             }
@@ -255,6 +259,9 @@ var CamlBuilder;
                 conditions[_i] = arguments[_i + 0];
             }
             var pos = this.builder.tree.length;
+
+            if (conditions.length == 1 && conditions[0] instanceof Array)
+                conditions = conditions[0];
 
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++) {
@@ -277,6 +284,9 @@ var CamlBuilder;
                 conditions[_i] = arguments[_i + 0];
             }
             var pos = this.builder.tree.length;
+
+            if (conditions.length == 1 && conditions[0] instanceof Array)
+                conditions = conditions[0];
 
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++) {
@@ -331,20 +341,25 @@ var CamlBuilder;
             this.name = name;
             this.startIndex = builder.tree.length;
             this.Membership = {
+                /** DEPRECATED. Please use UserField(...).IsInCurrentUserGroups() instead */
                 CurrentUserGroups: function () {
                     return self.IsInCurrentUserGroups();
                 },
+                /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
                 SPGroup: function (groupId) {
                     return self.IsInSPGroup(groupId);
                 },
                 /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
                 SPWeb: {
+                    /** DEPRECATED. Please use UserField(...).IsInSPWebAllUsers() instead */
                     AllUsers: function () {
                         return self.IsInSPWebAllUsers();
                     },
+                    /** DEPRECATED. Please use UserField(...).IsInSPWebUsers() instead */
                     Users: function () {
                         return self.IsInSPWebUsers();
                     },
+                    /** DEPRECATED. Please use UserField(...).IsInSPWebGroups() instead */
                     Groups: function () {
                         return self.IsInSPWebGroups();
                     }
@@ -547,7 +562,7 @@ var CamlBuilder;
         Builder.prototype.WriteEnd = function (count) {
             if (count > 0)
                 this.tree.push({ Element: "End", Count: count });
-else
+            else
                 this.tree.push({ Element: "End" });
         };
         Builder.prototype.WriteFieldRef = function (fieldInternalName, options) {
@@ -560,7 +575,7 @@ else
         Builder.prototype.WriteValueElement = function (valueType, value) {
             if (valueType == "Date")
                 this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value, IncludeTimeValue: false });
-else
+            else
                 this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
         };
         Builder.prototype.WriteMembership = function (startIndex, type, groupId) {
@@ -585,14 +600,14 @@ else
                 var tagsToClose = this.unclosedTags;
                 if (this.tree[0].Name == "Query")
                     tagsToClose--;
-else if (this.tree[0].Name == "View")
+                else if (this.tree[0].Name == "View")
                     tagsToClose -= 2;
                 this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
             }
             if (collapse)
                 this.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE" }] });
-else
+            else
                 this.tree.push({ Element: "Start", Name: "GroupBy" });
             this.tree.push({ Element: "FieldRef", Name: groupFieldName });
             this.WriteEnd();
@@ -602,7 +617,7 @@ else
                 var tagsToClose = this.unclosedTags;
                 if (this.tree[0].Name == "Query")
                     tagsToClose--;
-else if (this.tree[0].Name == "View")
+                else if (this.tree[0].Name == "View")
                     tagsToClose -= 2;
                 this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
@@ -615,7 +630,7 @@ else if (this.tree[0].Name == "View")
                 attributes.push({ Name: "UseIndexForOrderBy", Value: "TRUE" });
             if (attributes.length > 0)
                 this.tree.push({ Element: "Start", Name: "OrderBy", Attributes: attributes });
-else
+            else
                 this.tree.push({ Element: "Start", Name: "OrderBy" });
             this.unclosedTags++;
         };
@@ -646,7 +661,7 @@ else
                     var value = this.tree[i].Value.toString();
                     if (value.slice(0, 1) == "{" && value.slice(-1) == "}")
                         writer.writeRaw("<" + value.slice(1, value.length - 1) + " />");
-else
+                    else
                         writer.writeString(value);
 
                     writer.writeEndElement();
@@ -677,8 +692,8 @@ else
     var CamlValues = (function () {
         function CamlValues() {
         }
-        CamlValues.TodayWithOffset = /** Dynamic value that represents current date with specified offset (may be negative) */
-        function (offsetDays) {
+        /** Dynamic value that represents current date with specified offset (may be negative) */
+        CamlValues.TodayWithOffset = function (offsetDays) {
             return "{Today OffsetDays=\"" + offsetDays + "\"}";
         };
         CamlValues.UserID = "{UserID}";

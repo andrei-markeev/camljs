@@ -107,6 +107,10 @@ module CamlBuilder {
         All(...conditions: IExpression[]): IExpression;
         /** Adds Or clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
         Any(...conditions: IExpression[]): IExpression;
+        /** Adds And clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
+        All(conditions: IExpression[]): IExpression;
+        /** Adds Or clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
+        Any(conditions: IExpression[]): IExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Text */
         TextField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
@@ -518,8 +522,11 @@ module CamlBuilder {
             return new QueryToken(this.builder, pos);
         }
         /** Adds And clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
-        All(...conditions: IExpression[]): IExpression {
+        All(...conditions: any[]): IExpression {
             var pos = this.builder.tree.length;
+
+            if (conditions.length == 1 && conditions[0] instanceof Array)
+                conditions = conditions[0];
 
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++)
@@ -536,8 +543,11 @@ module CamlBuilder {
             return new QueryToken(this.builder, pos);
         }
         /** Adds Or clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
-        Any(...conditions: IExpression[]): IExpression {
+        Any(...conditions: any[]): IExpression {
             var pos = this.builder.tree.length;
+
+            if (conditions.length == 1 && conditions[0] instanceof Array)
+                conditions = conditions[0];
 
             conditions.reverse();
             for (var i = 0; i < conditions.length; i++)
@@ -595,25 +605,25 @@ module CamlBuilder {
             this.startIndex = builder.tree.length;
             this.Membership = {
                 /** DEPRECATED. Please use UserField(...).IsInCurrentUserGroups() instead */
-                CurrentUserGroups(): IExpression {
+                CurrentUserGroups: (): IExpression => {
                     return self.IsInCurrentUserGroups();
                 },
                 /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
-                SPGroup(groupId: number): IExpression {
+                SPGroup: (groupId: number): IExpression => {
                     return self.IsInSPGroup(groupId);
                 },
                 /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
                 SPWeb: {
                     /** DEPRECATED. Please use UserField(...).IsInSPWebAllUsers() instead */
-                    AllUsers(): IExpression {
+                    AllUsers: (): IExpression => {
                         return self.IsInSPWebAllUsers();
                     },
                     /** DEPRECATED. Please use UserField(...).IsInSPWebUsers() instead */
-                    Users(): IExpression {
+                    Users: (): IExpression => {
                         return self.IsInSPWebUsers();
                     },
                     /** DEPRECATED. Please use UserField(...).IsInSPWebGroups() instead */
-                    Groups(): IExpression {
+                    Groups: (): IExpression => {
                         return self.IsInSPWebGroups();
                     }
                 }
@@ -1018,4 +1028,3 @@ module CamlBuilder {
         }
     }
 }
-

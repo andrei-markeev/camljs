@@ -1,11 +1,11 @@
+﻿/// <reference path="CamlBuilder.ts" />
+/// <reference path="tsUnit.ts" />
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-/// <reference path="CamlBuilder.ts" />
-/// <reference path="tsUnit.ts" />
 var CUI;
 var ExecuteOrDelayUntilScriptLoaded;
 
@@ -30,7 +30,7 @@ var TestsHelper = (function () {
                 for (i; i < children.length; i++) {
                     if (children[i].nodeName == '#text')
                         o.push(children[i].nodeValue);
-else {
+                    else {
                         var ch = {};
                         ch[children[i].nodeName] = elementToObject(children[i]);
                         o.push(ch);
@@ -88,7 +88,7 @@ var Tests = (function (_super) {
 
     Tests.prototype.TestDynamicBracketExpressions = function () {
         var categories = ["Platform Support", "Research and Strategy"];
-        var purposes = ["How To", "Support Information", "Application and User Lists"];
+        var purposes = ["Application and User Lists", "How To", "Support Information"];
 
         var categoriesExpressions = [];
         for (var i = 0; i < categories.length; i++) {
@@ -99,14 +99,11 @@ var Tests = (function (_super) {
             purposesExpressions.push(CamlBuilder.Expression().TextField("ContentPurpose").EqualTo(purposes[i]));
         }
 
-        var categoriesBuilder = CamlBuilder.Expression();
-        var purposesBuilder = CamlBuilder.Expression();
-
-        var caml = new CamlBuilder().Where().All(categoriesBuilder.Any.apply(categoriesBuilder, categoriesExpressions), purposesBuilder.Any.apply(purposesBuilder, purposesExpressions)).ToString();
+        var caml = new CamlBuilder().Where().All(CamlBuilder.Expression().Any(categoriesExpressions), CamlBuilder.Expression().Any(purposesExpressions)).ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<Where>\
                     <And>\
-                        <Or Group="true">\
+                        <Or>\
                             <Eq>\
                                 <FieldRef Name="ContentCategory"/>\
                                 <Value Type="Text">Platform Support</Value>\
@@ -116,7 +113,11 @@ var Tests = (function (_super) {
                                 <Value Type="Text">Research and Strategy</Value>\
                             </Eq>\
                         </Or>\
-                        <Or Group="true">\
+                        <Or>\
+                            <Eq>\
+                                <FieldRef Name="ContentPurpose"/>\
+                                <Value Type="Text">Application and User Lists</Value>\
+                            </Eq>\
                             <Or>\
                                 <Eq>\
                                     <FieldRef Name="ContentPurpose"/>\
@@ -127,10 +128,6 @@ var Tests = (function (_super) {
                                     <Value Type="Text">Support Information</Value>\
                                 </Eq>\
                             </Or>\
-                            <Eq>\
-                                <FieldRef Name="ContentPurpose"/>\
-                                <Value Type="Text">Application and User Lists</Value>\
-                            </Eq>\
                         </Or>\
                     </And>\
                 </Where>'), TestsHelper.XmlToJson(caml));
@@ -201,7 +198,7 @@ var Tests = (function (_super) {
     };
 
     Tests.prototype.TestDateRangesOverlap = function () {
-        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(CamlBuilder.DateRangesOverlapType.Year, new Date().toISOString())).ToString();
+        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(4 /* Year */, new Date().toISOString())).ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<And>\
                 <Geq>\
