@@ -1,4 +1,4 @@
-module tsUnit {
+﻿module tsUnit {
     export interface ITestClass {
 
     }
@@ -113,12 +113,9 @@ module tsUnit {
 
         areIdentical(a: any, b: any): void {
             if (a !== b) {
-                if (typeof a == "string" && typeof b == "string" && window["jsDiff"] != null)
-                    throw window["jsDiff"].diffString(a, b);
-                else
-                    throw 'areIdentical failed when passed ' +
-                        '{' + (typeof a) + '} "' + a + '" and ' +
-                        '{' + (typeof b) + '} "' + b + '"';
+                throw 'areIdentical failed when passed ' +
+                    '{' + (typeof a) + '} "' + a + '" and ' +
+                    '{' + (typeof b) + '} "' + b + '"';
             }
         }
 

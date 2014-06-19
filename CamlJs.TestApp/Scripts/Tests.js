@@ -1,4 +1,4 @@
-﻿/// <reference path="CamlBuilder.ts" />
+/// <reference path="typings/camljs/camljs.d.ts" />
 /// <reference path="tsUnit.ts" />
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -7,6 +7,7 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 var CUI;
+var _spBodyOnLoadFunctions;
 var ExecuteOrDelayUntilScriptLoaded;
 
 var TestsHelper = (function () {
@@ -198,7 +199,7 @@ var Tests = (function (_super) {
     };
 
     Tests.prototype.TestDateRangesOverlap = function () {
-        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(4 /* Year */, new Date().toISOString())).ToString();
+        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(CamlBuilder.DateRangesOverlapType.Year, new Date().toISOString())).ToString();
 
         this.areIdentical(TestsHelper.XmlToJson('<And>\
                 <Geq>\
@@ -242,9 +243,11 @@ var Tests = (function (_super) {
     return Tests;
 })(tsUnit.TestClass);
 
-ExecuteOrDelayUntilScriptLoaded(function () {
-    var test = new tsUnit.Test();
-    test.addTestClass(new Tests());
-    test.showResults(document.getElementById('caml'), test.run());
-}, 'sp.runtime.js');
+_spBodyOnLoadFunctions.push(function () {
+    ExecuteOrDelayUntilScriptLoaded(function () {
+        var test = new tsUnit.Test();
+        test.addTestClass(new Tests());
+        test.showResults(document.getElementById('caml'), test.run());
+    }, 'sp.runtime.js');
+});
 //# sourceMappingURL=Tests.js.map

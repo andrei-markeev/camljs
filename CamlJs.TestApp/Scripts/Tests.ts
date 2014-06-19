@@ -1,7 +1,8 @@
-/// <reference path="CamlBuilder.ts" />
+/// <reference path="typings/camljs/camljs.d.ts" />
 /// <reference path="tsUnit.ts" />
 
 var CUI: any;
+var _spBodyOnLoadFunctions: any;
 var ExecuteOrDelayUntilScriptLoaded: any;
 
 class TestsHelper {
@@ -316,10 +317,14 @@ class Tests extends tsUnit.TestClass {
 }
 
 
-ExecuteOrDelayUntilScriptLoaded(() => {
+_spBodyOnLoadFunctions.push(() => {
 
-    var test = new tsUnit.Test();
-    test.addTestClass(new Tests());
-    test.showResults(document.getElementById('caml'), test.run());
+    ExecuteOrDelayUntilScriptLoaded(() => {
 
-}, 'sp.runtime.js');
+        var test = new tsUnit.Test();
+        test.addTestClass(new Tests());
+        test.showResults(document.getElementById('caml'), test.run());
+
+    }, 'sp.runtime.js');
+
+});

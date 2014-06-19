@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ProjectItem Type="Microsoft.VisualStudio.SharePoint.Module" DefaultFile="Elements.xml" SupportedTrustLevels="All" SupportedDeploymentScopes="Web, Site" xmlns="http://schemas.microsoft.com/VisualStudio/2010/SharePointTools/SharePointProjectItemModel">
+  <Files>
+    <ProjectItemFile Source="Elements.xml" Target="Scripts\" Type="ElementManifest" />
+    <ProjectItemFile Source="jsdiff.js" Target="Scripts\" Type="ElementFile" />
+    <ProjectItemFile Source="Tests.js" Target="Scripts\" Type="ElementFile" />
+    <ProjectItemFile Source="tsUnit.ts" Target="Scripts\" Type="ElementFile" />
+    <ProjectItemFile Source="tsUnit.js" Target="Scripts\" Type="ElementFile" />
+    <ProjectItemFile Source="camljs.js" Target="Scripts\" Type="ElementFile" />
+    <ProjectItemFile Source="typings\camljs\camljs.d.ts" Target="Scripts\typings\camljs\" Type="ElementFile" />
+  </Files>
+</ProjectItem>
