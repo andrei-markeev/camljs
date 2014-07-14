@@ -1,0 +1,7 @@
+bin
+obj
+pkg
+pkgobj
+*.user
+*.suo
+*.js.map

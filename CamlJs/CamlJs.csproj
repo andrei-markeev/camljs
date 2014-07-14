@@ -58,5 +58,12 @@
   <ItemGroup>
     <TypeScriptCompile Include="camljs.ts" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="sp2007orStandalone\index.html" />
+    <Content Include="sp2007orStandalone\jsdiff.js" />
+    <Content Include="camljs.spdeps.js" />
+    <Content Include="sp2007orStandalone\Tests.js" />
+    <Content Include="sp2007orStandalone\tsUnit.js" />
+  </ItemGroup>
   <Import Project="$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets')" />
 </Project>
