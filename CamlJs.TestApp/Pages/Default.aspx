@@ -17,6 +17,19 @@
 	<script type="text/javascript" src="../Scripts/tsUnit.js"></script>
 	<script type="text/javascript" src="../Scripts/jsdiff.js"></script>
 	<script type="text/javascript" src="../Scripts/Tests.js"></script>
+    <script type="text/javascript">
+        _spBodyOnLoadFunctions.push(function() {
+
+            ExecuteOrDelayUntilScriptLoaded(function () {
+
+                var test = new tsUnit.Test();
+                test.addTestClass(new Tests());
+                test.showResults(document.getElementById('caml'), test.run());
+
+            }, 'sp.runtime.js');
+
+        });
+    </script>
 </asp:Content>
 
 <%-- The markup in the following Content element will be placed in the TitleArea of the page --%>

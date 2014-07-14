@@ -2,8 +2,6 @@
 /// <reference path="tsUnit.ts" />
 
 var CUI: any;
-var _spBodyOnLoadFunctions: any;
-var ExecuteOrDelayUntilScriptLoaded: any;
 
 class TestsHelper {
     static XmlToJson(xml: string): string {
@@ -315,16 +313,3 @@ class Tests extends tsUnit.TestClass {
     }
 
 }
-
-
-_spBodyOnLoadFunctions.push(() => {
-
-    ExecuteOrDelayUntilScriptLoaded(() => {
-
-        var test = new tsUnit.Test();
-        test.addTestClass(new Tests());
-        test.showResults(document.getElementById('caml'), test.run());
-
-    }, 'sp.runtime.js');
-
-});

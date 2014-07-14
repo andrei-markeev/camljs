@@ -1,11 +1,20 @@
 <html>
 <body>
+
     <script type="text/javascript" src="../camljs.spdeps.js"></script>
     <script type="text/javascript" src="../camljs.js"></script>
     <script type="text/javascript" src="tsUnit.js"></script>
     <script type="text/javascript" src="jsdiff.js"></script>
+    <script type="text/javascript" src="Tests.spdeps.js"></script>
+    <script type="text/javascript" src="Tests.js"></script>
+
     <div id="caml"></div>
 
-    <script type="text/javascript" src="Tests.js"></script>
+    <script type="text/javascript">
+        var test = new tsUnit.Test();
+        test.addTestClass(new Tests());
+        test.showResults(document.getElementById('caml'), test.run());
+    </script>
+
 </body>
 </html>

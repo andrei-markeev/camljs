@@ -7,8 +7,6 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 var CUI;
-var _spBodyOnLoadFunctions;
-var ExecuteOrDelayUntilScriptLoaded;
 
 var TestsHelper = (function () {
     function TestsHelper() {
@@ -242,12 +240,4 @@ var Tests = (function (_super) {
     };
     return Tests;
 })(tsUnit.TestClass);
-
-_spBodyOnLoadFunctions.push(function () {
-    ExecuteOrDelayUntilScriptLoaded(function () {
-        var test = new tsUnit.Test();
-        test.addTestClass(new Tests());
-        test.showResults(document.getElementById('caml'), test.run());
-    }, 'sp.runtime.js');
-});
 //# sourceMappingURL=Tests.js.map

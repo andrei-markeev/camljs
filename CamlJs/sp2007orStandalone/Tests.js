@@ -13,56 +13,6 @@ var ExecuteOrDelayUntilScriptLoaded;
 var TestsHelper = (function () {
     function TestsHelper() {
     }
-    function createXMLDocFromString(xml, newObj) {
-        function GetActiveXObject(progIDs) {
-            for (var i = 0; i < progIDs.length; i++) {
-                try {
-                    var xmlDoc = new ActiveXObject(progIDs[i]);
-                    return xmlDoc;
-                }
-                catch (ex) {
-
-                }
-            }
-            return null;
-        }
-
-        if (window.ActiveXObject) {
-            var msxmlDomDoc = newObj ? null : window.g_cuiXMLDOMDocument;
-            if (!msxmlDomDoc) {
-                try {
-                    msxmlDomDoc = GetActiveXObject(['Msxml2.DOMDocument.6.0', 'Msxml2.DOMDocument']);
-                    if (!newObj)
-                        g_cuiXMLDOMDocument = msxmlDomDoc;
-                }
-                catch (e) {
-
-                }
-            }
-            if (msxmlDomDoc != null)
-                msxmlDomDoc.loadXML(xml);
-            return msxmlDomDoc;
-        }
-        else if (DOMParser) {
-            var domParser = newObj ? null : g_cuiXMLParser;
-            if (!domParser) {
-                domParser = new DOMParser();
-                if (!newObj)
-                    g_cuiXMLParser = domParser;
-            }
-            return domParser.parseFromString(xml, "text/xml");
-        }
-        else if (window.XMLHttpRequest) {
-
-            var request = new XMLHttpRequest();
-
-            request.open("GET", "data:text/xml;charset=utf-8," + xml, false);
-            request.send(null);
-            return request.responseXML();
-        }
-
-        return null;
-    }
     TestsHelper.XmlToJson = function (xml) {
         function elementToObject(element) {
             var o = [];
@@ -91,7 +41,7 @@ var TestsHelper = (function () {
             return o;
         }
 
-        var domElement = createXMLDocFromString('<root>' + xml + '</root>');
+        var domElement = CUI.NativeUtility.createXMLDocFromString('<root>' + xml + '</root>');
         var obj = elementToObject(domElement);
         return JSON.stringify(obj[0].root, undefined, 2);
     };
@@ -292,7 +242,3 @@ var Tests = (function (_super) {
     };
     return Tests;
 })(tsUnit.TestClass);
-
-var test = new tsUnit.Test();
-test.addTestClass(new Tests());
-test.showResults(document.getElementById('caml'), test.run());
