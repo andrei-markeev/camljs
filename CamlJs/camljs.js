@@ -1,8 +1,17 @@
+/// <reference path="Scripts/typings/sharepoint/sharepoint.d.ts" />
 var CamlBuilder = (function () {
     function CamlBuilder() {
     }
+    /** Generate CAML Query, starting from <Where> tag */
     CamlBuilder.prototype.Where = function () {
         return CamlBuilder.Internal.createWhere();
+    };
+
+    /** Generate <View> tag for SP.CamlQuery
+    @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
+    Specifying view fields is a good practice, as it decreases traffic between server and client. */
+    CamlBuilder.prototype.View = function (viewFields) {
+        return CamlBuilder.Internal.createView(viewFields);
     };
 
     /** Use for:
@@ -18,6 +27,18 @@ var CamlBuilder = (function () {
 
 var CamlBuilder;
 (function (CamlBuilder) {
+    (function (ViewScope) {
+        /**  */
+        ViewScope[ViewScope["Recursive"] = 0] = "Recursive";
+
+        /**  */
+        ViewScope[ViewScope["RecursiveAll"] = 1] = "RecursiveAll";
+
+        /**  */
+        ViewScope[ViewScope["FilesOnly"] = 2] = "FilesOnly";
+    })(CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
+    var ViewScope = CamlBuilder.ViewScope;
+
     
 
     
@@ -44,8 +65,8 @@ var CamlBuilder;
     var Internal = (function () {
         function Internal() {
         }
-        Internal.createView = function () {
-            return new QueryInternal().View();
+        Internal.createView = function (viewFields) {
+            return new ViewInternal().View(viewFields);
         };
         Internal.createWhere = function () {
             return new QueryInternal().Where();
@@ -57,25 +78,61 @@ var CamlBuilder;
     })();
     CamlBuilder.Internal = Internal;
 
-    /** Represents SharePoint CAML Query element */
-    var QueryInternal = (function () {
-        function QueryInternal() {
+    var ViewInternal = (function () {
+        function ViewInternal() {
             this.builder = new Builder();
         }
         /** Adds View element. */
-        QueryInternal.prototype.View = function () {
+        ViewInternal.prototype.View = function (viewFields) {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
+            this.joinsManager = new JoinsManager(this.builder, this);
             return this;
+        };
+        ViewInternal.prototype.RowLimit = function (limit, paged) {
+            this.builder.WriteRowLimit(paged || false, limit);
+            return this;
+        };
+        ViewInternal.prototype.Scope = function (scope) {
+            this.builder.SetAttributeToLastElement("View", "Scope", scope.toString());
+            return this;
+        };
+        ViewInternal.prototype.InnerJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        };
+        ViewInternal.prototype.LeftJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        };
+
+        /** Select projected field for using in the main Query body
+        @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        ViewInternal.prototype.Select = function (remoteFieldInternalName, remoteFieldAlias) {
+            return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
+        };
+        ViewInternal.prototype.ToString = function () {
+            this.joinsManager.Finalize();
+            return this.builder.Finalize();
+        };
+        ViewInternal.prototype.ToCamlQuery = function () {
+            this.joinsManager.Finalize();
+            return this.builder.FinalizeToSPQuery();
         };
 
         /** Adds Query clause to the View XML. */
-        QueryInternal.prototype.Query = function () {
+        ViewInternal.prototype.Query = function () {
+            this.joinsManager.Finalize();
             this.builder.WriteStart("Query");
             this.builder.unclosedTags++;
-            return this;
+            return new QueryInternal();
         };
+        return ViewInternal;
+    })();
 
+    /** Represents SharePoint CAML Query element */
+    var QueryInternal = (function () {
+        function QueryInternal(builder) {
+            this.builder = builder || new Builder();
+        }
         /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
         QueryInternal.prototype.Where = function () {
             this.builder.WriteStart("Where");
@@ -83,6 +140,69 @@ var CamlBuilder;
             return new FieldExpression(this.builder);
         };
         return QueryInternal;
+    })();
+    var JoinsManager = (function () {
+        function JoinsManager(builder, viewInternal) {
+            this.projectedFields = [];
+            this.joins = [];
+            this.originalView = viewInternal;
+            this.builder = builder;
+        }
+        JoinsManager.prototype.Finalize = function () {
+            this.builder.WriteStart("Joins");
+            for (var i = 0; i < this.joins.length; i++) {
+                var join = this.joins[i];
+                this.builder.WriteStart("Join", [
+                    { Name: "Type", Value: join.JoinType },
+                    { Name: "Alias", Value: join.Alias }
+                ]);
+                this.builder.WriteStart("Eq");
+                this.builder.WriteFieldRef(join.RefFieldName, { RefType: "Id" });
+                this.builder.WriteFieldRef("ID", { List: join.Alias });
+                this.builder.WriteEnd();
+                this.builder.WriteEnd();
+            }
+            this.builder.WriteEnd();
+            this.builder.WriteStart("ProjectedFields");
+            for (var i = 0; i < this.projectedFields.length; i++) {
+                var projField = this.projectedFields[i];
+                this.builder.WriteStart("Field", [
+                    { Name: "ShowField", Value: projField.FieldName },
+                    { Name: "Name", Value: projField.Alias },
+                    { Name: "List", Value: projField.JoinAlias }
+                ]);
+                this.builder.WriteEnd();
+            }
+            this.builder.WriteEnd();
+        };
+
+        JoinsManager.prototype.Join = function (lookupFieldInternalName, alias, joinType) {
+            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType });
+            return new Join(this.builder, this);
+        };
+        JoinsManager.prototype.ProjectedField = function (remoteFieldInternalName, remoteFieldAlias) {
+            this.projectedFields.push({ FieldName: remoteFieldInternalName, Alias: remoteFieldAlias, JoinAlias: this.joins[this.joins.length - 1].Alias });
+            return this.originalView;
+        };
+        return JoinsManager;
+    })();
+    var Join = (function () {
+        function Join(builder, joinsManager) {
+            this.builder = builder;
+            this.joinsManager = joinsManager;
+        }
+        /** Select projected field for using in the main Query body
+        @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        Join.prototype.Select = function (remoteFieldInternalName, remoteFieldAlias) {
+            return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
+        };
+        Join.prototype.InnerJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        };
+        Join.prototype.LeftJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        };
+        return Join;
     })();
     var QueryToken = (function () {
         function QueryToken(builder, startIndex) {
@@ -136,6 +256,12 @@ var CamlBuilder;
         */
         QueryToken.prototype.ToString = function () {
             return this.builder.Finalize();
+        };
+
+        /** Returns SP.CamlQuery object that represents the constructed query
+        */
+        QueryToken.prototype.ToCamlQuery = function () {
+            return this.builder.FinalizeToSPQuery();
         };
         return QueryToken;
     })();
@@ -528,6 +654,10 @@ var CamlBuilder;
         GroupedQuery.prototype.ToString = function () {
             return this.builder.Finalize();
         };
+
+        GroupedQuery.prototype.ToCamlQuery = function () {
+            return this.builder.FinalizeToSPQuery();
+        };
         return GroupedQuery;
     })();
 
@@ -548,6 +678,10 @@ var CamlBuilder;
         SortedQuery.prototype.ToString = function () {
             return this.builder.Finalize();
         };
+
+        SortedQuery.prototype.ToCamlQuery = function () {
+            return this.builder.FinalizeToSPQuery();
+        };
         return SortedQuery;
     })();
 
@@ -556,8 +690,31 @@ var CamlBuilder;
             this.tree = new Array();
             this.unclosedTags = 0;
         }
-        Builder.prototype.WriteStart = function (tagName) {
-            this.tree.push({ Element: "Start", Name: tagName });
+        Builder.prototype.SetAttributeToLastElement = function (tagName, attributeName, attributeValue) {
+            for (var i = this.tree.length - 1; i >= 0; i--) {
+                if (this.tree[i].Element == "View") {
+                    this.tree[i].Attributes = this.tree[i].Attributes || [];
+                    this.tree[i].Attributes.push({ Name: attributeName, Value: attributeValue });
+                    return;
+                }
+            }
+            console.log("CamlJs ERROR: can't find element '" + tagName + "' in the tree while setting attribute " + attributeName + " to '" + attributeValue + "'!");
+        };
+        Builder.prototype.WriteRowLimit = function (paged, limit) {
+            if (paged)
+                this.tree.push({ Element: "Start", Name: "RowLimit", Attributes: [{ Name: "Paged", Value: "TRUE" }] });
+            else
+                this.tree.push({ Element: "Start", Name: "RowLimit" });
+
+            this.tree.push({ Element: "Raw", Xml: limit });
+
+            this.tree.push({ Element: "End" });
+        };
+        Builder.prototype.WriteStart = function (tagName, attributes) {
+            if (attributes)
+                this.tree.push({ Element: "Start", Name: tagName, Attributes: attributes });
+            else
+                this.tree.push({ Element: "Start", Name: tagName });
         };
         Builder.prototype.WriteEnd = function (count) {
             if (count > 0)
@@ -645,6 +802,11 @@ var CamlBuilder;
                         writer.writeAttributeString("LookupId", "True");
                     if (this.tree[i].Descending)
                         writer.writeAttributeString("Ascending", "False");
+                    for (var attr in this.tree[i]) {
+                        if (attr == "Element" || attr == "Name" || attr == "LookupId" || attr == "Descending")
+                            continue;
+                        writer.writeAttributeString(attr, this.tree[i][attr]);
+                    }
                     writer.writeEndElement();
                 } else if (this.tree[i].Element == "Start") {
                     writer.writeStartElement(this.tree[i].Name);
@@ -653,6 +815,8 @@ var CamlBuilder;
                             writer.writeAttributeString(this.tree[i].Attributes[a].Name, this.tree[i].Attributes[a].Value);
                         }
                     }
+                } else if (this.tree[i].Element == "Raw") {
+                    writer.writeRaw(this.tree[i].Xml);
                 } else if (this.tree[i].Element == "Value") {
                     writer.writeStartElement("Value");
                     if (this.tree[i].IncludeTimeValue === false)
@@ -686,6 +850,12 @@ var CamlBuilder;
             this.tree = new Array();
             writer.close();
             return sb.toString();
+        };
+        Builder.prototype.FinalizeToSPQuery = function () {
+            var camlWhere = this.Finalize();
+            var query = new SP.CamlQuery();
+            query.set_viewXml("<View><Query>" + camlWhere + "</Query></View>");
+            return query;
         };
         return Builder;
     })();

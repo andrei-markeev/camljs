@@ -1,4 +1,4 @@
-/// <reference path="typings/camljs/camljs.d.ts" />
+﻿/// <reference path="typings/camljs/camljs.d.ts" />
 /// <reference path="tsUnit.ts" />
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -12,6 +12,10 @@ var TestsHelper = (function () {
     function TestsHelper() {
     }
     TestsHelper.XmlToJson = function (xml) {
+        function trim(s) {
+            return s.replace(/^\s+/, '').replace(/\s+$/, '');
+        }
+
         function elementToObject(element) {
             var o = [];
             var i = 0;
@@ -27,9 +31,10 @@ var TestsHelper = (function () {
             if (children.length) {
                 i = 0;
                 for (i; i < children.length; i++) {
-                    if (children[i].nodeName == '#text')
-                        o.push(children[i].nodeValue);
-                    else {
+                    if (children[i].nodeName == '#text') {
+                        if (trim(children[i].nodeValue) != '')
+                            o.push(children[i].nodeValue);
+                    } else {
                         var ch = {};
                         ch[children[i].nodeName] = elementToObject(children[i]);
                         o.push(ch);

@@ -6,6 +6,10 @@ var CUI: any;
 class TestsHelper {
     static XmlToJson(xml: string): string {
 
+        function trim(s) {
+            return s.replace(/^\s+/, '').replace(/\s+$/, '');
+        }
+
         function elementToObject(element) {
             var o = [];
             var i = 0;
@@ -21,8 +25,10 @@ class TestsHelper {
             if (children.length) {
                 i = 0;
                 for (i; i < children.length; i++) {
-                    if (children[i].nodeName == '#text')
-                        o.push(children[i].nodeValue);
+                    if (children[i].nodeName == '#text') {
+                        if (trim(children[i].nodeValue) != '')
+                            o.push(children[i].nodeValue);
+                    }
                     else
                     {
                         var ch = {};

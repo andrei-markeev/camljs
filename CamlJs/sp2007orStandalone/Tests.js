@@ -14,6 +14,9 @@ var TestsHelper = (function () {
     function TestsHelper() {
     }
     TestsHelper.XmlToJson = function (xml) {
+        function trim(s) {
+            return s.replace(/^\s+/, '').replace(/\s+$/, '');
+        };
         function elementToObject(element) {
             var o = [];
             var i = 0;
@@ -29,8 +32,10 @@ var TestsHelper = (function () {
             if (children.length) {
                 i = 0;
                 for (i; i < children.length; i++) {
-                    if (children[i].nodeName == '#text')
-                        o.push(children[i].nodeValue);
+                    if (children[i].nodeName == '#text') {
+                        if (trim(children[i].nodeValue) != '')
+                            o.push(children[i].nodeValue);
+                    }
                     else {
                         var ch = {};
                         ch[children[i].nodeName] = elementToObject(children[i]);

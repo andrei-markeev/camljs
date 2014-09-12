@@ -113,9 +113,12 @@
 
         areIdentical(a: any, b: any): void {
             if (a !== b) {
-                throw 'areIdentical failed when passed ' +
-                    '{' + (typeof a) + '} "' + a + '" and ' +
-                    '{' + (typeof b) + '} "' + b + '"';
+                if (typeof a == "string" && typeof b == "string" && window["jsDiff"] != null)
+                    throw window["jsDiff"].diffString(a, b);
+                else
+                    throw 'areIdentical failed when passed ' +
+                        '{' + (typeof a) + '} "' + a + '" and ' +
+                        '{' + (typeof b) + '} "' + b + '"';
             }
         }
 

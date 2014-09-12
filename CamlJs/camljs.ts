@@ -1,49 +1,17 @@
-declare module Sys {
-    export class StringBuilder {
-        /** Appends a string to the string builder */
-        append(s: string): void;
-        /** Appends a line to the string builder */
-        appendLine(s: string): void;
-        /** Clears the contents of the string builder */
-        clear(): void;
-        /** Indicates wherever the string builder is empty */
-        isEmpty(): boolean;
-        /** Gets the contents of the string builder as a string */
-        toString(): string;
-    }
-}
-declare module SP {
-    /** Defines a writer that provides a set of methods to append text in XML format. Use the static SP.XmlWriter.create(sb) Method to create an SP.XmlWriter object with the Sys.StringBuilder object you pass in. */
-    export class XmlWriter {
-        /** Creates a new instance of the XmlWriter class with the specified string builder. */
-        static create(sb: Sys.StringBuilder): SP.XmlWriter;
-        /** Appends a start element tag with the specified name in XML format to the object?s string builder. */
-        writeStartElement(tagName: string): void;
-        /** Appends an element with the specified tag name and value in XML format to the string builder. */
-        writeElementString(tagName: string, value: string): void;
-        /** Appends an end element tag in XML format to the object?s string builder. This method appends the end element tag ?/>? if the start element tag is not closed; otherwise, it appends a full end element tag ?</tagName>? to the string builder. */
-        writeEndElement(): void;
-        /** Appends an attribute with the specified name and value in XML format to the object?s string builder. */
-        writeAttributeString(localName: string, value: string): void;
-        /** This method only appends the name of the attribute. You can append the value of the attribute by calling the SP.XmlWriter.writeString(value) Method, and close the attribute by calling the SP.XmlWriter.writeEndAttribute() Method. */
-        writeStartAttribute(localName: string): void;
-        /** Appends an end of an attribute in XML format to the object?s string builder. */
-        writeEndAttribute(): void;
-        /** Appends the specified value for an element tag or attribute to the object?s string builder. */
-        writeString(value: string): void;
-        /** Appends the specified text to the object?s string builder. */
-        writeRaw(xml: string): void;
-        /** This member is reserved for internal use and is not intended to be used directly from your code. */
-        close(): void;
-    }
-
-}
+/// <reference path="Scripts/typings/sharepoint/sharepoint.d.ts" />
 
 class CamlBuilder {
     constructor() {
     }
+    /** Generate CAML Query, starting from <Where> tag */
     Where(): CamlBuilder.IFieldExpression {
         return CamlBuilder.Internal.createWhere();
+    }
+    /** Generate <View> tag for SP.CamlQuery
+        @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
+                          Specifying view fields is a good practice, as it decreases traffic between server and client. */
+    View(viewFields: string[]): CamlBuilder.IView {
+        return CamlBuilder.Internal.createView(viewFields);
     }
     /** Use for:
         1. SPServices CAMLQuery attribute
@@ -57,8 +25,40 @@ class CamlBuilder {
 
 module CamlBuilder {
 
-    export interface IView {
+    export interface IView extends IJoinable, IFinalizable {
         Query(): IQuery;
+        RowLimit(limit: number, paged?: boolean): IView;
+        Scope(scope: ViewScope): IView;
+    }
+    export interface IJoinable {
+        /** Join the list you're querying with another list.
+            Joins are only allowed through a lookup field relation.
+            @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
+            @alias alias for the joined list */
+        InnerJoin(lookupFieldInternalName: string, alias: string): IJoin;
+        /** Join the list you're querying with another list.
+            Joins are only allowed through a lookup field relation.
+            @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
+            @alias alias for the joined list */
+        LeftJoin(lookupFieldInternalName: string, alias: string): IJoin;
+    }
+    export interface IJoin extends IJoinable {
+        /** Select projected field for using in the main Query body
+            @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView;
+    }
+    export interface IProjectableView extends IView {
+        /** Select projected field for using in the main Query body
+            @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView;
+    }
+    export enum ViewScope {
+        /**  */
+        Recursive,
+        /**  */
+        RecursiveAll,
+        /**  */
+        FilesOnly
     }
     export interface IQuery {
         Where(): IFieldExpression;
@@ -66,6 +66,8 @@ module CamlBuilder {
     export interface IFinalizable {
         /** Get the resulting CAML query as string */
         ToString(): string;
+        /** Get the resulting CAML query as SP.CamlQuery object */
+        ToCamlQuery(): SP.CamlQuery;
     }
     export interface ISortable extends IFinalizable {
         /** Adds OrderBy clause to the query
@@ -326,8 +328,8 @@ module CamlBuilder {
     }
 
     export class Internal {
-        static createView(): IView {
-            return new QueryInternal().View();
+        static createView(viewFields: string[]): IView {
+            return new ViewInternal().View(viewFields);
         }
         static createWhere(): IFieldExpression {
             return new QueryInternal().Where();
@@ -337,29 +339,134 @@ module CamlBuilder {
         }
     }
 
-    /** Represents SharePoint CAML Query element */
-    class QueryInternal implements IView, IQuery  {
+    class ViewInternal implements IView {
         constructor() {
             this.builder = new Builder();
         }
         private builder: Builder;
+        private joinsManager: JoinsManager;
         /** Adds View element. */
-        View(): IView {
+        View(viewFields: string[]): IView {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
+            this.joinsManager = new JoinsManager(this.builder, this);
             return this;
         }
+        RowLimit(limit: number, paged?: boolean): IView {
+            this.builder.WriteRowLimit(paged || false, limit);
+            return this;
+        }
+        Scope(scope: ViewScope): IView {
+            this.builder.SetAttributeToLastElement("View", "Scope", scope.toString());
+            return this;
+        }
+        InnerJoin(lookupFieldInternalName: string, alias: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        }
+        LeftJoin(lookupFieldInternalName: string, alias: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        }
+        /** Select projected field for using in the main Query body
+            @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView {
+            return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
+        }
+        ToString(): string {
+            this.joinsManager.Finalize();
+            return this.builder.Finalize();
+        }
+        ToCamlQuery(): SP.CamlQuery {
+            this.joinsManager.Finalize();
+            return this.builder.FinalizeToSPQuery();
+        }
+
         /** Adds Query clause to the View XML. */
         Query(): IQuery {
+            this.joinsManager.Finalize();
             this.builder.WriteStart("Query");
             this.builder.unclosedTags++;
-            return this;
+            return new QueryInternal();
         }
+    }
+
+    /** Represents SharePoint CAML Query element */
+    class QueryInternal implements IQuery  {
+        constructor(builder?: Builder) {
+            this.builder = builder || new Builder();
+        }
+        private builder: Builder;
         /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
         Where(): IFieldExpression {
             this.builder.WriteStart("Where");
             this.builder.unclosedTags++;
             return new FieldExpression(this.builder);
+        }
+    }
+    class JoinsManager {
+        constructor(builder: Builder, viewInternal: ViewInternal) {
+            this.projectedFields = [];
+            this.joins = [];
+            this.originalView = viewInternal;
+            this.builder = builder;
+        }
+        private builder: Builder;
+        private originalView: ViewInternal;
+ 
+        Finalize() {
+            this.builder.WriteStart("Joins");
+            for (var i = 0; i < this.joins.length; i++) {
+                var join = this.joins[i];
+                this.builder.WriteStart("Join", [
+                    { Name: "Type", Value: join.JoinType },
+                    { Name: "Alias", Value: join.Alias }
+                ]);
+                this.builder.WriteStart("Eq");
+                this.builder.WriteFieldRef(join.RefFieldName, { RefType: "Id" });
+                this.builder.WriteFieldRef("ID", { List: join.Alias });
+                this.builder.WriteEnd();
+                this.builder.WriteEnd();
+            }
+            this.builder.WriteEnd();
+            this.builder.WriteStart("ProjectedFields");
+            for (var i = 0; i < this.projectedFields.length; i++) {
+                var projField = this.projectedFields[i];
+                this.builder.WriteStart("Field", [
+                    { Name: "ShowField", Value: projField.FieldName },
+                    { Name: "Name", Value: projField.Alias },
+                    { Name: "List", Value: projField.JoinAlias }
+                ]);
+                this.builder.WriteEnd();
+            }
+            this.builder.WriteEnd();
+        }
+        private joins: any[];
+        private projectedFields: any[];
+        Join(lookupFieldInternalName: string, alias: string, joinType: string): IJoin {
+            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType });
+            return new Join(this.builder, this);
+        }
+        ProjectedField(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView {
+            this.projectedFields.push({ FieldName: remoteFieldInternalName, Alias: remoteFieldAlias, JoinAlias: this.joins[this.joins.length - 1].Alias });
+            return this.originalView;
+        }
+    }
+    class Join implements IJoin {
+        constructor(builder: Builder, joinsManager: JoinsManager) {
+            this.builder = builder;
+            this.joinsManager = joinsManager;
+        }
+        private builder: Builder;
+        private joinsManager: JoinsManager;
+        /** Select projected field for using in the main Query body
+            @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView {
+            return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
+        }
+        InnerJoin(lookupFieldInternalName: string, alias: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        }
+        LeftJoin(lookupFieldInternalName: string, alias: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
         }
     }
     class QueryToken implements IExpression {
@@ -418,6 +525,13 @@ module CamlBuilder {
         ToString() {
             return this.builder.Finalize();
         }
+
+        /** Returns SP.CamlQuery object that represents the constructed query
+        */
+        ToCamlQuery() {
+            return this.builder.FinalizeToSPQuery();
+        }
+
     }
 
     class FieldExpression implements IFieldExpression {
@@ -805,6 +919,10 @@ module CamlBuilder {
         ToString() {
             return this.builder.Finalize();
         }
+
+        ToCamlQuery() {
+            return this.builder.FinalizeToSPQuery();
+        }
     }
 
     class SortedQuery implements ISortedQuery {
@@ -825,6 +943,10 @@ module CamlBuilder {
         ToString() {
             return this.builder.Finalize();
         }
+
+        ToCamlQuery() {
+            return this.builder.FinalizeToSPQuery();
+        }
     }
 
     class Builder {
@@ -835,8 +957,31 @@ module CamlBuilder {
         tree: any[];
         unclosedTags: number;
 
-        WriteStart(tagName: string) {
-            this.tree.push({ Element: "Start", Name: tagName });
+        SetAttributeToLastElement(tagName: string, attributeName: string, attributeValue: string) {
+            for (var i = this.tree.length - 1; i >= 0; i--) {
+                if (this.tree[i].Element == "View") {
+                    this.tree[i].Attributes = this.tree[i].Attributes || [];
+                    this.tree[i].Attributes.push({Name: attributeName, Value: attributeValue})
+                    return;
+                }
+            }
+            console.log("CamlJs ERROR: can't find element '" + tagName + "' in the tree while setting attribute " + attributeName + " to '" + attributeValue + "'!");
+        }
+        WriteRowLimit(paged: boolean, limit: number) {
+            if (paged)
+                this.tree.push({ Element: "Start", Name: "RowLimit", Attributes: [{ Name: "Paged", Value: "TRUE" }] });
+            else
+                this.tree.push({ Element: "Start", Name: "RowLimit" });
+
+            this.tree.push({ Element: "Raw", Xml: limit });
+
+            this.tree.push({ Element: "End" });
+        }
+        WriteStart(tagName: string, attributes?: any[]) {
+            if (attributes)
+                this.tree.push({ Element: "Start", Name: tagName, Attributes: attributes });
+            else
+                this.tree.push({ Element: "Start", Name: tagName });
         }
         WriteEnd(count?: number) {
             if (count > 0)
@@ -927,16 +1072,23 @@ module CamlBuilder {
                         writer.writeAttributeString("LookupId", "True");
                     if (this.tree[i].Descending)
                         writer.writeAttributeString("Ascending", "False");
+                    for (var attr in this.tree[i]) {
+                        if (attr == "Element" || attr == "Name" || attr == "LookupId" || attr == "Descending")
+                            continue;
+                        writer.writeAttributeString(attr, this.tree[i][attr]);
+                    }
                     writer.writeEndElement();
                 } else if (this.tree[i].Element == "Start") {
                     writer.writeStartElement(this.tree[i].Name);
                     if (this.tree[i].Attributes) {
                         for (var a = 0; a < this.tree[i].Attributes.length; a++) {
                             writer.writeAttributeString(
-                                    this.tree[i].Attributes[a].Name,
-                                    this.tree[i].Attributes[a].Value);
+                                this.tree[i].Attributes[a].Name,
+                                this.tree[i].Attributes[a].Value);
                         }
                     }
+                } else if (this.tree[i].Element == "Raw") {
+                    writer.writeRaw(this.tree[i].Xml);
                 } else if (this.tree[i].Element == "Value") {
                     writer.writeStartElement("Value");
                     if (this.tree[i].IncludeTimeValue === false)
@@ -970,6 +1122,12 @@ module CamlBuilder {
             this.tree = new Array();
             writer.close();
             return sb.toString();
+        }
+        FinalizeToSPQuery() {
+            var camlWhere = this.Finalize();
+            var query = new SP.CamlQuery();
+            query.set_viewXml("<View><Query>" + camlWhere + "</Query></View>");
+            return query;
         }
     }
     export class CamlValues {

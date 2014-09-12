@@ -31,7 +31,7 @@ CUI.NativeUtility.createXMLDocFromString = CUI.NativeUtility.createXMLDocFromStr
         return msxmlDomDoc;
     }
     else if (DOMParser) {
-        var domParser = newObj ? null : g_cuiXMLParser;
+        var domParser = newObj ? null : window.g_cuiXMLParser;
         if (!domParser) {
             domParser = new DOMParser();
             if (!newObj)
