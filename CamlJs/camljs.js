@@ -86,6 +86,13 @@ var CamlBuilder;
         ViewInternal.prototype.View = function (viewFields) {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
+            if (viewFields && viewFields.length > 0) {
+                this.builder.WriteStart("ViewFields");
+                for (var i = 0; i < viewFields.length; i++) {
+                    this.builder.WriteFieldRef(viewFields[i]);
+                }
+                this.builder.WriteEnd();
+            }
             this.joinsManager = new JoinsManager(this.builder, this);
             return this;
         };
@@ -123,7 +130,7 @@ var CamlBuilder;
             this.joinsManager.Finalize();
             this.builder.WriteStart("Query");
             this.builder.unclosedTags++;
-            return new QueryInternal();
+            return new QueryInternal(this.builder);
         };
         return ViewInternal;
     })();
@@ -947,4 +954,3 @@ var CamlBuilder;
     })();
     CamlBuilder.CamlValues = CamlValues;
 })(CamlBuilder || (CamlBuilder = {}));
-//# sourceMappingURL=camljs.js.map

@@ -10,9 +10,10 @@ class CamlBuilder {
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
                           Specifying view fields is a good practice, as it decreases traffic between server and client. */
-    View(viewFields: string[]): CamlBuilder.IView {
+    View(viewFields?: string[]): CamlBuilder.IView {
         return CamlBuilder.Internal.createView(viewFields);
     }
+
     /** Use for:
         1. SPServices CAMLQuery attribute
         2. Creating partial expressions
@@ -354,7 +355,7 @@ module CamlBuilder {
     }
 
     export class Internal {
-        static createView(viewFields: string[]): IView {
+        static createView(viewFields?: string[]): IView {
             return new ViewInternal().View(viewFields);
         }
         static createWhere(): IFieldExpression {
@@ -372,9 +373,16 @@ module CamlBuilder {
         private builder: Builder;
         private joinsManager: JoinsManager;
         /** Adds View element. */
-        View(viewFields: string[]): IView {
+        View(viewFields?: string[]): IView {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
+            if (viewFields && viewFields.length > 0) {
+                this.builder.WriteStart("ViewFields");
+                for (var i = 0; i < viewFields.length; i++) {
+                    this.builder.WriteFieldRef(viewFields[i]);
+                }
+                this.builder.WriteEnd();
+            }
             this.joinsManager = new JoinsManager(this.builder, this);
             return this;
         }
@@ -411,7 +419,7 @@ module CamlBuilder {
             this.joinsManager.Finalize();
             this.builder.WriteStart("Query");
             this.builder.unclosedTags++;
-            return new QueryInternal();
+            return new QueryInternal(this.builder);
         }
     }
 
