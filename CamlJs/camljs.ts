@@ -129,12 +129,10 @@ module CamlBuilder {
         UserField(internalName: string): IUserFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Lookup */
         LookupField(internalName: string): ILookupFieldExpression;
-        /** DEPRECATED. Please use LookupField(...).Id() instead */
-        LookupIdField(internalName: string): INumberFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is LookupMulti */
         LookupMultiField(internalName: string): ILookupMultiFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is UserMulti */
-        UserMultiField(internalName: string): ILookupMultiFieldExpression;
+        UserMultiField(internalName: string): IUserMultiFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Date */
         DateField(internalName: string): IDateTimeFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is DateTime */
@@ -303,14 +301,42 @@ module CamlBuilder {
         ValueAsBoolean(): IBooleanFieldExpression;
     }
     export interface ILookupMultiFieldExpression {
-        /** Checks whether the value of the field is equal to the specified value */
-        EqualTo(value: string): IExpression;
-        /** Checks whether the value of the field is not equal to the specified value */
-        NotEqualTo(value: string): IExpression;
-        /** Checks whether the values of the field includes the specified value */
+        /** Checks a condition against every item in the multi lookup value */
+        IncludesSuchItemThat(): ILookupFieldExpression;
+        
+        /** Checks whether the field values collection is empty */
+        IsNull(): IExpression;
+        /** Checks whether the field values collection is not empty */
+        IsNotNull(): IExpression;
+
+        /** DEPRECATED: use "IncludesSuchItemThat().ValueAsText().EqualTo(value)" instead. */
         Includes(value): IExpression;
-        /** Checks whether the values of the field not includes the specified value */
+        /** DEPRECATED: use "IncludesSuchItemThat().ValueAsText().NotEqualTo(value)" instead. */
         NotIncludes(value): IExpression;
+
+        /** DEPRECATED: "Eq" operation in CAML works exactly the same as "Includes". To avoid confusion, please use Includes. */
+        EqualTo(value): IExpression;
+        /** DEPRECATED: "Neq" operation in CAML works exactly the same as "NotIncludes". To avoid confusion, please use NotIncludes. */
+        NotEqualTo(value): IExpression;
+    }
+    export interface IUserMultiFieldExpression {
+        /** Checks a condition against every item in the multi lookup value */
+        IncludesSuchItemThat(): IUserFieldExpression;
+
+        /** Checks whether the field values collection is empty */
+        IsNull(): IExpression;
+        /** Checks whether the field values collection is not empty */
+        IsNotNull(): IExpression;
+
+        /** DEPRECATED: use "IncludesSuchItemThat().ValueAsText().EqualTo(value)" instead. */
+        Includes(value): IExpression;
+        /** DEPRECATED: use "IncludesSuchItemThat().ValueAsText().NotEqualTo(value)" instead. */
+        NotIncludes(value): IExpression;
+
+        /** DEPRECATED: "Eq" operation in CAML works exactly the same as "Includes". To avoid confusion, please use Includes. */
+        EqualTo(value): IExpression;
+        /** DEPRECATED: "Neq" operation in CAML works exactly the same as "NotIncludes". To avoid confusion, please use NotIncludes. */
+        NotEqualTo(value): IExpression;
     }
 
     export enum DateRangesOverlapType {
@@ -570,19 +596,15 @@ module CamlBuilder {
         }
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Lookup */
         LookupField(internalName: string): ILookupFieldExpression {
-            return new LookupFieldExpression(this.builder, internalName, "Lookup");
-        }
-        /** DEPRECATED. Please use LookupField(...).Id() instead. This method will be removed in the next release. */
-        LookupIdField(internalName: string): INumberFieldExpression {
-            return new LookupFieldExpression(this.builder, internalName, "Lookup").Id();
+            return new LookupFieldExpression(this.builder, internalName);
         }
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is LookupMulti */
         LookupMultiField(internalName: string): ILookupMultiFieldExpression {
-            return new FieldExpressionToken(this.builder, internalName, "LookupMulti");
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, FieldMultiExpressionType.LookupMulti);
         }
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is UserMulti */
-        UserMultiField(internalName: string): ILookupMultiFieldExpression {
-            return new FieldExpressionToken(this.builder, internalName, "UserMulti");
+        UserMultiField(internalName: string): IUserMultiFieldExpression {
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, FieldMultiExpressionType.UserMulti);
         }
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Date */
         DateField(internalName: string): IDateTimeFieldExpression {
@@ -679,20 +701,71 @@ module CamlBuilder {
         }
     }
 
-    class LookupFieldExpression implements ILookupFieldExpression {
-        constructor(builder: Builder, name: string, valueType: string) {
+    enum FieldMultiExpressionType {
+        UserMulti,
+        LookupMulti
+    }
+
+    class LookupOrUserMultiFieldExpression implements ILookupMultiFieldExpression {
+        constructor(builder: Builder, name: string, type: FieldMultiExpressionType) {
             this.builder = builder;
             this.name = name;
-            this.valueType = valueType;
+            this.type = type;
+            if (this.type == FieldMultiExpressionType.UserMulti)
+                this.typeAsString = "UserMulti";
+            else
+                this.typeAsString = "LookupMulti";
+        }
+        private builder: Builder;
+        private type: FieldMultiExpressionType;
+        private name: string;
+        private typeAsString: string;
+
+        IncludesSuchItemThat(): any {
+            if (this.type == FieldMultiExpressionType.LookupMulti)
+                return new LookupFieldExpression(this.builder, this.name);
+            else
+                return new UserFieldExpression(this.builder, this.name);
+        }
+
+        IsNull(): IExpression {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).IsNull();
+        }
+
+        IsNotNull(): IExpression {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).IsNotNull();
+        }
+
+        Includes(value): IExpression {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).EqualTo(value);
+        }
+
+        NotIncludes(value): IExpression {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).NotEqualTo(value);
+        }
+
+        EqualTo(value): IExpression {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).EqualTo(value);
+        }
+
+        NotEqualTo(value): IExpression {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).NotEqualTo(value);
+        }
+
+    }
+
+    class LookupFieldExpression implements ILookupFieldExpression {
+        constructor(builder: Builder, name: string) {
+            this.builder = builder;
+            this.name = name;
         }
         private builder: Builder;
         private name: string;
-        private valueType: string;
         Id(): INumberFieldExpression {
             return new FieldExpressionToken(this.builder, this.name, "Integer", true);
         }
         Value(): ITextFieldExpression {
-            return new FieldExpressionToken(this.builder, this.name, this.valueType);
+            return new FieldExpressionToken(this.builder, this.name, "Lookup");
         }
         ValueAsText(): ITextFieldExpression {
             return new FieldExpressionToken(this.builder, this.name, "Text");
@@ -853,21 +926,6 @@ module CamlBuilder {
             if (value instanceof Date)
                 value = value.toISOString();
             this.builder.WriteBinaryOperation(this.startIndex, "Neq", this.valueType, value);
-            return new QueryToken(this.builder, this.startIndex);
-        }
-        NotIncludes(value): IExpression {
-            if (value instanceof Date)
-                value = value.toISOString();
-            this.builder.WriteBinaryOperation(this.startIndex, "NotIncludes", this.valueType, value);
-            return new QueryToken(this.builder, this.startIndex);
-        }
-        Includes(value): IExpression {
-            if (value instanceof Date)
-                value = value.toISOString();
-
-            // Using Eq instead of Includes due to a notorious bug:
-            // if LookupMulti field points to DateTime target field, Includes causes exception
-            this.builder.WriteBinaryOperation(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
         Contains(value): IExpression {

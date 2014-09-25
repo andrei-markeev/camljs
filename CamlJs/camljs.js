@@ -307,22 +307,17 @@ var CamlBuilder;
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Lookup */
         FieldExpression.prototype.LookupField = function (internalName) {
-            return new LookupFieldExpression(this.builder, internalName, "Lookup");
-        };
-
-        /** DEPRECATED. Please use LookupField(...).Id() instead. This method will be removed in the next release. */
-        FieldExpression.prototype.LookupIdField = function (internalName) {
-            return new LookupFieldExpression(this.builder, internalName, "Lookup").Id();
+            return new LookupFieldExpression(this.builder, internalName);
         };
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is LookupMulti */
         FieldExpression.prototype.LookupMultiField = function (internalName) {
-            return new FieldExpressionToken(this.builder, internalName, "LookupMulti");
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, 1 /* LookupMulti */);
         };
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is UserMulti */
         FieldExpression.prototype.UserMultiField = function (internalName) {
-            return new FieldExpressionToken(this.builder, internalName, "UserMulti");
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, 0 /* UserMulti */);
         };
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Date */
@@ -430,17 +425,65 @@ var CamlBuilder;
         return FieldExpression;
     })();
 
-    var LookupFieldExpression = (function () {
-        function LookupFieldExpression(builder, name, valueType) {
+    var FieldMultiExpressionType;
+    (function (FieldMultiExpressionType) {
+        FieldMultiExpressionType[FieldMultiExpressionType["UserMulti"] = 0] = "UserMulti";
+        FieldMultiExpressionType[FieldMultiExpressionType["LookupMulti"] = 1] = "LookupMulti";
+    })(FieldMultiExpressionType || (FieldMultiExpressionType = {}));
+
+    var LookupOrUserMultiFieldExpression = (function () {
+        function LookupOrUserMultiFieldExpression(builder, name, type) {
             this.builder = builder;
             this.name = name;
-            this.valueType = valueType;
+            this.type = type;
+            if (this.type == 0 /* UserMulti */)
+                this.typeAsString = "UserMulti";
+            else
+                this.typeAsString = "LookupMulti";
+        }
+        LookupOrUserMultiFieldExpression.prototype.IncludesSuchItemThat = function () {
+            if (this.type == 1 /* LookupMulti */)
+                return new LookupFieldExpression(this.builder, this.name);
+            else
+                return new UserFieldExpression(this.builder, this.name);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.IsNull = function () {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).IsNull();
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.IsNotNull = function () {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).IsNotNull();
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.Includes = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).EqualTo(value);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.NotIncludes = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).NotEqualTo(value);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.EqualTo = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).EqualTo(value);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.NotEqualTo = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).NotEqualTo(value);
+        };
+        return LookupOrUserMultiFieldExpression;
+    })();
+
+    var LookupFieldExpression = (function () {
+        function LookupFieldExpression(builder, name) {
+            this.builder = builder;
+            this.name = name;
         }
         LookupFieldExpression.prototype.Id = function () {
             return new FieldExpressionToken(this.builder, this.name, "Integer", true);
         };
         LookupFieldExpression.prototype.Value = function () {
-            return new FieldExpressionToken(this.builder, this.name, this.valueType);
+            return new FieldExpressionToken(this.builder, this.name, "Lookup");
         };
         LookupFieldExpression.prototype.ValueAsText = function () {
             return new FieldExpressionToken(this.builder, this.name, "Text");
@@ -591,21 +634,6 @@ var CamlBuilder;
             if (value instanceof Date)
                 value = value.toISOString();
             this.builder.WriteBinaryOperation(this.startIndex, "Neq", this.valueType, value);
-            return new QueryToken(this.builder, this.startIndex);
-        };
-        FieldExpressionToken.prototype.NotIncludes = function (value) {
-            if (value instanceof Date)
-                value = value.toISOString();
-            this.builder.WriteBinaryOperation(this.startIndex, "NotIncludes", this.valueType, value);
-            return new QueryToken(this.builder, this.startIndex);
-        };
-        FieldExpressionToken.prototype.Includes = function (value) {
-            if (value instanceof Date)
-                value = value.toISOString();
-
-            // Using Eq instead of Includes due to a notorious bug:
-            // if LookupMulti field points to DateTime target field, Includes causes exception
-            this.builder.WriteBinaryOperation(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
         FieldExpressionToken.prototype.Contains = function (value) {
