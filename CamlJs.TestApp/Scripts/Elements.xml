@@ -1,11 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Elements xmlns="http://schemas.microsoft.com/sharepoint/">
   <Module Name="Scripts">
-    <File Path="Scripts\jsdiff.js" Url="Scripts/jsdiff.js" ReplaceContent="TRUE" />
-    <File Path="Scripts\Tests.js" Url="Scripts/Tests.js" ReplaceContent="TRUE" />
-    <File Path="Scripts\tsUnit.ts" Url="Scripts/tsUnit.ts" ReplaceContent="TRUE" />
-    <File Path="Scripts\tsUnit.js" Url="Scripts/tsUnit.js" ReplaceContent="TRUE" />
     <File Path="Scripts\camljs.js" Url="Scripts/camljs.js" ReplaceContent="TRUE" />
-    <File Path="Scripts\typings\camljs\camljs.d.ts" Url="Scripts/typings/camljs/camljs.d.ts" ReplaceContent="TRUE" />
+    <File Path="Scripts\vkbeautify.js" Url="Scripts/vkbeautify.js" ReplaceContent="TRUE" />
   </Module>
 </Elements>

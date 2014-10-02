@@ -57,18 +57,22 @@
   </PropertyGroup>
   <ItemGroup>
     <TypeScriptCompile Include="camljs.ts" />
-    <TypeScriptCompile Include="Scripts\typings\sharepoint\SharePoint.d.ts" />
+    <TypeScriptCompile Include="tests\Tests.ts" />
+    <TypeScriptCompile Include="tests\tsUnit.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="sp2007orStandalone\index.html" />
-    <Content Include="sp2007orStandalone\jsdiff.js" />
-    <Content Include="camljs.spdeps.js" />
-    <Content Include="sp2007orStandalone\Tests.js" />
-    <Content Include="sp2007orStandalone\Tests.spdeps.js" />
-    <Content Include="sp2007orStandalone\tsUnit.js" />
+    <Content Include="tests\index.html" />
+    <Content Include="tests\jsdiff.js" />
+    <Content Include="tests\vkbeautify.js" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="packages.config" />
+    <Content Include="web.config" />
+    <None Include="web.Debug.config">
+      <DependentUpon>web.config</DependentUpon>
+    </None>
+    <None Include="web.Release.config">
+      <DependentUpon>web.config</DependentUpon>
+    </None>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(VSToolsPath)\TypeScript\Microsoft.TypeScript.targets')" />
 </Project>

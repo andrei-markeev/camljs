@@ -1,8 +1,16 @@
 var CamlBuilder = (function () {
     function CamlBuilder() {
     }
+    /** Generate CAML Query, starting from <Where> tag */
     CamlBuilder.prototype.Where = function () {
         return CamlBuilder.Internal.createWhere();
+    };
+
+    /** Generate <View> tag for SP.CamlQuery
+    @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
+    Specifying view fields is a good practice, as it decreases traffic between server and client. */
+    CamlBuilder.prototype.View = function (viewFields) {
+        return CamlBuilder.Internal.createView(viewFields);
     };
 
     /** Use for:
@@ -18,6 +26,18 @@ var CamlBuilder = (function () {
 
 var CamlBuilder;
 (function (CamlBuilder) {
+    (function (ViewScope) {
+        /**  */
+        ViewScope[ViewScope["Recursive"] = 0] = "Recursive";
+
+        /**  */
+        ViewScope[ViewScope["RecursiveAll"] = 1] = "RecursiveAll";
+
+        /**  */
+        ViewScope[ViewScope["FilesOnly"] = 2] = "FilesOnly";
+    })(CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
+    var ViewScope = CamlBuilder.ViewScope;
+
     
 
     
@@ -44,8 +64,8 @@ var CamlBuilder;
     var Internal = (function () {
         function Internal() {
         }
-        Internal.createView = function () {
-            return new QueryInternal().View();
+        Internal.createView = function (viewFields) {
+            return new ViewInternal().View(viewFields);
         };
         Internal.createWhere = function () {
             return new QueryInternal().Where();
@@ -57,25 +77,68 @@ var CamlBuilder;
     })();
     CamlBuilder.Internal = Internal;
 
-    /** Represents SharePoint CAML Query element */
-    var QueryInternal = (function () {
-        function QueryInternal() {
+    var ViewInternal = (function () {
+        function ViewInternal() {
             this.builder = new Builder();
         }
         /** Adds View element. */
-        QueryInternal.prototype.View = function () {
+        ViewInternal.prototype.View = function (viewFields) {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
+            if (viewFields && viewFields.length > 0) {
+                this.builder.WriteStart("ViewFields");
+                for (var i = 0; i < viewFields.length; i++) {
+                    this.builder.WriteFieldRef(viewFields[i]);
+                }
+                this.builder.WriteEnd();
+            }
+            this.joinsManager = new JoinsManager(this.builder, this);
             return this;
+        };
+        ViewInternal.prototype.RowLimit = function (limit, paged) {
+            this.builder.WriteRowLimit(paged || false, limit);
+            return this;
+        };
+        ViewInternal.prototype.Scope = function (scope) {
+            this.builder.SetAttributeToLastElement("View", "Scope", scope.toString());
+            return this;
+        };
+        ViewInternal.prototype.InnerJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        };
+        ViewInternal.prototype.LeftJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        };
+
+        /** Select projected field for using in the main Query body
+        @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        ViewInternal.prototype.Select = function (remoteFieldInternalName, remoteFieldAlias) {
+            return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
+        };
+        ViewInternal.prototype.ToString = function () {
+            this.joinsManager.Finalize();
+            return this.builder.Finalize();
+        };
+        ViewInternal.prototype.ToCamlQuery = function () {
+            this.joinsManager.Finalize();
+            return this.builder.FinalizeToSPQuery();
         };
 
         /** Adds Query clause to the View XML. */
-        QueryInternal.prototype.Query = function () {
+        ViewInternal.prototype.Query = function () {
+            this.joinsManager.Finalize();
             this.builder.WriteStart("Query");
             this.builder.unclosedTags++;
-            return this;
+            return new QueryInternal(this.builder);
         };
+        return ViewInternal;
+    })();
 
+    /** Represents SharePoint CAML Query element */
+    var QueryInternal = (function () {
+        function QueryInternal(builder) {
+            this.builder = builder || new Builder();
+        }
         /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
         QueryInternal.prototype.Where = function () {
             this.builder.WriteStart("Where");
@@ -83,6 +146,70 @@ var CamlBuilder;
             return new FieldExpression(this.builder);
         };
         return QueryInternal;
+    })();
+    var JoinsManager = (function () {
+        function JoinsManager(builder, viewInternal) {
+            this.projectedFields = [];
+            this.joins = [];
+            this.originalView = viewInternal;
+            this.builder = builder;
+        }
+        JoinsManager.prototype.Finalize = function () {
+            this.builder.WriteStart("Joins");
+            for (var i = 0; i < this.joins.length; i++) {
+                var join = this.joins[i];
+                this.builder.WriteStart("Join", [
+                    { Name: "Type", Value: join.JoinType },
+                    { Name: "ListAlias", Value: join.Alias }
+                ]);
+                this.builder.WriteStart("Eq");
+                this.builder.WriteFieldRef(join.RefFieldName, { RefType: "ID" });
+                this.builder.WriteFieldRef("ID", { List: join.Alias });
+                this.builder.WriteEnd();
+                this.builder.WriteEnd();
+            }
+            this.builder.WriteEnd();
+            this.builder.WriteStart("ProjectedFields");
+            for (var i = 0; i < this.projectedFields.length; i++) {
+                var projField = this.projectedFields[i];
+                this.builder.WriteStart("Field", [
+                    { Name: "ShowField", Value: projField.FieldName },
+                    { Name: "Type", Value: "Lookup" },
+                    { Name: "Name", Value: projField.Alias },
+                    { Name: "List", Value: projField.JoinAlias }
+                ]);
+                this.builder.WriteEnd();
+            }
+            this.builder.WriteEnd();
+        };
+
+        JoinsManager.prototype.Join = function (lookupFieldInternalName, alias, joinType) {
+            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType });
+            return new Join(this.builder, this);
+        };
+        JoinsManager.prototype.ProjectedField = function (remoteFieldInternalName, remoteFieldAlias) {
+            this.projectedFields.push({ FieldName: remoteFieldInternalName, Alias: remoteFieldAlias, JoinAlias: this.joins[this.joins.length - 1].Alias });
+            return this.originalView;
+        };
+        return JoinsManager;
+    })();
+    var Join = (function () {
+        function Join(builder, joinsManager) {
+            this.builder = builder;
+            this.joinsManager = joinsManager;
+        }
+        /** Select projected field for using in the main Query body
+        @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
+        Join.prototype.Select = function (remoteFieldInternalName, remoteFieldAlias) {
+            return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
+        };
+        Join.prototype.InnerJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        };
+        Join.prototype.LeftJoin = function (lookupFieldInternalName, alias) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        };
+        return Join;
     })();
     var QueryToken = (function () {
         function QueryToken(builder, startIndex) {
@@ -137,6 +264,12 @@ var CamlBuilder;
         QueryToken.prototype.ToString = function () {
             return this.builder.Finalize();
         };
+
+        /** Returns SP.CamlQuery object that represents the constructed query
+        */
+        QueryToken.prototype.ToCamlQuery = function () {
+            return this.builder.FinalizeToSPQuery();
+        };
         return QueryToken;
     })();
 
@@ -181,22 +314,17 @@ var CamlBuilder;
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Lookup */
         FieldExpression.prototype.LookupField = function (internalName) {
-            return new LookupFieldExpression(this.builder, internalName, "Lookup");
-        };
-
-        /** DEPRECATED. Please use LookupField(...).Id() instead. This method will be removed in the next release. */
-        FieldExpression.prototype.LookupIdField = function (internalName) {
-            return new LookupFieldExpression(this.builder, internalName, "Lookup").Id();
+            return new LookupFieldExpression(this.builder, internalName);
         };
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is LookupMulti */
         FieldExpression.prototype.LookupMultiField = function (internalName) {
-            return new FieldExpressionToken(this.builder, internalName, "LookupMulti");
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, 1 /* LookupMulti */);
         };
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is UserMulti */
         FieldExpression.prototype.UserMultiField = function (internalName) {
-            return new FieldExpressionToken(this.builder, internalName, "UserMulti");
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, 0 /* UserMulti */);
         };
 
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Date */
@@ -304,17 +432,65 @@ var CamlBuilder;
         return FieldExpression;
     })();
 
-    var LookupFieldExpression = (function () {
-        function LookupFieldExpression(builder, name, valueType) {
+    var FieldMultiExpressionType;
+    (function (FieldMultiExpressionType) {
+        FieldMultiExpressionType[FieldMultiExpressionType["UserMulti"] = 0] = "UserMulti";
+        FieldMultiExpressionType[FieldMultiExpressionType["LookupMulti"] = 1] = "LookupMulti";
+    })(FieldMultiExpressionType || (FieldMultiExpressionType = {}));
+
+    var LookupOrUserMultiFieldExpression = (function () {
+        function LookupOrUserMultiFieldExpression(builder, name, type) {
             this.builder = builder;
             this.name = name;
-            this.valueType = valueType;
+            this.type = type;
+            if (this.type == 0 /* UserMulti */)
+                this.typeAsString = "UserMulti";
+            else
+                this.typeAsString = "LookupMulti";
+        }
+        LookupOrUserMultiFieldExpression.prototype.IncludesSuchItemThat = function () {
+            if (this.type == 1 /* LookupMulti */)
+                return new LookupFieldExpression(this.builder, this.name);
+            else
+                return new UserFieldExpression(this.builder, this.name);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.IsNull = function () {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).IsNull();
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.IsNotNull = function () {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).IsNotNull();
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.Includes = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).EqualTo(value);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.NotIncludes = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).NotEqualTo(value);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.EqualTo = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).EqualTo(value);
+        };
+
+        LookupOrUserMultiFieldExpression.prototype.NotEqualTo = function (value) {
+            return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).NotEqualTo(value);
+        };
+        return LookupOrUserMultiFieldExpression;
+    })();
+
+    var LookupFieldExpression = (function () {
+        function LookupFieldExpression(builder, name) {
+            this.builder = builder;
+            this.name = name;
         }
         LookupFieldExpression.prototype.Id = function () {
             return new FieldExpressionToken(this.builder, this.name, "Integer", true);
         };
         LookupFieldExpression.prototype.Value = function () {
-            return new FieldExpressionToken(this.builder, this.name, this.valueType);
+            return new FieldExpressionToken(this.builder, this.name, "Lookup");
         };
         LookupFieldExpression.prototype.ValueAsText = function () {
             return new FieldExpressionToken(this.builder, this.name, "Text");
@@ -467,21 +643,6 @@ var CamlBuilder;
             this.builder.WriteBinaryOperation(this.startIndex, "Neq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
-        FieldExpressionToken.prototype.NotIncludes = function (value) {
-            if (value instanceof Date)
-                value = value.toISOString();
-            this.builder.WriteBinaryOperation(this.startIndex, "NotIncludes", this.valueType, value);
-            return new QueryToken(this.builder, this.startIndex);
-        };
-        FieldExpressionToken.prototype.Includes = function (value) {
-            if (value instanceof Date)
-                value = value.toISOString();
-
-            // Using Eq instead of Includes due to a notorious bug:
-            // if LookupMulti field points to DateTime target field, Includes causes exception
-            this.builder.WriteBinaryOperation(this.startIndex, "Eq", this.valueType, value);
-            return new QueryToken(this.builder, this.startIndex);
-        };
         FieldExpressionToken.prototype.Contains = function (value) {
             this.builder.WriteBinaryOperation(this.startIndex, "Contains", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
@@ -528,6 +689,10 @@ var CamlBuilder;
         GroupedQuery.prototype.ToString = function () {
             return this.builder.Finalize();
         };
+
+        GroupedQuery.prototype.ToCamlQuery = function () {
+            return this.builder.FinalizeToSPQuery();
+        };
         return GroupedQuery;
     })();
 
@@ -548,6 +713,10 @@ var CamlBuilder;
         SortedQuery.prototype.ToString = function () {
             return this.builder.Finalize();
         };
+
+        SortedQuery.prototype.ToCamlQuery = function () {
+            return this.builder.FinalizeToSPQuery();
+        };
         return SortedQuery;
     })();
 
@@ -556,8 +725,31 @@ var CamlBuilder;
             this.tree = new Array();
             this.unclosedTags = 0;
         }
-        Builder.prototype.WriteStart = function (tagName) {
-            this.tree.push({ Element: "Start", Name: tagName });
+        Builder.prototype.SetAttributeToLastElement = function (tagName, attributeName, attributeValue) {
+            for (var i = this.tree.length - 1; i >= 0; i--) {
+                if (this.tree[i].Element == "View") {
+                    this.tree[i].Attributes = this.tree[i].Attributes || [];
+                    this.tree[i].Attributes.push({ Name: attributeName, Value: attributeValue });
+                    return;
+                }
+            }
+            console.log("CamlJs ERROR: can't find element '" + tagName + "' in the tree while setting attribute " + attributeName + " to '" + attributeValue + "'!");
+        };
+        Builder.prototype.WriteRowLimit = function (paged, limit) {
+            if (paged)
+                this.tree.push({ Element: "Start", Name: "RowLimit", Attributes: [{ Name: "Paged", Value: "TRUE" }] });
+            else
+                this.tree.push({ Element: "Start", Name: "RowLimit" });
+
+            this.tree.push({ Element: "Raw", Xml: limit });
+
+            this.tree.push({ Element: "End" });
+        };
+        Builder.prototype.WriteStart = function (tagName, attributes) {
+            if (attributes)
+                this.tree.push({ Element: "Start", Name: tagName, Attributes: attributes });
+            else
+                this.tree.push({ Element: "Start", Name: tagName });
         };
         Builder.prototype.WriteEnd = function (count) {
             if (count > 0)
@@ -635,8 +827,8 @@ var CamlBuilder;
             this.unclosedTags++;
         };
         Builder.prototype.Finalize = function () {
-            var sb = new Sys.StringBuilder();
-            var writer = SP.XmlWriter.create(sb);
+            var sb = new window["Sys"].StringBuilder();
+            var writer = window["SP"].XmlWriter.create(sb);
             for (var i = 0; i < this.tree.length; i++) {
                 if (this.tree[i].Element == "FieldRef") {
                     writer.writeStartElement("FieldRef");
@@ -645,6 +837,11 @@ var CamlBuilder;
                         writer.writeAttributeString("LookupId", "True");
                     if (this.tree[i].Descending)
                         writer.writeAttributeString("Ascending", "False");
+                    for (var attr in this.tree[i]) {
+                        if (attr == "Element" || attr == "Name" || attr == "LookupId" || attr == "Descending")
+                            continue;
+                        writer.writeAttributeString(attr, this.tree[i][attr]);
+                    }
                     writer.writeEndElement();
                 } else if (this.tree[i].Element == "Start") {
                     writer.writeStartElement(this.tree[i].Name);
@@ -653,6 +850,8 @@ var CamlBuilder;
                             writer.writeAttributeString(this.tree[i].Attributes[a].Name, this.tree[i].Attributes[a].Value);
                         }
                     }
+                } else if (this.tree[i].Element == "Raw") {
+                    writer.writeRaw(this.tree[i].Xml);
                 } else if (this.tree[i].Element == "Value") {
                     writer.writeStartElement("Value");
                     if (this.tree[i].IncludeTimeValue === false)
@@ -686,6 +885,12 @@ var CamlBuilder;
             this.tree = new Array();
             writer.close();
             return sb.toString();
+        };
+        Builder.prototype.FinalizeToSPQuery = function () {
+            var camlWhere = this.Finalize();
+            var query = new window["SP"].CamlQuery();
+            query.set_viewXml("<View><Query>" + camlWhere + "</Query></View>");
+            return query;
         };
         return Builder;
     })();
@@ -749,3 +954,202 @@ var CamlBuilder;
     })();
     CamlBuilder.CamlValues = CamlValues;
 })(CamlBuilder || (CamlBuilder = {}));
+
+// -------------------- Dependencies ------------------
+if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
+    window["Sys"] = {};
+    window["Sys"].StringBuilder = function Sys$StringBuilder(initialText) {
+        this._parts = (typeof (initialText) !== 'undefined' && initialText !== null && initialText !== '') ? [initialText.toString()] : [];
+        this._value = {};
+        this._len = 0;
+    };
+
+    function Sys$StringBuilder$append(text) {
+        this._parts[this._parts.length] = text;
+    }
+    function Sys$StringBuilder$appendLine(text) {
+        this._parts[this._parts.length] = ((typeof (text) === 'undefined') || (text === null) || (text === '')) ? '\r\n' : text + '\r\n';
+    }
+    function Sys$StringBuilder$clear() {
+        this._parts = [];
+        this._value = {};
+        this._len = 0;
+    }
+    function Sys$StringBuilder$isEmpty() {
+        if (this._parts.length === 0)
+            return true;
+        return this.toString() === '';
+    }
+    function Sys$StringBuilder$toString(separator) {
+        separator = separator || '';
+        var parts = this._parts;
+        if (this._len !== parts.length) {
+            this._value = {};
+            this._len = parts.length;
+        }
+        var val = this._value;
+        if (typeof (val[separator]) === 'undefined') {
+            if (separator !== '') {
+                for (var i = 0; i < parts.length;) {
+                    if ((typeof (parts[i]) === 'undefined') || (parts[i] === '') || (parts[i] === null)) {
+                        parts.splice(i, 1);
+                    } else {
+                        i++;
+                    }
+                }
+            }
+            val[separator] = this._parts.join(separator);
+        }
+        return val[separator];
+    }
+
+    window["Sys"].StringBuilder.prototype = {
+        append: Sys$StringBuilder$append,
+        appendLine: Sys$StringBuilder$appendLine,
+        clear: Sys$StringBuilder$clear,
+        isEmpty: Sys$StringBuilder$isEmpty,
+        toString: Sys$StringBuilder$toString
+    };
+}
+
+if (typeof window["SP"]["XmlWriter"] == 'undefined') {
+    window["SP"] = {};
+    function SP_ScriptUtility$isNullOrEmptyString(str) {
+        var strNull = null;
+
+        return str === strNull || typeof str === 'undefined' || !str.length;
+    }
+    ;
+    window["SP"].XmlWriter = function SP_XmlWriter($p0) {
+        this.$f_0 = [];
+        this.$1_0 = $p0;
+        this.$V_0 = true;
+    };
+    window["SP"].XmlWriter.create = function SP_XmlWriter$create(sb) {
+        return new window["SP"].XmlWriter(sb);
+    };
+    window["SP"].XmlWriter.prototype = {
+        $1_0: null,
+        $11_0: null,
+        $V_0: false,
+        $k_0: false,
+        writeStartElement: function SP_XmlWriter$writeStartElement(tagName) {
+            this.$1R_0();
+            this.$1A_0();
+            this.$f_0.push(tagName);
+            this.$11_0 = tagName;
+            this.$1_0.append('<');
+            this.$1_0.append(tagName);
+            this.$V_0 = false;
+            this.$k_0 = false;
+        },
+        writeElementString: function SP_XmlWriter$writeElementString(tagName, value) {
+            this.$1R_0();
+            this.$1A_0();
+            this.writeStartElement(tagName);
+            this.writeString(value);
+            this.writeEndElement();
+        },
+        writeEndElement: function SP_XmlWriter$writeEndElement() {
+            this.$1R_0();
+            if (SP_ScriptUtility$isNullOrEmptyString(this.$11_0)) {
+                throw "Invalid operation";
+            }
+            if (!this.$V_0) {
+                this.$1_0.append(' />');
+                this.$V_0 = true;
+            } else {
+                this.$1_0.append('</');
+                this.$1_0.append(this.$11_0);
+                this.$1_0.append('>');
+            }
+            this.$f_0.pop();
+            if (this.$f_0.length > 0) {
+                this.$11_0 = this.$f_0[this.$f_0.length - 1];
+            } else {
+                this.$11_0 = null;
+            }
+        },
+        $1A_0: function SP_XmlWriter$$1A_0() {
+            if (!this.$V_0) {
+                this.$1_0.append('>');
+                this.$V_0 = true;
+            }
+        },
+        writeAttributeString: function SP_XmlWriter$writeAttributeString(localName, value) {
+            if (this.$V_0) {
+                throw "Invalid operation";
+            }
+            this.$1_0.append(' ');
+            this.$1_0.append(localName);
+            this.$1_0.append('=\"');
+            this.$1T_0(value, true);
+            this.$1_0.append('\"');
+        },
+        writeStartAttribute: function SP_XmlWriter$writeStartAttribute(localName) {
+            if (!this.$V_0) {
+                throw "Invalid operation";
+            }
+            this.$k_0 = true;
+            this.$1_0.append(' ');
+            this.$1_0.append(localName);
+            this.$1_0.append('=\"');
+        },
+        writeEndAttribute: function SP_XmlWriter$writeEndAttribute() {
+            if (!this.$k_0) {
+                throw "Invalid operation";
+            }
+            this.$1_0.append('\"');
+            this.$k_0 = false;
+        },
+        writeString: function SP_XmlWriter$writeString(value) {
+            if (this.$k_0) {
+                this.$1T_0(value, true);
+                this.$1_0.append(value);
+            } else {
+                this.$1A_0();
+                this.$1T_0(value, false);
+            }
+        },
+        writeRaw: function SP_XmlWriter$writeRaw(xml) {
+            this.$1R_0();
+            this.$1A_0();
+            this.$1_0.append(xml);
+        },
+        $1R_0: function SP_XmlWriter$$1R_0() {
+            if (this.$k_0) {
+                throw "Invalid operation";
+            }
+        },
+        $1T_0: function SP_XmlWriter$$1T_0($p0, $p1) {
+            if (SP_ScriptUtility$isNullOrEmptyString($p0)) {
+                return;
+            }
+            for (var $v_0 = 0; $v_0 < $p0.length; $v_0++) {
+                var $v_1 = $p0.charCodeAt($v_0);
+
+                if ($v_1 === 62) {
+                    this.$1_0.append('&gt;');
+                } else if ($v_1 === 60) {
+                    this.$1_0.append('&lt;');
+                } else if ($v_1 === 38) {
+                    this.$1_0.append('&amp;');
+                } else if ($v_1 === 34 && $p1) {
+                    this.$1_0.append('&quot;');
+                } else if ($v_1 === 39 && $p1) {
+                    this.$1_0.append('&apos;');
+                } else if ($v_1 === 9 && $p1) {
+                    this.$1_0.append('&#09;');
+                } else if ($v_1 === 10) {
+                    this.$1_0.append('&#10;');
+                } else if ($v_1 === 13) {
+                    this.$1_0.append('&#13;');
+                } else {
+                    this.$1_0.append(($p0.charAt($v_0)).toString());
+                }
+            }
+        },
+        close: function SP_XmlWriter$close() {
+        }
+    };
+}

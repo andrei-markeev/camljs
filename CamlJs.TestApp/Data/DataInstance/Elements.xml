@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Elements xmlns="http://schemas.microsoft.com/sharepoint/">
+  <ListInstance Title="Data" OnQuickLaunch="TRUE" TemplateType="100" Url="Lists/Data" Description="My List Instance">
+    <Data>
+      <Rows>
+        <Row>
+          <Field Name="Title">Afghanistan</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Albania</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Algeria</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Andorra</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Angola</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Antigua and Barbuda</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Argentina</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Armenia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Aruba</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Australia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Austria</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Azerbaijan</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Bahamas, The</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Bahrain</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Bangladesh</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Barbados</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Belarus</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Belgium</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Belize</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Benin</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Bhutan</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Bolivia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Bosnia and Herzegovina</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Botswana</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Brazil</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Brunei </Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Bulgaria</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Burkina Faso</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Burma</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Burundi</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Cambodia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Cameroon</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Canada</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Cape Verde</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Central African Republic</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Chad</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Chile</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">China</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Colombia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Comoros</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Congo, Democratic Republic of the</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Congo, Republic of the</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Costa Rica</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Cote d'Ivoire</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Croatia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Cuba</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Curacao</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Cyprus</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Czech Republic</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Denmark</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Djibouti</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Dominica</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Dominican Republic</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Ecuador</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Egypt</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">El Salvador</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Equatorial Guinea</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Eritrea</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Estonia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Ethiopia</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Fiji</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">Finland</Field>
+        </Row>
+        <Row>
+          <Field Name="Title">France</Field>
+        </Row>
+      </Rows>
+    </Data>
+  </ListInstance>
+</Elements>

@@ -84,14 +84,14 @@ var tsUnit;
                     }
                     list += '<li>' + result.testName + '<ul>';
                 }
-                list += '<li>' + result.funcName + '(): ' + this.encodeHtmlEntities(result.message) + '</li>';
+                list += '<li>' + result.funcName + '(): <pre>' + result.message + '</pre></li>';
             }
             return list + '</ul>';
         };
 
         Test.prototype.encodeHtmlEntities = function (input) {
             var entitiesToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
-            input.replace(/[&<>]/g, function (entity) {
+            input = input.replace(/[&<>]/g, function (entity) {
                 return entitiesToReplace[entity] || entity;
             });
             return input;
@@ -111,7 +111,10 @@ var tsUnit;
 
         TestContext.prototype.areIdentical = function (a, b) {
             if (a !== b) {
-                throw 'areIdentical failed when passed ' + '{' + (typeof a) + '} "' + a + '" and ' + '{' + (typeof b) + '} "' + b + '"';
+                if (typeof a == "string" && typeof b == "string" && window["jsDiff"] != null)
+                    throw window["jsDiff"].diffString(a, b);
+                else
+                    throw 'areIdentical failed when passed ' + '{' + (typeof a) + '} "' + a + '" and ' + '{' + (typeof b) + '} "' + b + '"';
             }
         };
 

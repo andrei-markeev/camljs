@@ -92,14 +92,14 @@
                     }
                     list += '<li>' + result.testName + '<ul>';
                 }
-                list += '<li>' + result.funcName + '(): ' + this.encodeHtmlEntities(result.message) + '</li>';
+                list += '<li>' + result.funcName + '(): <pre>' + result.message + '</pre></li>';
             }
             return list + '</ul>';
         }
 
         private encodeHtmlEntities(input: string) {
             var entitiesToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
-            input.replace(/[&<>]/g, function (entity) { return entitiesToReplace[entity] || entity; });
+            input = input.replace(/[&<>]/g, function (entity) { return entitiesToReplace[entity] || entity; });
             return input;
         }
     }
