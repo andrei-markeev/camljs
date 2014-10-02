@@ -1012,7 +1012,7 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
     };
 }
 
-if (typeof window["SP"]["XmlWriter"] == 'undefined') {
+if (typeof window["SP"] == 'undefined') {
     window["SP"] = {};
     function SP_ScriptUtility$isNullOrEmptyString(str) {
         var strNull = null;
@@ -1153,3 +1153,4 @@ if (typeof window["SP"]["XmlWriter"] == 'undefined') {
         }
     };
 }
+//# sourceMappingURL=camljs.js.map

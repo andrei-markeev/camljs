@@ -1,7 +1,6 @@
-"C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\tsc" --declaration CamlJs\camljs.ts
+"C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\tsc" --declaration CamlJs\camljs.ts --out camljs.d.ts
 copy CamlJs\camljs.js Nuget\content\Scripts
 copy CamlJs\camljs.js CamlJs.TestApp\Scripts
-copy CamlJs\camljs.d.ts CamlJs.TestApp\Scripts\typings\camljs
-copy CamlJs\camljs.d.ts ..\DefinitelyTyped\camljs
+copy camljs.d.ts ..\DefinitelyTyped\camljs
 copy CamlJs\camljs.js ..\camljs-console\Scripts\
-copy CamlJs\camljs.d.ts ..\camljs-console\Scripts\typings\camljs
+copy camljs.d.ts ..\camljs-console\Scripts\typings\camljs
