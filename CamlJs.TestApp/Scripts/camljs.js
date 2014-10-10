@@ -103,12 +103,16 @@ var CamlBuilder;
             switch (scope) {
                 case 2 /* FilesOnly */:
                     this.builder.SetAttributeToLastElement("View", "Scope", "FilesOnly");
+                    break;
                 case 0 /* Recursive */:
                     this.builder.SetAttributeToLastElement("View", "Scope", "Recursive");
+                    break;
                 case 1 /* RecursiveAll */:
                     this.builder.SetAttributeToLastElement("View", "Scope", "RecursiveAll");
+                    break;
                 default:
                     console.log('Incorrect view scope! Please use values from CamlBuilder.ViewScope enumeration.');
+                    break;
             }
             return this;
         };
