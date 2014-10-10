@@ -232,6 +232,20 @@ var Tests = (function (_super) {
                 </Query>\
             </View>'), vkbeautify.xml(query));
     };
+
+    Tests.prototype.TestScope = function () {
+        var query = new CamlBuilder().View().Scope(1 /* RecursiveAll */).Query().Where().NumberField("ID").IsNotNull().ToString();
+
+        this.areIdentical(vkbeautify.xml('<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <IsNotNull>\
+                            <FieldRef Name="ID" />\
+                        </IsNotNull>\
+                    </Where>\
+                </Query>\
+            </View>'), vkbeautify.xml(query));
+    };
     return Tests;
 })(tsUnit.TestClass);
 //# sourceMappingURL=Tests.js.map

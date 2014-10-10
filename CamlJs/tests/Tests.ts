@@ -319,5 +319,31 @@ class Tests extends tsUnit.TestClass {
 
     }
 
+    TestScope() {
+        var query = new CamlBuilder()
+            .View()
+            .Scope(CamlBuilder.ViewScope.RecursiveAll)
+            .Query()
+            .Where()
+            .NumberField("ID").IsNotNull()
+            .ToString();
+
+
+        this.areIdentical(
+            vkbeautify.xml(
+                '<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <IsNotNull>\
+                            <FieldRef Name="ID" />\
+                        </IsNotNull>\
+                    </Where>\
+                </Query>\
+            </View>'),
+            vkbeautify.xml(query)
+            );
+
+    }
+
 
 }

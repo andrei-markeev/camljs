@@ -389,7 +389,16 @@ module CamlBuilder {
             return this;
         }
         Scope(scope: ViewScope): IView {
-            this.builder.SetAttributeToLastElement("View", "Scope", scope.toString());
+            switch (scope) {
+                case ViewScope.FilesOnly:
+                    this.builder.SetAttributeToLastElement("View", "Scope", "FilesOnly");
+                case ViewScope.Recursive:
+                    this.builder.SetAttributeToLastElement("View", "Scope", "Recursive");
+                case ViewScope.RecursiveAll:
+                    this.builder.SetAttributeToLastElement("View", "Scope", "RecursiveAll");
+                default:
+                    console.log('Incorrect view scope! Please use values from CamlBuilder.ViewScope enumeration.');
+            }
             return this;
         }
         InnerJoin(lookupFieldInternalName: string, alias: string): IJoin {
@@ -445,32 +454,34 @@ module CamlBuilder {
         private originalView: ViewInternal;
  
         Finalize() {
-            this.builder.WriteStart("Joins");
-            for (var i = 0; i < this.joins.length; i++) {
-                var join = this.joins[i];
-                this.builder.WriteStart("Join", [
-                    { Name: "Type", Value: join.JoinType },
-                    { Name: "ListAlias", Value: join.Alias }
-                ]);
-                this.builder.WriteStart("Eq");
-                this.builder.WriteFieldRef(join.RefFieldName, { RefType: "ID" });
-                this.builder.WriteFieldRef("ID", { List: join.Alias });
+            if (this.joins.length > 0) {
+                this.builder.WriteStart("Joins");
+                for (var i = 0; i < this.joins.length; i++) {
+                    var join = this.joins[i];
+                    this.builder.WriteStart("Join", [
+                        { Name: "Type", Value: join.JoinType },
+                        { Name: "ListAlias", Value: join.Alias }
+                    ]);
+                    this.builder.WriteStart("Eq");
+                    this.builder.WriteFieldRef(join.RefFieldName, { RefType: "ID" });
+                    this.builder.WriteFieldRef("ID", { List: join.Alias });
+                    this.builder.WriteEnd();
+                    this.builder.WriteEnd();
+                }
                 this.builder.WriteEnd();
+                this.builder.WriteStart("ProjectedFields");
+                for (var i = 0; i < this.projectedFields.length; i++) {
+                    var projField = this.projectedFields[i];
+                    this.builder.WriteStart("Field", [
+                        { Name: "ShowField", Value: projField.FieldName },
+                        { Name: "Type", Value: "Lookup" },
+                        { Name: "Name", Value: projField.Alias },
+                        { Name: "List", Value: projField.JoinAlias }
+                    ]);
+                    this.builder.WriteEnd();
+                }
                 this.builder.WriteEnd();
             }
-            this.builder.WriteEnd();
-            this.builder.WriteStart("ProjectedFields");
-            for (var i = 0; i < this.projectedFields.length; i++) {
-                var projField = this.projectedFields[i];
-                this.builder.WriteStart("Field", [
-                    { Name: "ShowField", Value: projField.FieldName },
-                    { Name: "Type", Value: "Lookup" },
-                    { Name: "Name", Value: projField.Alias },
-                    { Name: "List", Value: projField.JoinAlias }
-                ]);
-                this.builder.WriteEnd();
-            }
-            this.builder.WriteEnd();
         }
         private joins: any[];
         private projectedFields: any[];
@@ -1024,7 +1035,7 @@ module CamlBuilder {
 
         SetAttributeToLastElement(tagName: string, attributeName: string, attributeValue: string) {
             for (var i = this.tree.length - 1; i >= 0; i--) {
-                if (this.tree[i].Element == "View") {
+                if (this.tree[i].Name == tagName) {
                     this.tree[i].Attributes = this.tree[i].Attributes || [];
                     this.tree[i].Attributes.push({Name: attributeName, Value: attributeValue})
                     return;
