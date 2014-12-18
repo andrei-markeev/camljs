@@ -1078,9 +1078,9 @@ module CamlBuilder {
         }
         WriteValueElement(valueType: string, value: any) {
             if (valueType == "Date")
-                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value, IncludeTimeValue: false });
+                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
             else
-                this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
+                this.tree.push({ Element: "Value", ValueType: valueType, Value: value, IncludeTimeValue: true });
         }
         WriteMembership(startIndex: number, type, groupId?: number) {
             var attributes = [{ Name: "Type", Value: type }];
@@ -1171,8 +1171,8 @@ module CamlBuilder {
                     writer.writeRaw(this.tree[i].Xml);
                 } else if (this.tree[i].Element == "Value") {
                     writer.writeStartElement("Value");
-                    if (this.tree[i].IncludeTimeValue === false)
-                        writer.writeAttributeString("IncludeTimeValue", "False");
+                    if (this.tree[i].IncludeTimeValue === true)
+                        writer.writeAttributeString("IncludeTimeValue", "True");
                     writer.writeAttributeString("Type", this.tree[i].ValueType);
                     var value = this.tree[i].Value.toString();
                     if (value.slice(0, 1) == "{" && value.slice(-1) == "}")
