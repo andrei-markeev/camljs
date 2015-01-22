@@ -133,7 +133,7 @@ var Tests = (function (_super) {
                     </In>\
                     <Gt>\
                       <FieldRef Name="ExpirationDate" />\
-                      <Value IncludeTimeValue="False" Type="DateTime">\
+                      <Value Type="DateTime">\
                         <Now />\
                       </Value>\
                     </Gt>\
@@ -165,7 +165,7 @@ var Tests = (function (_super) {
         this.areIdentical(vkbeautify.xml('<And>\
                 <Geq>\
                     <FieldRef Name="BroadcastExpires" />\
-                    <Value IncludeTimeValue="False" Type="DateTime">\
+                    <Value Type="DateTime">\
                         <Today />\
                     </Value>\
                 </Geq>\
@@ -197,7 +197,7 @@ var Tests = (function (_super) {
         this.areIdentical(vkbeautify.xml('<Where>\
                 <Gt>\
                     <FieldRef Name="Created" />\
-                    <Value Type="DateTime">2013-01-01T00:00:00.000Z</Value>\
+                    <Value IncludeTimeValue="True" Type="DateTime">2013-01-01T00:00:00.000Z</Value>\
                 </Gt>\
             </Where>'), vkbeautify.xml(caml));
     };

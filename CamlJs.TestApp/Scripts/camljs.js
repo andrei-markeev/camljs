@@ -13,6 +13,11 @@ var CamlBuilder = (function () {
         return CamlBuilder.Internal.createView(viewFields);
     };
 
+    /** Generate <ViewFields> tag for SPServices */
+    CamlBuilder.prototype.ViewFields = function (viewFields) {
+        return CamlBuilder.Internal.createViewFields(viewFields);
+    };
+
     /** Use for:
     1. SPServices CAMLQuery attribute
     2. Creating partial expressions
@@ -67,6 +72,9 @@ var CamlBuilder;
         Internal.createView = function (viewFields) {
             return new ViewInternal().View(viewFields);
         };
+        Internal.createViewFields = function (viewFields) {
+            return new ViewInternal().CreateViewFields(viewFields);
+        };
         Internal.createWhere = function () {
             return new QueryInternal().Where();
         };
@@ -85,14 +93,17 @@ var CamlBuilder;
         ViewInternal.prototype.View = function (viewFields) {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
-            if (viewFields && viewFields.length > 0) {
-                this.builder.WriteStart("ViewFields");
-                for (var i = 0; i < viewFields.length; i++) {
-                    this.builder.WriteFieldRef(viewFields[i]);
-                }
-                this.builder.WriteEnd();
-            }
+            if (viewFields && viewFields.length > 0)
+                this.CreateViewFields(viewFields);
             this.joinsManager = new JoinsManager(this.builder, this);
+            return this;
+        };
+        ViewInternal.prototype.CreateViewFields = function (viewFields) {
+            this.builder.WriteStart("ViewFields");
+            for (var i = 0; i < viewFields.length; i++) {
+                this.builder.WriteFieldRef(viewFields[i]);
+            }
+            this.builder.WriteEnd();
             return this;
         };
         ViewInternal.prototype.RowLimit = function (limit, paged) {
@@ -129,7 +140,8 @@ var CamlBuilder;
             return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
         };
         ViewInternal.prototype.ToString = function () {
-            this.joinsManager.Finalize();
+            if (this.joinsManager != null)
+                this.joinsManager.Finalize();
             return this.builder.Finalize();
         };
         ViewInternal.prototype.ToCamlQuery = function () {
@@ -388,7 +400,7 @@ var CamlBuilder;
                     break;
             }
 
-            this.builder.WriteValueElement("DateTime", value);
+            this.builder.WriteValueElement("Date", value);
             this.builder.WriteEnd();
 
             // TODO: write CalendarDate to QueryOptions
@@ -781,7 +793,9 @@ var CamlBuilder;
         };
         Builder.prototype.WriteValueElement = function (valueType, value) {
             if (valueType == "Date")
-                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value, IncludeTimeValue: false });
+                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
+            else if (valueType == "DateTime")
+                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value, IncludeTimeValue: true });
             else
                 this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
         };
@@ -869,8 +883,8 @@ var CamlBuilder;
                     writer.writeRaw(this.tree[i].Xml);
                 } else if (this.tree[i].Element == "Value") {
                     writer.writeStartElement("Value");
-                    if (this.tree[i].IncludeTimeValue === false)
-                        writer.writeAttributeString("IncludeTimeValue", "False");
+                    if (this.tree[i].IncludeTimeValue === true)
+                        writer.writeAttributeString("IncludeTimeValue", "True");
                     writer.writeAttributeString("Type", this.tree[i].ValueType);
                     var value = this.tree[i].Value.toString();
                     if (value.slice(0, 1) == "{" && value.slice(-1) == "}")

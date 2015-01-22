@@ -185,7 +185,7 @@ class Tests extends tsUnit.TestClass {
                     </In>\
                     <Gt>\
                       <FieldRef Name="ExpirationDate" />\
-                      <Value IncludeTimeValue="False" Type="DateTime">\
+                      <Value Type="DateTime">\
                         <Now />\
                       </Value>\
                     </Gt>\
@@ -234,7 +234,7 @@ class Tests extends tsUnit.TestClass {
             '<And>\
                 <Geq>\
                     <FieldRef Name="BroadcastExpires" />\
-                    <Value IncludeTimeValue="False" Type="DateTime">\
+                    <Value Type="DateTime">\
                         <Today />\
                     </Value>\
                 </Geq>\
@@ -269,7 +269,7 @@ class Tests extends tsUnit.TestClass {
                 '<Where>\
                 <Gt>\
                     <FieldRef Name="Created" />\
-                    <Value Type="DateTime">2013-01-01T00:00:00.000Z</Value>\
+                    <Value IncludeTimeValue="True" Type="DateTime">2013-01-01T00:00:00.000Z</Value>\
                 </Gt>\
             </Where>'),
             vkbeautify.xml(caml)

@@ -12,6 +12,11 @@ class CamlBuilder {
         return CamlBuilder.Internal.createView(viewFields);
     }
 
+    /** Generate <ViewFields> tag for SPServices */
+    ViewFields(viewFields: string[]): CamlBuilder.IFinalizableToString {
+        return CamlBuilder.Internal.createViewFields(viewFields);
+    }
+
     /** Use for:
         1. SPServices CAMLQuery attribute
         2. Creating partial expressions
@@ -62,9 +67,11 @@ module CamlBuilder {
     export interface IQuery {
         Where(): IFieldExpression;
     }
-    export interface IFinalizable {
+    export interface IFinalizableToString {
         /** Get the resulting CAML query as string */
         ToString(): string;
+    }
+    export interface IFinalizable extends IFinalizableToString {
         /** Get the resulting CAML query as SP.CamlQuery object */
         ToCamlQuery(): any;
     }
@@ -356,6 +363,9 @@ module CamlBuilder {
         static createView(viewFields?: string[]): IView {
             return new ViewInternal().View(viewFields);
         }
+        static createViewFields(viewFields: string[]): IFinalizableToString {
+            return new ViewInternal().CreateViewFields(viewFields);
+        }
         static createWhere(): IFieldExpression {
             return new QueryInternal().Where();
         }
@@ -374,14 +384,17 @@ module CamlBuilder {
         View(viewFields?: string[]): IView {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
-            if (viewFields && viewFields.length > 0) {
-                this.builder.WriteStart("ViewFields");
-                for (var i = 0; i < viewFields.length; i++) {
-                    this.builder.WriteFieldRef(viewFields[i]);
-                }
-                this.builder.WriteEnd();
-            }
+            if (viewFields && viewFields.length > 0)
+                this.CreateViewFields(viewFields);
             this.joinsManager = new JoinsManager(this.builder, this);
+            return this;
+        }
+        CreateViewFields(viewFields: string[]): IFinalizableToString {
+            this.builder.WriteStart("ViewFields");
+            for (var i = 0; i < viewFields.length; i++) {
+                this.builder.WriteFieldRef(viewFields[i]);
+            }
+            this.builder.WriteEnd();
             return this;
         }
         RowLimit(limit: number, paged?: boolean): IView {
@@ -417,7 +430,8 @@ module CamlBuilder {
             return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
         }
         ToString(): string {
-            this.joinsManager.Finalize();
+            if (this.joinsManager != null)
+                this.joinsManager.Finalize();
             return this.builder.Finalize();
         }
         ToCamlQuery(): any {
@@ -672,7 +686,7 @@ module CamlBuilder {
                     break;
             }
 
-            this.builder.WriteValueElement("DateTime", value);
+            this.builder.WriteValueElement("Date", value);
             this.builder.WriteEnd();
 
             // TODO: write CalendarDate to QueryOptions
@@ -1079,8 +1093,10 @@ module CamlBuilder {
         WriteValueElement(valueType: string, value: any) {
             if (valueType == "Date")
                 this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
+            else if (valueType == "DateTime")
+                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value, IncludeTimeValue: true });
             else
-                this.tree.push({ Element: "Value", ValueType: valueType, Value: value, IncludeTimeValue: true });
+                this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
         }
         WriteMembership(startIndex: number, type, groupId?: number) {
             var attributes = [{ Name: "Type", Value: type }];
