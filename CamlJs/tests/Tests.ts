@@ -163,6 +163,29 @@ class Tests extends tsUnit.TestClass {
 
     }
 
+    TestViewWithExpression() {
+
+        var expression = CamlBuilder.Expression().BooleanField("Enabled").IsTrue();
+
+        var caml = new CamlBuilder().View().Query().Where().All(expression).OrderBy("Priority").ToString();
+
+        this.areIdentical(
+            vkbeautify.xml(
+                '<View>\
+                    <Query>\
+                        <Where>\
+                            <Eq><FieldRef Name="Enabled" /><Value Type="Integer">1</Value></Eq>\
+                        </Where>\
+                        <OrderBy>\
+                            <FieldRef Name="Priority" />\
+                        </OrderBy>\
+                    </Query>\
+                </View>'),
+            vkbeautify.xml(caml)
+            );
+
+    }
+
     TestLookupIdAndOrderBy() {
         var caml = new CamlBuilder().Where()
             .LookupField("Category").Id().In([2, 3, 10])

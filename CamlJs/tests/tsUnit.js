@@ -1,4 +1,4 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -12,10 +12,9 @@ var tsUnit;
             this.testClass = new TestClass();
         }
         Test.prototype.addTestClass = function (testClass, name) {
-            if (typeof name === "undefined") { name = 'Tests'; }
+            if (name === void 0) { name = 'Tests'; }
             this.tests.push(new TestDefintion(testClass, name));
         };
-
         Test.prototype.isReservedFunctionName = function (functionName) {
             for (var prop in this.testClass) {
                 if (prop === functionName) {
@@ -24,11 +23,9 @@ var tsUnit;
             }
             return false;
         };
-
         Test.prototype.run = function () {
             var testContext = new TestContext();
             var testResult = new TestResult();
-
             for (var i = 0; i < this.tests.length; ++i) {
                 var testClass = this.tests[i].testClass;
                 var testName = this.tests[i].name;
@@ -38,10 +35,11 @@ var tsUnit;
                             if (typeof testClass['setUp'] === 'function') {
                                 testClass['setUp']();
                             }
-                            try  {
+                            try {
                                 testClass[prop](testContext);
                                 testResult.passes.push(new TestDescription(testName, prop, 'OK'));
-                            } catch (err) {
+                            }
+                            catch (err) {
                                 testResult.errors.push(new TestDescription(testName, prop, err));
                             }
                             if (typeof testClass['tearDown'] === 'function') {
@@ -51,24 +49,18 @@ var tsUnit;
                     }
                 }
             }
-
             return testResult;
         };
-
         Test.prototype.showResults = function (target, result) {
             var template = '<article>' + '<h1>' + this.getTestResult(result) + '</h1>' + '<p>' + this.getTestSummary(result) + '</p>' + '<section id="tsFail">' + '<h2>Errors</h2>' + '<ul class="bad">' + this.getTestResultList(result.errors) + '</ul>' + '</section>' + '<section id="tsOkay">' + '<h2>Passing Tests</h2>' + '<ul class="good">' + this.getTestResultList(result.passes) + '</ul>' + '</section>' + '</article>';
-
             target.innerHTML = template;
         };
-
         Test.prototype.getTestResult = function (result) {
             return result.errors.length === 0 ? 'Test Passed' : 'Test Failed';
         };
-
         Test.prototype.getTestSummary = function (result) {
             return 'Total tests: <span id="tsUnitTotalCout">' + (result.passes.length + result.errors.length).toString() + '</span>. ' + 'Passed tests: <span id="tsUnitPassCount" class="good">' + result.passes.length + '</span>. ' + 'Failed tests: <span id="tsUnitFailCount" class="bad">' + result.errors.length + '</span>.';
         };
-
         Test.prototype.getTestResultList = function (testResults) {
             var list = '';
             var group = '';
@@ -79,7 +71,8 @@ var tsUnit;
                     group = result.testName;
                     if (isFirst) {
                         isFirst = false;
-                    } else {
+                    }
+                    else {
                         list += '</li></ul>';
                     }
                     list += '<li>' + result.testName + '<ul>';
@@ -88,7 +81,6 @@ var tsUnit;
             }
             return list + '</ul>';
         };
-
         Test.prototype.encodeHtmlEntities = function (input) {
             var entitiesToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
             input = input.replace(/[&<>]/g, function (entity) {
@@ -99,16 +91,13 @@ var tsUnit;
         return Test;
     })();
     tsUnit.Test = Test;
-
     var TestContext = (function () {
         function TestContext() {
         }
         TestContext.prototype.setUp = function () {
         };
-
         TestContext.prototype.tearDown = function () {
         };
-
         TestContext.prototype.areIdentical = function (a, b) {
             if (a !== b) {
                 if (typeof a == "string" && typeof b == "string" && window["jsDiff"] != null)
@@ -117,56 +106,49 @@ var tsUnit;
                     throw 'areIdentical failed when passed ' + '{' + (typeof a) + '} "' + a + '" and ' + '{' + (typeof b) + '} "' + b + '"';
             }
         };
-
         TestContext.prototype.areNotIdentical = function (a, b) {
             if (a === b) {
                 throw 'areNotIdentical failed when passed ' + '{' + (typeof a) + '} "' + a + '" and ' + '{' + (typeof b) + '} "' + b + '"';
             }
         };
-
         TestContext.prototype.isTrue = function (a) {
             if (!a) {
                 throw 'isTrue failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
             }
         };
-
         TestContext.prototype.isFalse = function (a) {
             if (a) {
                 throw 'isFalse failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
             }
         };
-
         TestContext.prototype.isTruthy = function (a) {
             if (!a) {
                 throw 'isTrue failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
             }
         };
-
         TestContext.prototype.isFalsey = function (a) {
             if (a) {
                 throw 'isFalse failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
             }
         };
-
         TestContext.prototype.throws = function (a) {
             var isThrown = false;
-            try  {
+            try {
                 a();
-            } catch (ex) {
+            }
+            catch (ex) {
                 isThrown = true;
             }
             if (!isThrown) {
                 throw 'did not throw an error';
             }
         };
-
         TestContext.prototype.fail = function () {
             throw 'fail';
         };
         return TestContext;
     })();
     tsUnit.TestContext = TestContext;
-
     var TestClass = (function (_super) {
         __extends(TestClass, _super);
         function TestClass() {
@@ -175,7 +157,6 @@ var tsUnit;
         return TestClass;
     })(TestContext);
     tsUnit.TestClass = TestClass;
-
     var FakeFunction = (function () {
         function FakeFunction(name, delgate) {
             this.name = name;
@@ -184,14 +165,14 @@ var tsUnit;
         return FakeFunction;
     })();
     tsUnit.FakeFunction = FakeFunction;
-
     var Fake = (function () {
         function Fake(obj) {
             for (var prop in obj) {
                 if (typeof obj[prop] === 'function') {
                     this[prop] = function () {
                     };
-                } else {
+                }
+                else {
                     this[prop] = null;
                 }
             }
@@ -199,18 +180,15 @@ var tsUnit;
         Fake.prototype.create = function () {
             return this;
         };
-
         Fake.prototype.addFunction = function (name, delegate) {
             this[name] = delegate;
         };
-
         Fake.prototype.addProperty = function (name, value) {
             this[name] = value;
         };
         return Fake;
     })();
     tsUnit.Fake = Fake;
-
     var TestDefintion = (function () {
         function TestDefintion(testClass, name) {
             this.testClass = testClass;
@@ -218,7 +196,6 @@ var tsUnit;
         }
         return TestDefintion;
     })();
-
     var TestError = (function () {
         function TestError(name, message) {
             this.name = name;
@@ -226,7 +203,6 @@ var tsUnit;
         }
         return TestError;
     })();
-
     var TestDescription = (function () {
         function TestDescription(testName, funcName, message) {
             this.testName = testName;
@@ -236,7 +212,6 @@ var tsUnit;
         return TestDescription;
     })();
     tsUnit.TestDescription = TestDescription;
-
     var TestResult = (function () {
         function TestResult() {
             this.passes = [];
