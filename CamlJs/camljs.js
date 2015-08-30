@@ -150,6 +150,42 @@ var CamlBuilder;
             this.builder.unclosedTags++;
             return new FieldExpression(this.builder);
         };
+
+        /** Adds GroupBy clause to the query.
+        @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
+        QueryInternal.prototype.GroupBy = function (groupFieldName, collapse) {
+            this.builder.WriteStartGroupBy(groupFieldName, collapse);
+            return new GroupedQuery(this.builder);
+        };
+
+        /** Adds OrderBy clause to the query
+        @param fieldInternalName Internal field of the first field by that the data will be sorted (ascending)
+        @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
+        @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
+        */
+        QueryInternal.prototype.OrderBy = function (fieldInternalName, override, useIndexForOrderBy) {
+            this.builder.WriteStartOrderBy(override, useIndexForOrderBy);
+            this.builder.WriteFieldRef(fieldInternalName);
+            return new SortedQuery(this.builder);
+        };
+
+        /** Adds OrderBy clause to the query (using descending order for the first field).
+        @param fieldInternalName Internal field of the first field by that the data will be sorted (descending)
+        @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
+        @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
+        */
+        QueryInternal.prototype.OrderByDesc = function (fieldInternalName, override, useIndexForOrderBy) {
+            this.builder.WriteStartOrderBy(override, useIndexForOrderBy);
+            this.builder.WriteFieldRef(fieldInternalName, { Descending: true });
+            return new SortedQuery(this.builder);
+        };
+
+        QueryInternal.prototype.ToString = function () {
+            return this.builder.Finalize();
+        };
+        QueryInternal.prototype.ToCamlQuery = function () {
+            return this.builder.FinalizeToSPQuery();
+        };
         return QueryInternal;
     })();
     var JoinsManager = (function () {

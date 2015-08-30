@@ -64,7 +64,7 @@ module CamlBuilder {
         /**  */
         FilesOnly
     }
-    export interface IQuery {
+    export interface IQuery extends IGroupable {
         Where(): IFieldExpression;
     }
     export interface IFinalizableToString {
@@ -459,6 +459,42 @@ module CamlBuilder {
             this.builder.WriteStart("Where");
             this.builder.unclosedTags++;
             return new FieldExpression(this.builder);
+        }
+
+        /** Adds GroupBy clause to the query.
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
+        GroupBy(groupFieldName: string, collapse?: boolean) {
+            this.builder.WriteStartGroupBy(groupFieldName, collapse);
+            return new GroupedQuery(this.builder);
+        }
+
+        /** Adds OrderBy clause to the query
+            @param fieldInternalName Internal field of the first field by that the data will be sorted (ascending)
+            @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
+            @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
+        */
+        OrderBy(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
+            this.builder.WriteStartOrderBy(override, useIndexForOrderBy);
+            this.builder.WriteFieldRef(fieldInternalName);
+            return new SortedQuery(this.builder);
+        }
+
+        /** Adds OrderBy clause to the query (using descending order for the first field).
+            @param fieldInternalName Internal field of the first field by that the data will be sorted (descending)
+            @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
+            @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
+        */
+        OrderByDesc(fieldInternalName: string, override?: boolean, useIndexForOrderBy?: boolean) {
+            this.builder.WriteStartOrderBy(override, useIndexForOrderBy);
+            this.builder.WriteFieldRef(fieldInternalName, { Descending: true });
+            return new SortedQuery(this.builder);
+        }
+
+        ToString(): string {
+            return this.builder.Finalize();
+        }
+        ToCamlQuery(): any {
+            return this.builder.FinalizeToSPQuery();
         }
     }
     class JoinsManager {
