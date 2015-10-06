@@ -25,6 +25,10 @@ class CamlBuilder {
     static Expression(): CamlBuilder.IFieldExpression {
         return CamlBuilder.Internal.createExpression();
     }
+
+    static FromXml(xml: string): CamlBuilder.IRawQuery {
+        return CamlBuilder.Internal.createRawQuery(xml);
+    }
 }
 
 module CamlBuilder {
@@ -345,6 +349,11 @@ module CamlBuilder {
         NotEqualTo(value): IExpression;
     }
 
+    export interface IRawQuery {
+        /** Replace Where clause with a new one */
+        ReplaceWhere(): IFieldExpression;
+    }
+
     export enum DateRangesOverlapType {
         /** Returns events for today */
         Now,
@@ -371,6 +380,9 @@ module CamlBuilder {
         }
         static createExpression(): IFieldExpression {
             return new FieldExpression(new Builder());
+        }
+        static createRawQuery(xml: string): IRawQuery {
+            return new RawQueryInternal(xml);
         }
     }
 
@@ -630,6 +642,57 @@ module CamlBuilder {
             return this.builder.FinalizeToSPQuery();
         }
 
+    }
+
+    class RawQueryInternal implements IRawQuery {
+        constructor(xml: string) {
+            this.xml = xml;
+        }
+        private xml: string;
+
+        ReplaceWhere(): IFieldExpression {
+            var builder = new Builder();
+            var xmlDoc: Document;
+            if (window["DOMParser"]) {
+                var parser = new DOMParser();
+                xmlDoc = parser.parseFromString(this.xml, "text/xml");
+            }
+            else // Internet Explorer
+            {
+                xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+                xmlDoc["async"] = false;
+                xmlDoc["loadXML"](this.xml);
+            }
+            var found = this.parseRecursive(builder, xmlDoc.documentElement);
+            if (!found)
+                console.log("CamlJs error: incorrect XML, cannot find Where tag")
+            builder.WriteStart("Where");
+            builder.unclosedTags++;
+            return new FieldExpression(builder);
+        }
+
+        private parseRecursive(builder: Builder, node: Node): boolean {
+            var attrs = [];
+            for (var i = 0, len = node.attributes.length; i < len; i++) {
+                attrs.push({ Name: node.attributes[i].name, Value: node.attributes[i].value });
+            }
+            builder.WriteStart(node.nodeName, attrs);
+            builder.unclosedTags++;
+            var found = (node.nodeName == "Query");
+            for (var i = 0, len = node.childNodes.length; i < len; i++) {
+                if (node.nodeName == "Query" && node.childNodes[i].nodeName == "Where")
+                    continue;
+                if (node.childNodes[i].nodeName == "#text")
+                    continue;
+
+                found = found || this.parseRecursive(builder, node.childNodes[i]);
+            }
+            if (!found) {
+                builder.unclosedTags--;
+                builder.WriteEnd();
+            }
+            return found;
+        }
     }
 
     class FieldExpression implements IFieldExpression {
@@ -1193,7 +1256,7 @@ module CamlBuilder {
             this.unclosedTags++;
 
         }
-        Finalize() {
+        Finalize(): string {
             var sb = new window["Sys"].StringBuilder();
             var writer = window["SP"].XmlWriter.create(sb);
             for (var i = 0; i < this.tree.length; i++) {
@@ -1256,9 +1319,11 @@ module CamlBuilder {
             return sb.toString();
         }
         FinalizeToSPQuery() {
-            var camlWhere = this.Finalize();
+            var camlQuery = this.Finalize();
+            if (camlQuery.indexOf("<View") != 0)
+                camlQuery = "<View><Query>" + camlQuery + "</Query></View>";
             var query = new window["SP"].CamlQuery();
-            query.set_viewXml("<View><Query>" + camlWhere + "</Query></View>");
+            query.set_viewXml(camlQuery);
             return query;
         }
     }

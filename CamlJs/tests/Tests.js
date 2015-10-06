@@ -1,6 +1,6 @@
 /// <reference path="../camljs.ts" />
 /// <reference path="tsUnit.ts" />
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -14,7 +14,9 @@ var Tests = (function (_super) {
         _super.apply(this, arguments);
     }
     Tests.prototype.TestAny = function () {
-        var caml = new CamlBuilder().Where().Any(CamlBuilder.Expression().TextField("Email").EqualTo("support@google.com"), CamlBuilder.Expression().TextField("Email").EqualTo("plus@google.com"), CamlBuilder.Expression().TextField("Title").BeginsWith("[Google]"), CamlBuilder.Expression().TextField("Content").Contains("Google")).ToString();
+        var caml = new CamlBuilder().Where()
+            .Any(CamlBuilder.Expression().TextField("Email").EqualTo("support@google.com"), CamlBuilder.Expression().TextField("Email").EqualTo("plus@google.com"), CamlBuilder.Expression().TextField("Title").BeginsWith("[Google]"), CamlBuilder.Expression().TextField("Content").Contains("Google"))
+            .ToString();
         this.areIdentical(vkbeautify.xml('<Where>\
                     <Or>\
                         <Eq><FieldRef Name="Email" /><Value Type="Text">support@google.com</Value></Eq>\
@@ -29,7 +31,13 @@ var Tests = (function (_super) {
                 </Where>'), vkbeautify.xml(caml));
     };
     Tests.prototype.TestMembership = function () {
-        var caml = new CamlBuilder().Where().UserField("AssignedTo").EqualToCurrentUser().Or().UserField("AssignedTo").Membership.CurrentUserGroups().GroupBy("Category").OrderBy("Priority").ThenBy("Title").ToString();
+        var caml = new CamlBuilder().Where()
+            .UserField("AssignedTo").EqualToCurrentUser()
+            .Or()
+            .UserField("AssignedTo").Membership.CurrentUserGroups()
+            .GroupBy("Category")
+            .OrderBy("Priority").ThenBy("Title")
+            .ToString();
         this.areIdentical(vkbeautify.xml('<Where>\
                     <Or>\
                         <Eq><FieldRef Name="AssignedTo" LookupId="True" /><Value Type="Integer"><UserID /></Value></Eq>\
@@ -54,7 +62,9 @@ var Tests = (function (_super) {
         for (var i = 0; i < purposes.length; i++) {
             purposesExpressions.push(CamlBuilder.Expression().TextField("ContentPurpose").EqualTo(purposes[i]));
         }
-        var caml = new CamlBuilder().Where().All(CamlBuilder.Expression().Any(categoriesExpressions), CamlBuilder.Expression().Any(purposesExpressions)).ToString();
+        var caml = new CamlBuilder().Where()
+            .All(CamlBuilder.Expression().Any(categoriesExpressions), CamlBuilder.Expression().Any(purposesExpressions))
+            .ToString();
         this.areIdentical(vkbeautify.xml('<Where>\
                     <And>\
                         <Or>\
@@ -87,7 +97,9 @@ var Tests = (function (_super) {
                 </Where>'), vkbeautify.xml(caml));
     };
     Tests.prototype.TestNestedBracketExpressions = function () {
-        var caml = new CamlBuilder().Where().All(CamlBuilder.Expression().All(CamlBuilder.Expression().BooleanField("Enabled").IsTrue(), CamlBuilder.Expression().UserMultiField("TargetAudience").EqualTo("55").Or().UserMultiField("TargetAudience").EqualTo("66")), CamlBuilder.Expression().Any(CamlBuilder.Expression().TextField("NotificationScope").EqualTo("77"), CamlBuilder.Expression().TextField("NotificationScope").EqualTo("88").And().TextField("ScopeWebRelativeUrl").EqualTo("99"))).ToString();
+        var caml = new CamlBuilder().Where()
+            .All(CamlBuilder.Expression().All(CamlBuilder.Expression().BooleanField("Enabled").IsTrue(), CamlBuilder.Expression().UserMultiField("TargetAudience").EqualTo("55").Or().UserMultiField("TargetAudience").EqualTo("66")), CamlBuilder.Expression().Any(CamlBuilder.Expression().TextField("NotificationScope").EqualTo("77"), CamlBuilder.Expression().TextField("NotificationScope").EqualTo("88").And().TextField("ScopeWebRelativeUrl").EqualTo("99")))
+            .ToString();
         this.areIdentical(vkbeautify.xml('<Where>\
                     <And>\
                         <And>\
@@ -122,7 +134,12 @@ var Tests = (function (_super) {
                 </View>'), vkbeautify.xml(caml));
     };
     Tests.prototype.TestLookupIdAndOrderBy = function () {
-        var caml = new CamlBuilder().Where().LookupField("Category").Id().In([2, 3, 10]).And().DateField("ExpirationDate").GreaterThan(CamlBuilder.CamlValues.Now).OrderBy("ExpirationDate").ToString();
+        var caml = new CamlBuilder().Where()
+            .LookupField("Category").Id().In([2, 3, 10])
+            .And()
+            .DateField("ExpirationDate").GreaterThan(CamlBuilder.CamlValues.Now)
+            .OrderBy("ExpirationDate")
+            .ToString();
         this.areIdentical(vkbeautify.xml('<Where>\
                   <And>\
                     <In>\
@@ -159,7 +176,9 @@ var Tests = (function (_super) {
             </Where>'), vkbeautify.xml(caml));
     };
     Tests.prototype.TestDateRangesOverlap = function () {
-        var caml = CamlBuilder.Expression().All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(CamlBuilder.DateRangesOverlapType.Year, new Date().toISOString())).ToString();
+        var caml = CamlBuilder.Expression()
+            .All(CamlBuilder.Expression().DateField("BroadcastExpires").GreaterThanOrEqualTo(CamlBuilder.CamlValues.Today), CamlBuilder.Expression().Any(CamlBuilder.Expression().UserField("BroadcastTo").IsInCurrentUserGroups(), CamlBuilder.Expression().UserField("BroadcastTo").EqualToCurrentUser()), CamlBuilder.Expression().DateRangesOverlap(CamlBuilder.DateRangesOverlapType.Year, new Date().toISOString()))
+            .ToString();
         this.areIdentical(vkbeautify.xml('<And>\
                 <Geq>\
                     <FieldRef Name="BroadcastExpires" />\
@@ -198,7 +217,13 @@ var Tests = (function (_super) {
             </Where>'), vkbeautify.xml(caml));
     };
     Tests.prototype.TestJoins = function () {
-        var query = new CamlBuilder().View(["Title", "Country", "Population"]).LeftJoin("Country", "Country").Select("y4r6", "Population").Query().Where().NumberField("Population").LessThan(10).ToString();
+        var query = new CamlBuilder()
+            .View(["Title", "Country", "Population"])
+            .LeftJoin("Country", "Country").Select("y4r6", "Population")
+            .Query()
+            .Where()
+            .NumberField("Population").LessThan(10)
+            .ToString();
         this.areIdentical(vkbeautify.xml('<View>\
                 <ViewFields>\
                     <FieldRef Name="Title" />\
@@ -227,12 +252,39 @@ var Tests = (function (_super) {
             </View>'), vkbeautify.xml(query));
     };
     Tests.prototype.TestScope = function () {
-        var query = new CamlBuilder().View().Scope(CamlBuilder.ViewScope.RecursiveAll).Query().Where().NumberField("ID").IsNotNull().ToString();
+        var query = new CamlBuilder()
+            .View()
+            .Scope(CamlBuilder.ViewScope.RecursiveAll)
+            .Query()
+            .Where()
+            .NumberField("ID").IsNotNull()
+            .ToString();
         this.areIdentical(vkbeautify.xml('<View Scope="RecursiveAll">\
                 <Query>\
                     <Where>\
                         <IsNotNull>\
                             <FieldRef Name="ID" />\
+                        </IsNotNull>\
+                    </Where>\
+                </Query>\
+            </View>'), vkbeautify.xml(query));
+    };
+    Tests.prototype.TestReplaceWhere = function () {
+        var rawQuery = '<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <IsNotNull>\
+                            <FieldRef Name="ID" />\
+                        </IsNotNull>\
+                    </Where>\
+                </Query>\
+            </View>';
+        var query = CamlBuilder.FromXml(rawQuery).ReplaceWhere().TextField("Title").IsNotNull().ToString();
+        this.areIdentical(vkbeautify.xml('<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <IsNotNull>\
+                            <FieldRef Name="Title" />\
                         </IsNotNull>\
                     </Where>\
                 </Query>\

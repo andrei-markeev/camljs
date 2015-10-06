@@ -1,4 +1,4 @@
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -52,14 +52,27 @@ var tsUnit;
             return testResult;
         };
         Test.prototype.showResults = function (target, result) {
-            var template = '<article>' + '<h1>' + this.getTestResult(result) + '</h1>' + '<p>' + this.getTestSummary(result) + '</p>' + '<section id="tsFail">' + '<h2>Errors</h2>' + '<ul class="bad">' + this.getTestResultList(result.errors) + '</ul>' + '</section>' + '<section id="tsOkay">' + '<h2>Passing Tests</h2>' + '<ul class="good">' + this.getTestResultList(result.passes) + '</ul>' + '</section>' + '</article>';
+            var template = '<article>' +
+                '<h1>' + this.getTestResult(result) + '</h1>' +
+                '<p>' + this.getTestSummary(result) + '</p>' +
+                '<section id="tsFail">' +
+                '<h2>Errors</h2>' +
+                '<ul class="bad">' + this.getTestResultList(result.errors) + '</ul>' +
+                '</section>' +
+                '<section id="tsOkay">' +
+                '<h2>Passing Tests</h2>' +
+                '<ul class="good">' + this.getTestResultList(result.passes) + '</ul>' +
+                '</section>' +
+                '</article>';
             target.innerHTML = template;
         };
         Test.prototype.getTestResult = function (result) {
             return result.errors.length === 0 ? 'Test Passed' : 'Test Failed';
         };
         Test.prototype.getTestSummary = function (result) {
-            return 'Total tests: <span id="tsUnitTotalCout">' + (result.passes.length + result.errors.length).toString() + '</span>. ' + 'Passed tests: <span id="tsUnitPassCount" class="good">' + result.passes.length + '</span>. ' + 'Failed tests: <span id="tsUnitFailCount" class="bad">' + result.errors.length + '</span>.';
+            return 'Total tests: <span id="tsUnitTotalCout">' + (result.passes.length + result.errors.length).toString() + '</span>. ' +
+                'Passed tests: <span id="tsUnitPassCount" class="good">' + result.passes.length + '</span>. ' +
+                'Failed tests: <span id="tsUnitFailCount" class="bad">' + result.errors.length + '</span>.';
         };
         Test.prototype.getTestResultList = function (testResults) {
             var list = '';
@@ -83,9 +96,7 @@ var tsUnit;
         };
         Test.prototype.encodeHtmlEntities = function (input) {
             var entitiesToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
-            input = input.replace(/[&<>]/g, function (entity) {
-                return entitiesToReplace[entity] || entity;
-            });
+            input = input.replace(/[&<>]/g, function (entity) { return entitiesToReplace[entity] || entity; });
             return input;
         };
         return Test;
@@ -103,32 +114,40 @@ var tsUnit;
                 if (typeof a == "string" && typeof b == "string" && window["jsDiff"] != null)
                     throw window["jsDiff"].diffString(a, b);
                 else
-                    throw 'areIdentical failed when passed ' + '{' + (typeof a) + '} "' + a + '" and ' + '{' + (typeof b) + '} "' + b + '"';
+                    throw 'areIdentical failed when passed ' +
+                        '{' + (typeof a) + '} "' + a + '" and ' +
+                        '{' + (typeof b) + '} "' + b + '"';
             }
         };
         TestContext.prototype.areNotIdentical = function (a, b) {
             if (a === b) {
-                throw 'areNotIdentical failed when passed ' + '{' + (typeof a) + '} "' + a + '" and ' + '{' + (typeof b) + '} "' + b + '"';
+                throw 'areNotIdentical failed when passed ' +
+                    '{' + (typeof a) + '} "' + a + '" and ' +
+                    '{' + (typeof b) + '} "' + b + '"';
             }
         };
         TestContext.prototype.isTrue = function (a) {
             if (!a) {
-                throw 'isTrue failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
+                throw 'isTrue failed when passed ' +
+                    '{' + (typeof a) + '} "' + a + '"';
             }
         };
         TestContext.prototype.isFalse = function (a) {
             if (a) {
-                throw 'isFalse failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
+                throw 'isFalse failed when passed ' +
+                    '{' + (typeof a) + '} "' + a + '"';
             }
         };
         TestContext.prototype.isTruthy = function (a) {
             if (!a) {
-                throw 'isTrue failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
+                throw 'isTrue failed when passed ' +
+                    '{' + (typeof a) + '} "' + a + '"';
             }
         };
         TestContext.prototype.isFalsey = function (a) {
             if (a) {
-                throw 'isFalse failed when passed ' + '{' + (typeof a) + '} "' + a + '"';
+                throw 'isFalse failed when passed ' +
+                    '{' + (typeof a) + '} "' + a + '"';
             }
         };
         TestContext.prototype.throws = function (a) {
@@ -169,8 +188,7 @@ var tsUnit;
         function Fake(obj) {
             for (var prop in obj) {
                 if (typeof obj[prop] === 'function') {
-                    this[prop] = function () {
-                    };
+                    this[prop] = function () { };
                 }
                 else {
                     this[prop] = null;

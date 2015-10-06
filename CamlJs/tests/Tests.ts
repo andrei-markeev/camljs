@@ -369,4 +369,33 @@ class Tests extends tsUnit.TestClass {
     }
 
 
+    TestReplaceWhere() {
+        var rawQuery = '<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <IsNotNull>\
+                            <FieldRef Name="ID" />\
+                        </IsNotNull>\
+                    </Where>\
+                </Query>\
+            </View>';
+
+        var query = CamlBuilder.FromXml(rawQuery).ReplaceWhere().TextField("Title").IsNotNull().ToString();
+
+        this.areIdentical(
+            vkbeautify.xml('<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <IsNotNull>\
+                            <FieldRef Name="Title" />\
+                        </IsNotNull>\
+                    </Where>\
+                </Query>\
+            </View>'),
+            vkbeautify.xml(query)
+            );
+
+    }
+
+
 }

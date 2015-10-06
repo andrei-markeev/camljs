@@ -23,6 +23,9 @@ var CamlBuilder = (function () {
     CamlBuilder.Expression = function () {
         return CamlBuilder.Internal.createExpression();
     };
+    CamlBuilder.FromXml = function (xml) {
+        return CamlBuilder.Internal.createRawQuery(xml);
+    };
     return CamlBuilder;
 })();
 var CamlBuilder;
@@ -65,6 +68,9 @@ var CamlBuilder;
         Internal.createExpression = function () {
             return new FieldExpression(new Builder());
         };
+        Internal.createRawQuery = function (xml) {
+            return new RawQueryInternal(xml);
+        };
         return Internal;
     })();
     CamlBuilder.Internal = Internal;
@@ -95,13 +101,13 @@ var CamlBuilder;
         };
         ViewInternal.prototype.Scope = function (scope) {
             switch (scope) {
-                case 2 /* FilesOnly */:
+                case ViewScope.FilesOnly:
                     this.builder.SetAttributeToLastElement("View", "Scope", "FilesOnly");
                     break;
-                case 0 /* Recursive */:
+                case ViewScope.Recursive:
                     this.builder.SetAttributeToLastElement("View", "Scope", "Recursive");
                     break;
-                case 1 /* RecursiveAll */:
+                case ViewScope.RecursiveAll:
                     this.builder.SetAttributeToLastElement("View", "Scope", "RecursiveAll");
                     break;
                 default:
@@ -150,36 +156,32 @@ var CamlBuilder;
             this.builder.unclosedTags++;
             return new FieldExpression(this.builder);
         };
-
         /** Adds GroupBy clause to the query.
-        @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
         QueryInternal.prototype.GroupBy = function (groupFieldName, collapse) {
             this.builder.WriteStartGroupBy(groupFieldName, collapse);
             return new GroupedQuery(this.builder);
         };
-
         /** Adds OrderBy clause to the query
-        @param fieldInternalName Internal field of the first field by that the data will be sorted (ascending)
-        @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
-        @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
+            @param fieldInternalName Internal field of the first field by that the data will be sorted (ascending)
+            @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
+            @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
         QueryInternal.prototype.OrderBy = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.WriteStartOrderBy(override, useIndexForOrderBy);
             this.builder.WriteFieldRef(fieldInternalName);
             return new SortedQuery(this.builder);
         };
-
         /** Adds OrderBy clause to the query (using descending order for the first field).
-        @param fieldInternalName Internal field of the first field by that the data will be sorted (descending)
-        @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
-        @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
+            @param fieldInternalName Internal field of the first field by that the data will be sorted (descending)
+            @param override This is only necessary for large lists. DON'T use it unless you know what it is for!
+            @param useIndexForOrderBy This is only necessary for large lists. DON'T use it unless you know what it is for!
         */
         QueryInternal.prototype.OrderByDesc = function (fieldInternalName, override, useIndexForOrderBy) {
             this.builder.WriteStartOrderBy(override, useIndexForOrderBy);
             this.builder.WriteFieldRef(fieldInternalName, { Descending: true });
             return new SortedQuery(this.builder);
         };
-
         QueryInternal.prototype.ToString = function () {
             return this.builder.Finalize();
         };
@@ -308,6 +310,52 @@ var CamlBuilder;
         };
         return QueryToken;
     })();
+    var RawQueryInternal = (function () {
+        function RawQueryInternal(xml) {
+            this.xml = xml;
+        }
+        RawQueryInternal.prototype.ReplaceWhere = function () {
+            var builder = new Builder();
+            var xmlDoc;
+            if (window["DOMParser"]) {
+                var parser = new DOMParser();
+                xmlDoc = parser.parseFromString(this.xml, "text/xml");
+            }
+            else {
+                xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+                xmlDoc["async"] = false;
+                xmlDoc["loadXML"](this.xml);
+            }
+            var found = this.parseRecursive(builder, xmlDoc.documentElement);
+            if (!found)
+                console.log("CamlJs error: incorrect XML, cannot find Where tag");
+            builder.WriteStart("Where");
+            builder.unclosedTags++;
+            return new FieldExpression(builder);
+        };
+        RawQueryInternal.prototype.parseRecursive = function (builder, node) {
+            var attrs = [];
+            for (var i = 0, len = node.attributes.length; i < len; i++) {
+                attrs.push({ Name: node.attributes[i].name, Value: node.attributes[i].value });
+            }
+            builder.WriteStart(node.nodeName, attrs);
+            builder.unclosedTags++;
+            var found = (node.nodeName == "Query");
+            for (var i = 0, len = node.childNodes.length; i < len; i++) {
+                if (node.nodeName == "Query" && node.childNodes[i].nodeName == "Where")
+                    continue;
+                if (node.childNodes[i].nodeName == "#text")
+                    continue;
+                found = found || this.parseRecursive(builder, node.childNodes[i]);
+            }
+            if (!found) {
+                builder.unclosedTags--;
+                builder.WriteEnd();
+            }
+            return found;
+        };
+        return RawQueryInternal;
+    })();
     var FieldExpression = (function () {
         function FieldExpression(builder) {
             this.builder = builder;
@@ -346,11 +394,11 @@ var CamlBuilder;
         };
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is LookupMulti */
         FieldExpression.prototype.LookupMultiField = function (internalName) {
-            return new LookupOrUserMultiFieldExpression(this.builder, internalName, 1 /* LookupMulti */);
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, FieldMultiExpressionType.LookupMulti);
         };
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is UserMulti */
         FieldExpression.prototype.UserMultiField = function (internalName) {
-            return new LookupOrUserMultiFieldExpression(this.builder, internalName, 0 /* UserMulti */);
+            return new LookupOrUserMultiFieldExpression(this.builder, internalName, FieldMultiExpressionType.UserMulti);
         };
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Date */
         FieldExpression.prototype.DateField = function (internalName) {
@@ -377,19 +425,19 @@ var CamlBuilder;
             this.builder.WriteFieldRef(recurrenceIDField || "RecurrenceID");
             var value;
             switch (overlapType) {
-                case 0 /* Now */:
+                case DateRangesOverlapType.Now:
                     value = CamlValues.Now;
                     break;
-                case 1 /* Day */:
+                case DateRangesOverlapType.Day:
                     value = CamlValues.Today;
                     break;
-                case 2 /* Week */:
+                case DateRangesOverlapType.Week:
                     value = "{Week}";
                     break;
-                case 3 /* Month */:
+                case DateRangesOverlapType.Month:
                     value = "{Month}";
                     break;
-                case 4 /* Year */:
+                case DateRangesOverlapType.Year:
                     value = "{Year}";
                     break;
             }
@@ -454,13 +502,13 @@ var CamlBuilder;
             this.builder = builder;
             this.name = name;
             this.type = type;
-            if (this.type == 0 /* UserMulti */)
+            if (this.type == FieldMultiExpressionType.UserMulti)
                 this.typeAsString = "UserMulti";
             else
                 this.typeAsString = "LookupMulti";
         }
         LookupOrUserMultiFieldExpression.prototype.IncludesSuchItemThat = function () {
-            if (this.type == 1 /* LookupMulti */)
+            if (this.type == FieldMultiExpressionType.LookupMulti)
                 return new LookupFieldExpression(this.builder, this.name);
             else
                 return new UserFieldExpression(this.builder, this.name);
@@ -876,9 +924,11 @@ var CamlBuilder;
             return sb.toString();
         };
         Builder.prototype.FinalizeToSPQuery = function () {
-            var camlWhere = this.Finalize();
+            var camlQuery = this.Finalize();
+            if (camlQuery.indexOf("<View") != 0)
+                camlQuery = "<View><Query>" + camlQuery + "</Query></View>";
             var query = new window["SP"].CamlQuery();
-            query.set_viewXml("<View><Query>" + camlWhere + "</Query></View>");
+            query.set_viewXml(camlQuery);
             return query;
         };
         return Builder;
@@ -947,7 +997,8 @@ var CamlBuilder;
 if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
     window["Sys"] = {};
     window["Sys"].StringBuilder = function Sys$StringBuilder(initialText) {
-        this._parts = (typeof (initialText) !== 'undefined' && initialText !== null && initialText !== '') ? [initialText.toString()] : [];
+        this._parts = (typeof (initialText) !== 'undefined' && initialText !== null && initialText !== '') ?
+            [initialText.toString()] : [];
         this._value = {};
         this._len = 0;
     };
@@ -955,7 +1006,9 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
         this._parts[this._parts.length] = text;
     }
     function Sys$StringBuilder$appendLine(text) {
-        this._parts[this._parts.length] = ((typeof (text) === 'undefined') || (text === null) || (text === '')) ? '\r\n' : text + '\r\n';
+        this._parts[this._parts.length] =
+            ((typeof (text) === 'undefined') || (text === null) || (text === '')) ?
+                '\r\n' : text + '\r\n';
     }
     function Sys$StringBuilder$clear() {
         this._parts = [];
