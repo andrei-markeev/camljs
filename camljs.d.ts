@@ -14,6 +14,7 @@ declare class CamlBuilder {
     3. In conjunction with Any & All clauses
     */
     static Expression(): CamlBuilder.IFieldExpression;
+    static FromXml(xml: string): CamlBuilder.IRawQuery;
 }
 declare module CamlBuilder {
     interface IView extends IJoinable, IFinalizable {
@@ -51,7 +52,7 @@ declare module CamlBuilder {
         /**  */
         FilesOnly = 2,
     }
-    interface IQuery {
+    interface IQuery extends IGroupable {
         Where(): IFieldExpression;
     }
     interface IFinalizableToString {
@@ -316,6 +317,10 @@ declare module CamlBuilder {
         /** DEPRECATED: "Neq" operation in CAML works exactly the same as "NotIncludes". To avoid confusion, please use NotIncludes. */
         NotEqualTo(value: any): IExpression;
     }
+    interface IRawQuery {
+        /** Replace Where clause with a new one */
+        ReplaceWhere(): IFieldExpression;
+    }
     enum DateRangesOverlapType {
         /** Returns events for today */
         Now = 0,
@@ -334,6 +339,7 @@ declare module CamlBuilder {
         static createViewFields(viewFields: string[]): IFinalizableToString;
         static createWhere(): IFieldExpression;
         static createExpression(): IFieldExpression;
+        static createRawQuery(xml: string): IRawQuery;
     }
     class CamlValues {
         /** Dynamic value that represents Id of the current user */
