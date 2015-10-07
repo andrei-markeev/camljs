@@ -310,12 +310,57 @@ var CamlBuilder;
         };
         return QueryToken;
     })();
+    var ModifyType;
+    (function (ModifyType) {
+        ModifyType[ModifyType["Replace"] = 0] = "Replace";
+        ModifyType[ModifyType["AppendOr"] = 1] = "AppendOr";
+        ModifyType[ModifyType["AppendAnd"] = 2] = "AppendAnd";
+    })(ModifyType || (ModifyType = {}));
     var RawQueryInternal = (function () {
         function RawQueryInternal(xml) {
             this.xml = xml;
         }
         RawQueryInternal.prototype.ReplaceWhere = function () {
+            return this.modifyWhere(ModifyType.Replace);
+        };
+        RawQueryInternal.prototype.ModifyWhere = function () {
+            return this;
+        };
+        RawQueryInternal.prototype.AppendOr = function () {
+            return this.modifyWhere(ModifyType.AppendOr);
+        };
+        RawQueryInternal.prototype.AppendAnd = function () {
+            return this.modifyWhere(ModifyType.AppendAnd);
+        };
+        RawQueryInternal.prototype.modifyWhere = function (modifyType) {
             var builder = new Builder();
+            var xmlDoc = this.getXmlDocument(this.xml);
+            var whereBuilder = this.parseRecursive(builder, xmlDoc.documentElement, modifyType);
+            if (whereBuilder == null)
+                console.log("CamlJs error: cannot find Query tag in provided XML");
+            builder.WriteStart("Where");
+            builder.unclosedTags++;
+            switch (modifyType) {
+                case ModifyType.Replace:
+                    return new FieldExpression(builder);
+                case ModifyType.AppendAnd:
+                    var pos = builder.tree.length;
+                    builder.WriteStart("And");
+                    builder.unclosedTags++;
+                    builder.tree = builder.tree.concat(whereBuilder.tree);
+                    return new FieldExpression(builder);
+                case ModifyType.AppendOr:
+                    var pos = builder.tree.length;
+                    builder.WriteStart("Or");
+                    builder.unclosedTags++;
+                    builder.tree = builder.tree.concat(whereBuilder.tree);
+                    return new FieldExpression(builder);
+                default:
+                    console.log("CamlJs error: unknown ModifyType " + modifyType);
+                    return null;
+            }
+        };
+        RawQueryInternal.prototype.getXmlDocument = function (xml) {
             var xmlDoc;
             if (window["DOMParser"]) {
                 var parser = new DOMParser();
@@ -326,27 +371,33 @@ var CamlBuilder;
                 xmlDoc["async"] = false;
                 xmlDoc["loadXML"](this.xml);
             }
-            var found = this.parseRecursive(builder, xmlDoc.documentElement);
-            if (!found)
-                console.log("CamlJs error: incorrect XML, cannot find Where tag");
-            builder.WriteStart("Where");
-            builder.unclosedTags++;
-            return new FieldExpression(builder);
+            return xmlDoc;
         };
-        RawQueryInternal.prototype.parseRecursive = function (builder, node) {
+        RawQueryInternal.prototype.parseRecursive = function (builder, node, modifyType) {
+            if (node.nodeName == "#text") {
+                builder.tree.push({ Element: "Raw", Xml: node.nodeValue });
+                return;
+            }
             var attrs = [];
             for (var i = 0, len = node.attributes.length; i < len; i++) {
                 attrs.push({ Name: node.attributes[i].name, Value: node.attributes[i].value });
             }
             builder.WriteStart(node.nodeName, attrs);
             builder.unclosedTags++;
-            var found = (node.nodeName == "Query");
+            var found = node.nodeName == "Query" ? new Builder() : null;
             for (var i = 0, len = node.childNodes.length; i < len; i++) {
-                if (node.nodeName == "Query" && node.childNodes[i].nodeName == "Where")
+                if (node.nodeName == "Query" && node.childNodes[i].nodeName == "Where") {
+                    var whereBuilder = new Builder();
+                    var whereNode = node.childNodes[i];
+                    for (var w = 0, wlen = whereNode.childNodes.length; w < wlen; w++) {
+                        this.parseRecursive(whereBuilder, whereNode.childNodes[w], modifyType);
+                    }
+                    found = whereBuilder;
                     continue;
-                if (node.childNodes[i].nodeName == "#text")
-                    continue;
-                found = found || this.parseRecursive(builder, node.childNodes[i]);
+                }
+                var result = this.parseRecursive(builder, node.childNodes[i], modifyType);
+                if (found == null)
+                    found = result;
             }
             if (!found) {
                 builder.unclosedTags--;
@@ -455,17 +506,10 @@ var CamlBuilder;
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
                 conditions = conditions[0];
-            conditions.reverse();
-            for (var i = 0; i < conditions.length; i++) {
-                var conditionBuilder = conditions[i]["builder"];
-                if (conditionBuilder.unclosedTags > 0)
-                    conditionBuilder.WriteEnd(conditionBuilder.unclosedTags);
-                if (i > 0) {
-                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "And" });
-                    this.builder.WriteEnd();
-                }
-                Array.prototype.splice.apply(this.builder.tree, [pos, 0].concat(conditionBuilder.tree));
-            }
+            var builders = [];
+            for (var i = 0; i < conditions.length; i++)
+                builders.push(conditions[i]["builder"]);
+            this.builder.WriteConditions(builders, "And");
             return new QueryToken(this.builder, pos);
         };
         /** Adds Or clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */
@@ -477,17 +521,10 @@ var CamlBuilder;
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
                 conditions = conditions[0];
-            conditions.reverse();
-            for (var i = 0; i < conditions.length; i++) {
-                var conditionBuilder = conditions[i]["builder"];
-                if (conditionBuilder.unclosedTags > 0)
-                    conditionBuilder.WriteEnd(conditionBuilder.unclosedTags);
-                if (i > 0) {
-                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: "Or" });
-                    this.builder.WriteEnd();
-                }
-                Array.prototype.splice.apply(this.builder.tree, [pos, 0].concat(conditionBuilder.tree));
-            }
+            var builders = [];
+            for (var i = 0; i < conditions.length; i++)
+                builders.push(conditions[i]["builder"]);
+            this.builder.WriteConditions(builders, "Or");
             return new QueryToken(this.builder, pos);
         };
         return FieldExpression;
@@ -860,6 +897,20 @@ var CamlBuilder;
             else
                 this.tree.push({ Element: "Start", Name: "OrderBy" });
             this.unclosedTags++;
+        };
+        Builder.prototype.WriteConditions = function (builders, elementName) {
+            var pos = this.tree.length;
+            builders.reverse();
+            for (var i = 0; i < builders.length; i++) {
+                var conditionBuilder = builders[i];
+                if (conditionBuilder.unclosedTags > 0)
+                    conditionBuilder.WriteEnd(conditionBuilder.unclosedTags);
+                if (i > 0) {
+                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: elementName });
+                    this.WriteEnd();
+                }
+                Array.prototype.splice.apply(this.tree, [pos, 0].concat(conditionBuilder.tree));
+            }
         };
         Builder.prototype.Finalize = function () {
             var sb = new window["Sys"].StringBuilder();

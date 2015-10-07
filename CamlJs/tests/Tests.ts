@@ -397,5 +397,79 @@ class Tests extends tsUnit.TestClass {
 
     }
 
+    TestAppendToWhere() {
+        var rawQuery = '<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <IsNotNull>\
+                            <FieldRef Name="ID" />\
+                        </IsNotNull>\
+                    </Where>\
+                </Query>\
+            </View>';
+
+        var query = CamlBuilder.FromXml(rawQuery).ModifyWhere().AppendAnd().TextField("Title").IsNotNull().ToString();
+
+        this.areIdentical(
+            vkbeautify.xml('<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <And>\
+                            <IsNotNull>\
+                                <FieldRef Name="ID" />\
+                            </IsNotNull>\
+                            <IsNotNull>\
+                                <FieldRef Name="Title" />\
+                            </IsNotNull>\
+                        </And>\
+                    </Where>\
+                </Query>\
+            </View>'),
+            vkbeautify.xml(query)
+            );
+
+    }
+
+    TestAppendToWhereWithOrderBy() {
+        var rawQuery = '<View Scope="RecursiveAll">\
+                <Query>\
+                    <Where>\
+                        <Eq>\
+                            <FieldRef Name="ID" />\
+                            <Value Type="Number">10</Value>\
+                        </Eq>\
+                    </Where>\
+                    <OrderBy>\
+                        <FieldRef Name="Date" />\
+                    </OrderBy>\
+                </Query>\
+            </View>';
+
+        var query = CamlBuilder.FromXml(rawQuery).ModifyWhere().AppendOr().TextField("Title").Contains("Summer").ToString();
+
+        this.areIdentical(
+            vkbeautify.xml('<View Scope="RecursiveAll">\
+                <Query>\
+                    <OrderBy>\
+                        <FieldRef Name="Date" />\
+                    </OrderBy>\
+                    <Where>\
+                        <Or>\
+                            <Eq>\
+                                <FieldRef Name="ID" />\
+                                <Value Type="Number">10</Value>\
+                            </Eq>\
+                            <Contains>\
+                                <FieldRef Name="Title" />\
+                                <Value Type="Text">Summer</Value>\
+                            </Contains>\
+                        </Or>\
+                    </Where>\
+                </Query>\
+            </View>'),
+            vkbeautify.xml(query)
+            );
+
+    }
 
 }

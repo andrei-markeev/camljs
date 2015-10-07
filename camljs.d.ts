@@ -318,8 +318,13 @@ declare module CamlBuilder {
         NotEqualTo(value: any): IExpression;
     }
     interface IRawQuery {
-        /** Replace Where clause with a new one */
+        /** Change Where clause */
         ReplaceWhere(): IFieldExpression;
+        ModifyWhere(): IRawQueryModify;
+    }
+    interface IRawQueryModify {
+        AppendOr(): IFieldExpression;
+        AppendAnd(): IFieldExpression;
     }
     enum DateRangesOverlapType {
         /** Returns events for today */
