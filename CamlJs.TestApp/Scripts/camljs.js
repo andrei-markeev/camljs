@@ -27,7 +27,7 @@ var CamlBuilder = (function () {
         return CamlBuilder.Internal.createRawQuery(xml);
     };
     return CamlBuilder;
-})();
+}());
 var CamlBuilder;
 (function (CamlBuilder) {
     (function (ViewScope) {
@@ -72,7 +72,7 @@ var CamlBuilder;
             return new RawQueryInternal(xml);
         };
         return Internal;
-    })();
+    }());
     CamlBuilder.Internal = Internal;
     var ViewInternal = (function () {
         function ViewInternal() {
@@ -144,7 +144,7 @@ var CamlBuilder;
             return new QueryInternal(this.builder);
         };
         return ViewInternal;
-    })();
+    }());
     /** Represents SharePoint CAML Query element */
     var QueryInternal = (function () {
         function QueryInternal(builder) {
@@ -189,7 +189,7 @@ var CamlBuilder;
             return this.builder.FinalizeToSPQuery();
         };
         return QueryInternal;
-    })();
+    }());
     var JoinsManager = (function () {
         function JoinsManager(builder, viewInternal) {
             this.projectedFields = [];
@@ -236,7 +236,7 @@ var CamlBuilder;
             return this.originalView;
         };
         return JoinsManager;
-    })();
+    }());
     var Join = (function () {
         function Join(builder, joinsManager) {
             this.builder = builder;
@@ -254,7 +254,7 @@ var CamlBuilder;
             return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
         };
         return Join;
-    })();
+    }());
     var QueryToken = (function () {
         function QueryToken(builder, startIndex) {
             this.builder = builder;
@@ -309,7 +309,7 @@ var CamlBuilder;
             return this.builder.FinalizeToSPQuery();
         };
         return QueryToken;
-    })();
+    }());
     var ModifyType;
     (function (ModifyType) {
         ModifyType[ModifyType["Replace"] = 0] = "Replace";
@@ -406,7 +406,7 @@ var CamlBuilder;
             return found;
         };
         return RawQueryInternal;
-    })();
+    }());
     var FieldExpression = (function () {
         function FieldExpression(builder) {
             this.builder = builder;
@@ -458,6 +458,10 @@ var CamlBuilder;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is DateTime */
         FieldExpression.prototype.DateTimeField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "DateTime");
+        };
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is ModStat (moderation status) */
+        FieldExpression.prototype.ModStatField = function (internalName) {
+            return new ModStatFieldExpression(this.builder, internalName);
         };
         /** Used in queries for retrieving recurring calendar events.
             @param overlapType Defines type of overlap: return all events for a day, for a week, for a month or for a year
@@ -528,7 +532,7 @@ var CamlBuilder;
             return new QueryToken(this.builder, pos);
         };
         return FieldExpression;
-    })();
+    }());
     var FieldMultiExpressionType;
     (function (FieldMultiExpressionType) {
         FieldMultiExpressionType[FieldMultiExpressionType["UserMulti"] = 0] = "UserMulti";
@@ -569,7 +573,7 @@ var CamlBuilder;
             return new FieldExpressionToken(this.builder, this.name, this.typeAsString, false).NotEqualTo(value);
         };
         return LookupOrUserMultiFieldExpression;
-    })();
+    }());
     var LookupFieldExpression = (function () {
         function LookupFieldExpression(builder, name) {
             this.builder = builder;
@@ -597,7 +601,7 @@ var CamlBuilder;
             return new FieldExpressionToken(this.builder, this.name, "Integer");
         };
         return LookupFieldExpression;
-    })();
+    }());
     var UserFieldExpression = (function () {
         function UserFieldExpression(builder, name) {
             var self = this;
@@ -667,7 +671,30 @@ var CamlBuilder;
             return new QueryToken(this.builder, this.startIndex);
         };
         return UserFieldExpression;
-    })();
+    }());
+    var ModStatFieldExpression = (function () {
+        function ModStatFieldExpression(builder, name) {
+            this.builder = builder;
+            this.name = name;
+            this.startIndex = builder.tree.length;
+        }
+        ModStatFieldExpression.prototype.ModStatId = function () {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat");
+        };
+        ModStatFieldExpression.prototype.IsApproved = function () {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat").EqualTo(0);
+        };
+        ModStatFieldExpression.prototype.IsRejected = function () {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat").EqualTo(1);
+        };
+        ModStatFieldExpression.prototype.IsPending = function () {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat").EqualTo(2);
+        };
+        ModStatFieldExpression.prototype.ValueAsText = function () {
+            return new FieldExpressionToken(this.builder, this.name, "Text");
+        };
+        return ModStatFieldExpression;
+    }());
     var FieldExpressionToken = (function () {
         function FieldExpressionToken(builder, name, valueType, isLookupId) {
             this.builder = builder;
@@ -695,6 +722,10 @@ var CamlBuilder;
         FieldExpressionToken.prototype.EqualTo = function (value) {
             if (value instanceof Date)
                 value = value.toISOString();
+            if (value === true)
+                value = 1;
+            if (value === false)
+                value = 0;
             this.builder.WriteBinaryOperation(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         };
@@ -750,7 +781,7 @@ var CamlBuilder;
             return new QueryToken(this.builder, this.startIndex);
         };
         return FieldExpressionToken;
-    })();
+    }());
     var GroupedQuery = (function () {
         function GroupedQuery(builder) {
             this.builder = builder;
@@ -772,7 +803,7 @@ var CamlBuilder;
             return this.builder.FinalizeToSPQuery();
         };
         return GroupedQuery;
-    })();
+    }());
     var SortedQuery = (function () {
         function SortedQuery(builder) {
             this.builder = builder;
@@ -792,7 +823,7 @@ var CamlBuilder;
             return this.builder.FinalizeToSPQuery();
         };
         return SortedQuery;
-    })();
+    }());
     var Builder = (function () {
         function Builder() {
             this.tree = new Array();
@@ -983,7 +1014,7 @@ var CamlBuilder;
             return query;
         };
         return Builder;
-    })();
+    }());
     var CamlValues = (function () {
         function CamlValues() {
         }
@@ -1041,7 +1072,7 @@ var CamlBuilder;
             Url: "{ProjectProperty Name=\"Url\"}"
         };
         return CamlValues;
-    })();
+    }());
     CamlBuilder.CamlValues = CamlValues;
 })(CamlBuilder || (CamlBuilder = {}));
 // -------------------- Dependencies ------------------
@@ -1252,4 +1283,3 @@ if (typeof window["SP"] == 'undefined') {
         }
     };
 }
-//# sourceMappingURL=camljs.js.map

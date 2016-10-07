@@ -147,6 +147,8 @@ module CamlBuilder {
         DateField(internalName: string): IDateTimeFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is DateTime */
         DateTimeField(internalName: string): IDateTimeFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is ModStat (moderation status) */
+        ModStatField(internalName: string): IModStatFieldExpression;
         /** Used in queries for retrieving recurring calendar events.
             NOTICE: DateRangesOverlap with overlapType other than Now cannot be used with SP.CamlQuery, because it doesn't support 
             CalendarDate and ExpandRecurrence query options. Lists.asmx, however, supports them, so you can still use DateRangesOverlap
@@ -347,6 +349,19 @@ module CamlBuilder {
         EqualTo(value): IExpression;
         /** DEPRECATED: "Neq" operation in CAML works exactly the same as "NotIncludes". To avoid confusion, please use NotIncludes. */
         NotEqualTo(value): IExpression;
+    }
+
+    export interface IModStatFieldExpression {
+        /** Represents moderation status ID. */
+        ModStatId(): INumberFieldExpression;
+        /** Checks whether the value of the field is Approved - same as ModStatId.EqualTo(0) */
+        IsApproved(): IExpression;
+        /** Checks whether the value of the field is Rejected - same as ModStatId.EqualTo(1) */
+        IsRejected(): IExpression;
+        /** Checks whether the value of the field is Pending - same as ModStatId.EqualTo(2) */
+        IsPending(): IExpression;
+        /** Represents moderation status as localized text. In most cases it is better to use ModStatId in the queries instead of ValueAsText. */
+        ValueAsText(): ITextFieldExpression;
     }
 
     export interface IRawQuery {
@@ -811,6 +826,10 @@ module CamlBuilder {
         DateTimeField(internalName: string): IDateTimeFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "DateTime");
         }
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is ModStat (moderation status) */
+        ModStatField(internalName: string): IModStatFieldExpression {
+            return new ModStatFieldExpression(this.builder, internalName);
+        }
         /** Used in queries for retrieving recurring calendar events.
             @param overlapType Defines type of overlap: return all events for a day, for a week, for a month or for a year
             @param calendarDate Defines date that will be used for determining events for which exactly day/week/month/year will be returned.
@@ -1044,6 +1063,32 @@ module CamlBuilder {
         }
     }
 
+    class ModStatFieldExpression implements IModStatFieldExpression {
+        constructor(builder: Builder, name: string) {
+            this.builder = builder;
+            this.name = name;
+            this.startIndex = builder.tree.length;
+        }
+        private builder: Builder;
+        private name: string;
+        private startIndex: number;
+        ModStatId() {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat");
+        }
+        IsApproved() {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat").EqualTo(0);
+        }
+        IsRejected() {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat").EqualTo(1);
+        }
+        IsPending() {
+            return new FieldExpressionToken(this.builder, this.name, "ModStat").EqualTo(2);
+        }
+        ValueAsText() {
+            return new FieldExpressionToken(this.builder, this.name, "Text");
+        }
+    }
+
     class FieldExpressionToken implements IBooleanFieldExpression, INumberFieldExpression, ITextFieldExpression, IDateTimeFieldExpression {
         constructor(builder: Builder, name: string, valueType: string, isLookupId?: boolean) {
             this.builder = builder;
@@ -1078,6 +1123,10 @@ module CamlBuilder {
         EqualTo(value): IExpression {
             if (value instanceof Date)
                 value = value.toISOString();
+            if (value === true)
+                value = 1;
+            if (value === false)
+                value = 0;
             this.builder.WriteBinaryOperation(this.startIndex, "Eq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
