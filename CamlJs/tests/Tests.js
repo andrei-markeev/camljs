@@ -3,8 +3,7 @@
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var CUI;
 var vkbeautify;
@@ -351,6 +350,24 @@ var Tests = (function (_super) {
                 </Query>\
             </View>'), vkbeautify.xml(query));
     };
+    Tests.prototype.TestToCamlQuery = function () {
+        window["SP"]["CamlQuery"] = function () {
+            this.set_viewXml = sinon.spy();
+        };
+        var queryText = new CamlBuilder().View(["Title", "Author"]).ToString();
+        var camlQuery = new CamlBuilder().View(["Title", "Author"]).ToCamlQuery();
+        this.areIdentical(queryText, camlQuery.set_viewXml.getCall(0).args[0]);
+        queryText = new CamlBuilder().View().RowLimit(1).ToString();
+        camlQuery = new CamlBuilder().View().RowLimit(1).ToCamlQuery();
+        this.areIdentical(queryText, camlQuery.set_viewXml.getCall(0).args[0]);
+        var date = new Date();
+        queryText = new CamlBuilder().View().Query().Where().DateTimeField("Modified").EqualTo(date).ToString();
+        camlQuery = new CamlBuilder().View().Query().Where().DateTimeField("Modified").EqualTo(date).ToCamlQuery();
+        this.areIdentical(queryText, camlQuery.set_viewXml.getCall(0).args[0]);
+        queryText = new CamlBuilder().Where().IntegerField("ID").In([1, 2, 3]).ToString();
+        camlQuery = new CamlBuilder().Where().IntegerField("ID").In([1, 2, 3]).ToCamlQuery();
+        this.areIdentical("<View><Query>" + queryText + "</Query></View>", camlQuery.set_viewXml.getCall(0).args[0]);
+    };
     return Tests;
-})(tsUnit.TestClass);
+}(tsUnit.TestClass));
 //# sourceMappingURL=Tests.js.map

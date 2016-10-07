@@ -1,8 +1,7 @@
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var tsUnit;
 (function (tsUnit) {
@@ -100,7 +99,7 @@ var tsUnit;
             return input;
         };
         return Test;
-    })();
+    }());
     tsUnit.Test = Test;
     var TestContext = (function () {
         function TestContext() {
@@ -166,7 +165,7 @@ var tsUnit;
             throw 'fail';
         };
         return TestContext;
-    })();
+    }());
     tsUnit.TestContext = TestContext;
     var TestClass = (function (_super) {
         __extends(TestClass, _super);
@@ -174,7 +173,7 @@ var tsUnit;
             _super.apply(this, arguments);
         }
         return TestClass;
-    })(TestContext);
+    }(TestContext));
     tsUnit.TestClass = TestClass;
     var FakeFunction = (function () {
         function FakeFunction(name, delgate) {
@@ -182,7 +181,7 @@ var tsUnit;
             this.delgate = delgate;
         }
         return FakeFunction;
-    })();
+    }());
     tsUnit.FakeFunction = FakeFunction;
     var Fake = (function () {
         function Fake(obj) {
@@ -205,7 +204,7 @@ var tsUnit;
             this[name] = value;
         };
         return Fake;
-    })();
+    }());
     tsUnit.Fake = Fake;
     var TestDefintion = (function () {
         function TestDefintion(testClass, name) {
@@ -213,14 +212,14 @@ var tsUnit;
             this.name = name;
         }
         return TestDefintion;
-    })();
+    }());
     var TestError = (function () {
         function TestError(name, message) {
             this.name = name;
             this.message = message;
         }
         return TestError;
-    })();
+    }());
     var TestDescription = (function () {
         function TestDescription(testName, funcName, message) {
             this.testName = testName;
@@ -228,7 +227,7 @@ var tsUnit;
             this.message = message;
         }
         return TestDescription;
-    })();
+    }());
     tsUnit.TestDescription = TestDescription;
     var TestResult = (function () {
         function TestResult() {
@@ -236,7 +235,7 @@ var tsUnit;
             this.errors = [];
         }
         return TestResult;
-    })();
+    }());
     tsUnit.TestResult = TestResult;
 })(tsUnit || (tsUnit = {}));
 //# sourceMappingURL=tsUnit.js.map

@@ -5,3 +5,5 @@ pkgobj
 *.user
 *.suo
 *.js.map
+/packages/*
+/.vs/*

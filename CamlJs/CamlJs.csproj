@@ -15,6 +15,7 @@
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -57,16 +58,19 @@
   </PropertyGroup>
   <ItemGroup>
     <TypeScriptCompile Include="camljs.ts" />
+    <TypeScriptCompile Include="Scripts\typings\sinon\sinon.d.ts" />
     <TypeScriptCompile Include="tests\Tests.ts" />
     <TypeScriptCompile Include="tests\tsUnit.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="tests\index.html" />
     <Content Include="tests\jsdiff.js" />
+    <Content Include="tests\sinon-1.17.6.js" />
     <Content Include="tests\vkbeautify.js" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="web.config" />
+    <Content Include="packages.config" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>
