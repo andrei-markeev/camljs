@@ -107,6 +107,8 @@ declare module CamlBuilder {
         Any(conditions: IExpression[]): IExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Text */
         TextField(internalName: string): ITextFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Choice */
+        ChoiceField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         BooleanField(internalName: string): IBooleanFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is URL */
