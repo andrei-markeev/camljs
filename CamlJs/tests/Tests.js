@@ -1,16 +1,21 @@
 /// <reference path="../camljs.ts" />
 /// <reference path="tsUnit.ts" />
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var CUI;
 var vkbeautify;
 var Tests = (function (_super) {
     __extends(Tests, _super);
     function Tests() {
-        _super.apply(this, arguments);
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     Tests.prototype.TestAny = function () {
         var caml = new CamlBuilder().Where()
@@ -350,6 +355,20 @@ var Tests = (function (_super) {
                 </Query>\
             </View>'), vkbeautify.xml(query));
     };
+    Tests.prototype.TestQueryOrderBy = function () {
+        var query = new CamlBuilder()
+            .View()
+            .Query()
+            .OrderBy("ID")
+            .ToString();
+        this.areIdentical(vkbeautify.xml('<View>\
+                <Query>\
+                    <OrderBy>\
+						<FieldRef Name="ID" />\
+                    </OrderBy>\
+                </Query>\
+            </View>'), vkbeautify.xml(query));
+    };
     Tests.prototype.TestToCamlQuery = function () {
         window["SP"]["CamlQuery"] = function () {
             this.set_viewXml = sinon.spy();
@@ -370,4 +389,3 @@ var Tests = (function (_super) {
     };
     return Tests;
 }(tsUnit.TestClass));
-//# sourceMappingURL=Tests.js.map

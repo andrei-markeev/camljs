@@ -1325,7 +1325,8 @@ module CamlBuilder {
                     tagsToClose--;
                 else if (this.tree[0].Name == "View")
                     tagsToClose -= 2;
-                this.tree.push({ Element: "End", Count: tagsToClose });
+                if (tagsToClose > 0)
+                    this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
             }
             if (collapse)
@@ -1343,7 +1344,8 @@ module CamlBuilder {
                     tagsToClose--;
                 else if (this.tree[0].Name == "View")
                     tagsToClose -= 2;
-                this.tree.push({ Element: "End", Count: tagsToClose });
+                if (tagsToClose > 0)
+                    this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
             }
 

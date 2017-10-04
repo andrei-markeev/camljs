@@ -28,8 +28,8 @@ var CamlBuilder = (function () {
     };
     return CamlBuilder;
 }());
-var CamlBuilder;
 (function (CamlBuilder) {
+    var ViewScope;
     (function (ViewScope) {
         /**  */
         ViewScope[ViewScope["Recursive"] = 0] = "Recursive";
@@ -37,8 +37,8 @@ var CamlBuilder;
         ViewScope[ViewScope["RecursiveAll"] = 1] = "RecursiveAll";
         /**  */
         ViewScope[ViewScope["FilesOnly"] = 2] = "FilesOnly";
-    })(CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
-    var ViewScope = CamlBuilder.ViewScope;
+    })(ViewScope = CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
+    var DateRangesOverlapType;
     (function (DateRangesOverlapType) {
         /** Returns events for today */
         DateRangesOverlapType[DateRangesOverlapType["Now"] = 0] = "Now";
@@ -51,8 +51,7 @@ var CamlBuilder;
         DateRangesOverlapType[DateRangesOverlapType["Month"] = 3] = "Month";
         /** Returns events for one year, specified by CalendarDate in QueryOptions */
         DateRangesOverlapType[DateRangesOverlapType["Year"] = 4] = "Year";
-    })(CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
-    var DateRangesOverlapType = CamlBuilder.DateRangesOverlapType;
+    })(DateRangesOverlapType = CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
     var Internal = (function () {
         function Internal() {
         }
@@ -509,7 +508,7 @@ var CamlBuilder;
         FieldExpression.prototype.All = function () {
             var conditions = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                conditions[_i - 0] = arguments[_i];
+                conditions[_i] = arguments[_i];
             }
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
@@ -524,7 +523,7 @@ var CamlBuilder;
         FieldExpression.prototype.Any = function () {
             var conditions = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                conditions[_i - 0] = arguments[_i];
+                conditions[_i] = arguments[_i];
             }
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
@@ -902,7 +901,8 @@ var CamlBuilder;
                     tagsToClose--;
                 else if (this.tree[0].Name == "View")
                     tagsToClose -= 2;
-                this.tree.push({ Element: "End", Count: tagsToClose });
+                if (tagsToClose > 0)
+                    this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
             }
             if (collapse)
@@ -919,7 +919,8 @@ var CamlBuilder;
                     tagsToClose--;
                 else if (this.tree[0].Name == "View")
                     tagsToClose -= 2;
-                this.tree.push({ Element: "End", Count: tagsToClose });
+                if (tagsToClose > 0)
+                    this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
             }
             var attributes = new Array();

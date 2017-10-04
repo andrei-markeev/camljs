@@ -472,6 +472,28 @@ class Tests extends tsUnit.TestClass {
 
     }
 
+    TestQueryOrderBy() {
+        var query = new CamlBuilder()
+            .View()
+            .Query()
+            .OrderBy("ID")
+            .ToString();
+
+
+        this.areIdentical(
+            vkbeautify.xml(
+                '<View>\
+                <Query>\
+                    <OrderBy>\
+						<FieldRef Name="ID" />\
+                    </OrderBy>\
+                </Query>\
+            </View>'),
+            vkbeautify.xml(query)
+            );
+
+    }
+	
     TestToCamlQuery() {
         window["SP"]["CamlQuery"] = function() {
             this.set_viewXml = sinon.spy();
