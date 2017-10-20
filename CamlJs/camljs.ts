@@ -127,6 +127,8 @@ module CamlBuilder {
         TextField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Choice */
         ChoiceField(internalName: string): ITextFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Computed */
+        ComputedField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         BooleanField(internalName: string): IBooleanFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is URL */
@@ -788,6 +790,10 @@ module CamlBuilder {
         ChoiceField(internalName: string): ITextFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "Choice");
         }
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Computed */
+        ComputedField(internalName: string): ITextFieldExpression {
+            return new FieldExpressionToken(this.builder, internalName, "Computed");
+        };
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         BooleanField(internalName: string): IBooleanFieldExpression {
             return new FieldExpressionToken(this.builder, internalName, "Integer");
