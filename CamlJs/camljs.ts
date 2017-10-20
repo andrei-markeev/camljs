@@ -1521,24 +1521,24 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
         this._len = 0;
     }
 
-    function Sys$StringBuilder$append(text) {
+    var Sys$StringBuilder$append = function(text) {
         this._parts[this._parts.length] = text;
     }
-    function Sys$StringBuilder$appendLine(text) {
+    var Sys$StringBuilder$appendLine = function(text) {
         this._parts[this._parts.length] =
         ((typeof (text) === 'undefined') || (text === null) || (text === '')) ?
         '\r\n' : text + '\r\n';
     }
-    function Sys$StringBuilder$clear() {
+    var Sys$StringBuilder$clear = function() {
         this._parts = [];
         this._value = {};
         this._len = 0;
     }
-    function Sys$StringBuilder$isEmpty() {
+    var Sys$StringBuilder$isEmpty = function() {
         if (this._parts.length === 0) return true;
         return this.toString() === '';
     }
-    function Sys$StringBuilder$toString(separator) {
+    var Sys$StringBuilder$toString = function(separator) {
         separator = separator || '';
         var parts = this._parts;
         if (this._len !== parts.length) {
@@ -1573,13 +1573,14 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
 }
 
 if (typeof window["SP"] == 'undefined') {
-
     window["SP"] = {};
-    function SP_ScriptUtility$isNullOrEmptyString(str) {
+
+    var SP_ScriptUtility$isNullOrEmptyString = function(str) {
         var strNull = null;
 
         return str === strNull || typeof str === 'undefined' || !str.length;
     };
+
     window["SP"].XmlWriter = function SP_XmlWriter($p0) {
         this.$f_0 = [];
         this.$1_0 = $p0;

@@ -28,8 +28,8 @@ var CamlBuilder = (function () {
     };
     return CamlBuilder;
 }());
+var CamlBuilder;
 (function (CamlBuilder) {
-    var ViewScope;
     (function (ViewScope) {
         /**  */
         ViewScope[ViewScope["Recursive"] = 0] = "Recursive";
@@ -37,8 +37,8 @@ var CamlBuilder = (function () {
         ViewScope[ViewScope["RecursiveAll"] = 1] = "RecursiveAll";
         /**  */
         ViewScope[ViewScope["FilesOnly"] = 2] = "FilesOnly";
-    })(ViewScope = CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
-    var DateRangesOverlapType;
+    })(CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
+    var ViewScope = CamlBuilder.ViewScope;
     (function (DateRangesOverlapType) {
         /** Returns events for today */
         DateRangesOverlapType[DateRangesOverlapType["Now"] = 0] = "Now";
@@ -51,7 +51,8 @@ var CamlBuilder = (function () {
         DateRangesOverlapType[DateRangesOverlapType["Month"] = 3] = "Month";
         /** Returns events for one year, specified by CalendarDate in QueryOptions */
         DateRangesOverlapType[DateRangesOverlapType["Year"] = 4] = "Year";
-    })(DateRangesOverlapType = CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
+    })(CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
+    var DateRangesOverlapType = CamlBuilder.DateRangesOverlapType;
     var Internal = (function () {
         function Internal() {
         }
@@ -422,6 +423,7 @@ var CamlBuilder = (function () {
         FieldExpression.prototype.ComputedField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Computed");
         };
+        ;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         FieldExpression.prototype.BooleanField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Integer");
@@ -512,7 +514,7 @@ var CamlBuilder = (function () {
         FieldExpression.prototype.All = function () {
             var conditions = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                conditions[_i] = arguments[_i];
+                conditions[_i - 0] = arguments[_i];
             }
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
@@ -527,7 +529,7 @@ var CamlBuilder = (function () {
         FieldExpression.prototype.Any = function () {
             var conditions = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                conditions[_i] = arguments[_i];
+                conditions[_i - 0] = arguments[_i];
             }
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
@@ -1093,25 +1095,25 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
         this._value = {};
         this._len = 0;
     };
-    function Sys$StringBuilder$append(text) {
+    var Sys$StringBuilder$append = function (text) {
         this._parts[this._parts.length] = text;
-    }
-    function Sys$StringBuilder$appendLine(text) {
+    };
+    var Sys$StringBuilder$appendLine = function (text) {
         this._parts[this._parts.length] =
             ((typeof (text) === 'undefined') || (text === null) || (text === '')) ?
                 '\r\n' : text + '\r\n';
-    }
-    function Sys$StringBuilder$clear() {
+    };
+    var Sys$StringBuilder$clear = function () {
         this._parts = [];
         this._value = {};
         this._len = 0;
-    }
-    function Sys$StringBuilder$isEmpty() {
+    };
+    var Sys$StringBuilder$isEmpty = function () {
         if (this._parts.length === 0)
             return true;
         return this.toString() === '';
-    }
-    function Sys$StringBuilder$toString(separator) {
+    };
+    var Sys$StringBuilder$toString = function (separator) {
         separator = separator || '';
         var parts = this._parts;
         if (this._len !== parts.length) {
@@ -1133,7 +1135,7 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
             val[separator] = this._parts.join(separator);
         }
         return val[separator];
-    }
+    };
     window["Sys"].StringBuilder.prototype = {
         append: Sys$StringBuilder$append,
         appendLine: Sys$StringBuilder$appendLine,
@@ -1144,11 +1146,10 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
 }
 if (typeof window["SP"] == 'undefined') {
     window["SP"] = {};
-    function SP_ScriptUtility$isNullOrEmptyString(str) {
+    var SP_ScriptUtility$isNullOrEmptyString = function (str) {
         var strNull = null;
         return str === strNull || typeof str === 'undefined' || !str.length;
-    }
-    ;
+    };
     window["SP"].XmlWriter = function SP_XmlWriter($p0) {
         this.$f_0 = [];
         this.$1_0 = $p0;
@@ -1292,3 +1293,4 @@ if (typeof window["SP"] == 'undefined') {
         }
     };
 }
+//# sourceMappingURL=camljs.js.map
