@@ -28,8 +28,8 @@ var CamlBuilder = (function () {
     };
     return CamlBuilder;
 }());
-var CamlBuilder;
 (function (CamlBuilder) {
+    var ViewScope;
     (function (ViewScope) {
         /**  */
         ViewScope[ViewScope["Recursive"] = 0] = "Recursive";
@@ -37,8 +37,8 @@ var CamlBuilder;
         ViewScope[ViewScope["RecursiveAll"] = 1] = "RecursiveAll";
         /**  */
         ViewScope[ViewScope["FilesOnly"] = 2] = "FilesOnly";
-    })(CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
-    var ViewScope = CamlBuilder.ViewScope;
+    })(ViewScope = CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
+    var DateRangesOverlapType;
     (function (DateRangesOverlapType) {
         /** Returns events for today */
         DateRangesOverlapType[DateRangesOverlapType["Now"] = 0] = "Now";
@@ -51,8 +51,7 @@ var CamlBuilder;
         DateRangesOverlapType[DateRangesOverlapType["Month"] = 3] = "Month";
         /** Returns events for one year, specified by CalendarDate in QueryOptions */
         DateRangesOverlapType[DateRangesOverlapType["Year"] = 4] = "Year";
-    })(CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
-    var DateRangesOverlapType = CamlBuilder.DateRangesOverlapType;
+    })(DateRangesOverlapType = CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
     var Internal = (function () {
         function Internal() {
         }
@@ -423,7 +422,6 @@ var CamlBuilder;
         FieldExpression.prototype.ComputedField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Computed");
         };
-        ;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         FieldExpression.prototype.BooleanField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Integer");
@@ -514,7 +512,7 @@ var CamlBuilder;
         FieldExpression.prototype.All = function () {
             var conditions = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                conditions[_i - 0] = arguments[_i];
+                conditions[_i] = arguments[_i];
             }
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
@@ -529,7 +527,7 @@ var CamlBuilder;
         FieldExpression.prototype.Any = function () {
             var conditions = [];
             for (var _i = 0; _i < arguments.length; _i++) {
-                conditions[_i - 0] = arguments[_i];
+                conditions[_i] = arguments[_i];
             }
             var pos = this.builder.tree.length;
             if (conditions.length == 1 && conditions[0] instanceof Array)
@@ -1293,4 +1291,3 @@ if (typeof window["SP"] == 'undefined') {
         }
     };
 }
-//# sourceMappingURL=camljs.js.map
