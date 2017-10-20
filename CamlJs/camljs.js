@@ -1291,3 +1291,6 @@ if (typeof window["SP"] == 'undefined') {
         }
     };
 }
+
+export default CamlBuilder;
+//# sourceMappingURL=camljs.js.map
