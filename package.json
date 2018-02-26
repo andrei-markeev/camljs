@@ -1,6 +1,6 @@
 {
   "name": "camljs",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "Simplifies creation of SharePoint CAML queries for client-side scripts. Can be used with either SharePoint Client Object Model or SPServices.",
   "scripts": {
     "build": "tsc",
@@ -22,9 +22,10 @@
       "email": "meison@meison.net"
     }
   ],
+  "main": "lib/camljs.js",
   "files": [
-    "./lib/camljs.d.ts",
-    "./lib/camljs.js"
+    "lib/camljs.d.ts",
+    "lib/camljs.js"
   ],
   "types": "./lib/camljs.d.ts",
   "license": "ISC",
