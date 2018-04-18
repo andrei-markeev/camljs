@@ -1,0 +1,14 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "target": "es5"
+  },
+  "files": [
+    "./CamlJs/camljs.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

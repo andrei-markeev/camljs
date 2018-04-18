@@ -7,3 +7,5 @@ pkgobj
 *.js.map
 /packages/*
 /.vs/*
+node_modules
+lib
