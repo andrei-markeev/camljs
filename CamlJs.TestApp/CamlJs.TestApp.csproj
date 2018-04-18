@@ -10,11 +10,11 @@
     <RootNamespace>CamlJs.TestApp</RootNamespace>
     <AssemblyName>CamlJs.TestApp</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetOfficeVersion>16.0</TargetOfficeVersion>
+    <TargetOfficeVersion>16.1</TargetOfficeVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{C1CDDADD-2546-481F-9697-4EA41081F2FC};{14822709-B5A1-4724-98CA-57A101D1B079};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
-    <MinimumOfficeToolsVersion>11.0</MinimumOfficeToolsVersion>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
+    <MinimumOfficeToolsVersion>12.2</MinimumOfficeToolsVersion>
     <IncludeAssemblyInPackage>False</IncludeAssemblyInPackage>
     <ProjectMode>SharePointApp</ProjectMode>
     <AppFeaturePartId>{3a4e814e-bc6c-47b4-8af3-d59559b6f4ce}</AppFeaturePartId>
@@ -22,6 +22,11 @@
     <WorkflowPartId>{c7133800-25ed-4691-a5cc-3f006b28a9ec}</WorkflowPartId>
     <CspkgPartId>{869f4b06-f1a9-4c12-bc05-019cbedf8e9c}</CspkgPartId>
     <SqlPackagePartId>{b545e350-3949-4cc9-a0ef-044b428a93fc}</SqlPackagePartId>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>12.0</OldToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

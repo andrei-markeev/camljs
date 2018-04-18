@@ -10,7 +10,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var tsUnit;
 (function (tsUnit) {
-    var Test = (function () {
+    var Test = /** @class */ (function () {
         function Test() {
             this.tests = [];
             this.testClass = new TestClass();
@@ -106,7 +106,7 @@ var tsUnit;
         return Test;
     }());
     tsUnit.Test = Test;
-    var TestContext = (function () {
+    var TestContext = /** @class */ (function () {
         function TestContext() {
         }
         TestContext.prototype.setUp = function () {
@@ -172,7 +172,7 @@ var tsUnit;
         return TestContext;
     }());
     tsUnit.TestContext = TestContext;
-    var TestClass = (function (_super) {
+    var TestClass = /** @class */ (function (_super) {
         __extends(TestClass, _super);
         function TestClass() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -180,7 +180,7 @@ var tsUnit;
         return TestClass;
     }(TestContext));
     tsUnit.TestClass = TestClass;
-    var FakeFunction = (function () {
+    var FakeFunction = /** @class */ (function () {
         function FakeFunction(name, delgate) {
             this.name = name;
             this.delgate = delgate;
@@ -188,7 +188,7 @@ var tsUnit;
         return FakeFunction;
     }());
     tsUnit.FakeFunction = FakeFunction;
-    var Fake = (function () {
+    var Fake = /** @class */ (function () {
         function Fake(obj) {
             for (var prop in obj) {
                 if (typeof obj[prop] === 'function') {
@@ -211,21 +211,21 @@ var tsUnit;
         return Fake;
     }());
     tsUnit.Fake = Fake;
-    var TestDefintion = (function () {
+    var TestDefintion = /** @class */ (function () {
         function TestDefintion(testClass, name) {
             this.testClass = testClass;
             this.name = name;
         }
         return TestDefintion;
     }());
-    var TestError = (function () {
+    var TestError = /** @class */ (function () {
         function TestError(name, message) {
             this.name = name;
             this.message = message;
         }
         return TestError;
     }());
-    var TestDescription = (function () {
+    var TestDescription = /** @class */ (function () {
         function TestDescription(testName, funcName, message) {
             this.testName = testName;
             this.funcName = funcName;
@@ -234,7 +234,7 @@ var tsUnit;
         return TestDescription;
     }());
     tsUnit.TestDescription = TestDescription;
-    var TestResult = (function () {
+    var TestResult = /** @class */ (function () {
         function TestResult() {
             this.passes = [];
             this.errors = [];
@@ -243,3 +243,4 @@ var tsUnit;
     }());
     tsUnit.TestResult = TestResult;
 })(tsUnit || (tsUnit = {}));
+//# sourceMappingURL=tsUnit.js.map

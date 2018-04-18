@@ -19,7 +19,7 @@ var CamlBuilder = (function () {
         1. SPServices CAMLQuery attribute
         2. Creating partial expressions
         3. In conjunction with Any & All clauses
-         */
+    */
     CamlBuilder.Expression = function () {
         return CamlBuilder.Internal.createExpression();
     };
@@ -31,11 +31,8 @@ var CamlBuilder = (function () {
 (function (CamlBuilder) {
     var ViewScope;
     (function (ViewScope) {
-        /**  */
         ViewScope[ViewScope["Recursive"] = 0] = "Recursive";
-        /**  */
         ViewScope[ViewScope["RecursiveAll"] = 1] = "RecursiveAll";
-        /**  */
         ViewScope[ViewScope["FilesOnly"] = 2] = "FilesOnly";
     })(ViewScope = CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
     var DateRangesOverlapType;
@@ -206,7 +203,10 @@ var CamlBuilder = (function () {
                         { Name: "ListAlias", Value: join.Alias }
                     ]);
                     this.builder.WriteStart("Eq");
-                    this.builder.WriteFieldRef(join.RefFieldName, { RefType: "ID" });
+                    var fieldAttrs = { RefType: "ID" };
+                    if (join.FromList)
+                        fieldAttrs["List"] = join.FromList;
+                    this.builder.WriteFieldRef(join.RefFieldName, fieldAttrs);
                     this.builder.WriteFieldRef("ID", { List: join.Alias });
                     this.builder.WriteEnd();
                     this.builder.WriteEnd();
@@ -226,8 +226,8 @@ var CamlBuilder = (function () {
                 this.builder.WriteEnd();
             }
         };
-        JoinsManager.prototype.Join = function (lookupFieldInternalName, alias, joinType) {
-            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType });
+        JoinsManager.prototype.Join = function (lookupFieldInternalName, alias, joinType, fromList) {
+            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType, FromList: fromList });
             return new Join(this.builder, this);
         };
         JoinsManager.prototype.ProjectedField = function (remoteFieldInternalName, remoteFieldAlias) {
@@ -246,11 +246,11 @@ var CamlBuilder = (function () {
         Join.prototype.Select = function (remoteFieldInternalName, remoteFieldAlias) {
             return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
         };
-        Join.prototype.InnerJoin = function (lookupFieldInternalName, alias) {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        Join.prototype.InnerJoin = function (lookupFieldInternalName, alias, fromList) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER", fromList);
         };
-        Join.prototype.LeftJoin = function (lookupFieldInternalName, alias) {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        Join.prototype.LeftJoin = function (lookupFieldInternalName, alias, fromList) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT", fromList);
         };
         return Join;
     }());
@@ -418,6 +418,11 @@ var CamlBuilder = (function () {
         FieldExpression.prototype.ChoiceField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Choice");
         };
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Computed */
+        FieldExpression.prototype.ComputedField = function (internalName) {
+            return new FieldExpressionToken(this.builder, internalName, "Computed");
+        };
+        ;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         FieldExpression.prototype.BooleanField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Integer");
@@ -1089,25 +1094,25 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
         this._value = {};
         this._len = 0;
     };
-    function Sys$StringBuilder$append(text) {
+    var Sys$StringBuilder$append = function (text) {
         this._parts[this._parts.length] = text;
-    }
-    function Sys$StringBuilder$appendLine(text) {
+    };
+    var Sys$StringBuilder$appendLine = function (text) {
         this._parts[this._parts.length] =
             ((typeof (text) === 'undefined') || (text === null) || (text === '')) ?
                 '\r\n' : text + '\r\n';
-    }
-    function Sys$StringBuilder$clear() {
+    };
+    var Sys$StringBuilder$clear = function () {
         this._parts = [];
         this._value = {};
         this._len = 0;
-    }
-    function Sys$StringBuilder$isEmpty() {
+    };
+    var Sys$StringBuilder$isEmpty = function () {
         if (this._parts.length === 0)
             return true;
         return this.toString() === '';
-    }
-    function Sys$StringBuilder$toString(separator) {
+    };
+    var Sys$StringBuilder$toString = function (separator) {
         separator = separator || '';
         var parts = this._parts;
         if (this._len !== parts.length) {
@@ -1129,7 +1134,7 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
             val[separator] = this._parts.join(separator);
         }
         return val[separator];
-    }
+    };
     window["Sys"].StringBuilder.prototype = {
         append: Sys$StringBuilder$append,
         appendLine: Sys$StringBuilder$appendLine,
@@ -1140,11 +1145,10 @@ if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
 }
 if (typeof window["SP"] == 'undefined') {
     window["SP"] = {};
-    function SP_ScriptUtility$isNullOrEmptyString(str) {
+    var SP_ScriptUtility$isNullOrEmptyString = function (str) {
         var strNull = null;
         return str === strNull || typeof str === 'undefined' || !str.length;
-    }
-    ;
+    };
     window["SP"].XmlWriter = function SP_XmlWriter($p0) {
         this.$f_0 = [];
         this.$1_0 = $p0;

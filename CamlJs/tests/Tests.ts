@@ -342,6 +342,46 @@ class Tests extends tsUnit.TestClass {
 
     }
 
+    TestNestedJoins() {
+        var query = new CamlBuilder()
+            .View(["Title", "CustomerCity"])
+            .LeftJoin("CustomerName", "customers")
+            .LeftJoin("CityName", "customerCities", "customers")
+            .Select("Title", "CustomerCity")
+            .Query()
+            .ToString();
+
+        this.areIdentical(
+            vkbeautify.xml(
+            '<View>\
+                <ViewFields>\
+                    <FieldRef Name="Title" />\
+                    <FieldRef Name="CustomerCity" />\
+                </ViewFields>\
+                <Joins>\
+                  <Join Type="LEFT" ListAlias="customers">\
+                    <Eq>\
+                      <FieldRef Name="CustomerName" RefType="ID" />\
+                      <FieldRef Name="ID" List="customers" />\
+                    </Eq>\
+                  </Join>\
+                  <Join Type="LEFT" ListAlias="customerCities">\
+                    <Eq>\
+                      <FieldRef Name="CityName" RefType="ID" List="customers" />\
+                      <FieldRef Name="ID" List="customerCities" />\
+                    </Eq>\
+                  </Join>\
+                </Joins>\
+                <ProjectedFields>\
+                    <Field ShowField="Title" Type="Lookup" Name="CustomerCity" List="customerCities" />\
+                </ProjectedFields>\
+                <Query />\
+            </View>'),
+            vkbeautify.xml(query)
+        );
+
+    }
+
     TestScope() {
         var query = new CamlBuilder()
             .View()

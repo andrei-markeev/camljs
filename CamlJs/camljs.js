@@ -19,7 +19,7 @@ var CamlBuilder = (function () {
         1. SPServices CAMLQuery attribute
         2. Creating partial expressions
         3. In conjunction with Any & All clauses
-         */
+    */
     CamlBuilder.Expression = function () {
         return CamlBuilder.Internal.createExpression();
     };
@@ -31,11 +31,8 @@ var CamlBuilder = (function () {
 (function (CamlBuilder) {
     var ViewScope;
     (function (ViewScope) {
-        /**  */
         ViewScope[ViewScope["Recursive"] = 0] = "Recursive";
-        /**  */
         ViewScope[ViewScope["RecursiveAll"] = 1] = "RecursiveAll";
-        /**  */
         ViewScope[ViewScope["FilesOnly"] = 2] = "FilesOnly";
     })(ViewScope = CamlBuilder.ViewScope || (CamlBuilder.ViewScope = {}));
     var DateRangesOverlapType;
@@ -206,7 +203,10 @@ var CamlBuilder = (function () {
                         { Name: "ListAlias", Value: join.Alias }
                     ]);
                     this.builder.WriteStart("Eq");
-                    this.builder.WriteFieldRef(join.RefFieldName, { RefType: "ID" });
+                    var fieldAttrs = { RefType: "ID" };
+                    if (join.FromList)
+                        fieldAttrs["List"] = join.FromList;
+                    this.builder.WriteFieldRef(join.RefFieldName, fieldAttrs);
                     this.builder.WriteFieldRef("ID", { List: join.Alias });
                     this.builder.WriteEnd();
                     this.builder.WriteEnd();
@@ -226,8 +226,8 @@ var CamlBuilder = (function () {
                 this.builder.WriteEnd();
             }
         };
-        JoinsManager.prototype.Join = function (lookupFieldInternalName, alias, joinType) {
-            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType });
+        JoinsManager.prototype.Join = function (lookupFieldInternalName, alias, joinType, fromList) {
+            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType, FromList: fromList });
             return new Join(this.builder, this);
         };
         JoinsManager.prototype.ProjectedField = function (remoteFieldInternalName, remoteFieldAlias) {
@@ -246,11 +246,11 @@ var CamlBuilder = (function () {
         Join.prototype.Select = function (remoteFieldInternalName, remoteFieldAlias) {
             return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
         };
-        Join.prototype.InnerJoin = function (lookupFieldInternalName, alias) {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        Join.prototype.InnerJoin = function (lookupFieldInternalName, alias, fromList) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER", fromList);
         };
-        Join.prototype.LeftJoin = function (lookupFieldInternalName, alias) {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        Join.prototype.LeftJoin = function (lookupFieldInternalName, alias, fromList) {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT", fromList);
         };
         return Join;
     }());
@@ -422,6 +422,7 @@ var CamlBuilder = (function () {
         FieldExpression.prototype.ComputedField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Computed");
         };
+        ;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         FieldExpression.prototype.BooleanField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Integer");
@@ -1291,6 +1292,3 @@ if (typeof window["SP"] == 'undefined') {
         }
     };
 }
-
-export default CamlBuilder;
-//# sourceMappingURL=camljs.js.map

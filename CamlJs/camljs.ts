@@ -21,7 +21,7 @@ class CamlBuilder {
         1. SPServices CAMLQuery attribute
         2. Creating partial expressions
         3. In conjunction with Any & All clauses
-         */
+    */
     static Expression(): CamlBuilder.IFieldExpression {
         return CamlBuilder.Internal.createExpression();
     }
@@ -33,12 +33,13 @@ class CamlBuilder {
 
 module CamlBuilder {
 
-    export interface IView extends IJoinable, IFinalizable {
+    export interface IView extends IFinalizable {
+        /** Define query */
         Query(): IQuery;
+        /** Define maximum amount of returned records */
         RowLimit(limit: number, paged?: boolean): IView;
+        /** Define view scope */
         Scope(scope: ViewScope): IView;
-    }
-    export interface IJoinable {
         /** Join the list you're querying with another list.
             Joins are only allowed through a lookup field relation.
             @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
@@ -50,22 +51,39 @@ module CamlBuilder {
             @alias alias for the joined list */
         LeftJoin(lookupFieldInternalName: string, alias: string): IJoin;
     }
+    export interface IJoinable {
+        /** Join the list you're querying with another list.
+            Joins are only allowed through a lookup field relation.
+            @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
+            @param alias Alias for the joined list
+            @param fromList (optional) List where the lookup column resides - use it only for nested joins */
+        InnerJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin;
+        /** Join the list you're querying with another list.
+            Joins are only allowed through a lookup field relation.
+            @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
+            @param alias Alias for the joined list
+            @param fromList (optional) List where the lookup column resides - use it only for nested joins */
+        LeftJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin;
+    }
     export interface IJoin extends IJoinable {
         /** Select projected field for using in the main Query body
             @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
         Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView;
     }
-    export interface IProjectableView extends IView {
+    export interface IProjectableView extends IJoinable {
+        /** Define query */
+        Query(): IQuery;
+        /** Define maximum amount of returned records */
+        RowLimit(limit: number, paged?: boolean): IView;
+        /** Define view scope */
+        Scope(scope: ViewScope): IView;
         /** Select projected field for using in the main Query body
             @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
         Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView;
     }
     export enum ViewScope {
-        /**  */
         Recursive,
-        /**  */
         RecursiveAll,
-        /**  */
         FilesOnly
     }
     export interface IQuery extends IGroupable {
@@ -554,7 +572,10 @@ module CamlBuilder {
                         { Name: "ListAlias", Value: join.Alias }
                     ]);
                     this.builder.WriteStart("Eq");
-                    this.builder.WriteFieldRef(join.RefFieldName, { RefType: "ID" });
+                    var fieldAttrs = { RefType: "ID" };
+                    if (join.FromList)
+                        fieldAttrs["List"] = join.FromList;
+                    this.builder.WriteFieldRef(join.RefFieldName, fieldAttrs);
                     this.builder.WriteFieldRef("ID", { List: join.Alias });
                     this.builder.WriteEnd();
                     this.builder.WriteEnd();
@@ -574,10 +595,10 @@ module CamlBuilder {
                 this.builder.WriteEnd();
             }
         }
-        private joins: any[];
+        private joins: { RefFieldName: string, Alias: string, JoinType: string, FromList?: string }[];
         private projectedFields: any[];
-        Join(lookupFieldInternalName: string, alias: string, joinType: string): IJoin {
-            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType });
+        Join(lookupFieldInternalName: string, alias: string, joinType: string, fromList?: string): IJoin {
+            this.joins.push({ RefFieldName: lookupFieldInternalName, Alias: alias, JoinType: joinType, FromList: fromList });
             return new Join(this.builder, this);
         }
         ProjectedField(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView {
@@ -597,11 +618,11 @@ module CamlBuilder {
         Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView {
             return this.joinsManager.ProjectedField(remoteFieldInternalName, remoteFieldAlias);
         }
-        InnerJoin(lookupFieldInternalName: string, alias: string): IJoin {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        InnerJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER", fromList);
         }
-        LeftJoin(lookupFieldInternalName: string, alias: string): IJoin {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        LeftJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT", fromList);
         }
     }
     class QueryToken implements IExpression {
@@ -747,8 +768,8 @@ module CamlBuilder {
             }
 
             var attrs = [];
-            for (var i = 0, len = node.attributes.length; i < len; i++) {
-                attrs.push({ Name: node.attributes[i].name, Value: node.attributes[i].value });
+            for (var i = 0, len = (<HTMLElement>node).attributes.length; i < len; i++) {
+                attrs.push({ Name: (<HTMLElement>node).attributes[i].name, Value: (<HTMLElement>node).attributes[i].value });
             }
             builder.WriteStart(node.nodeName, attrs);
             builder.unclosedTags++;

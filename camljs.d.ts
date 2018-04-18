@@ -12,17 +12,18 @@ declare class CamlBuilder {
         1. SPServices CAMLQuery attribute
         2. Creating partial expressions
         3. In conjunction with Any & All clauses
-         */
+    */
     static Expression(): CamlBuilder.IFieldExpression;
     static FromXml(xml: string): CamlBuilder.IRawQuery;
 }
 declare module CamlBuilder {
-    interface IView extends IJoinable, IFinalizable {
+    interface IView extends IFinalizable {
+        /** Define query */
         Query(): IQuery;
+        /** Define maximum amount of returned records */
         RowLimit(limit: number, paged?: boolean): IView;
+        /** Define view scope */
         Scope(scope: ViewScope): IView;
-    }
-    interface IJoinable {
         /** Join the list you're querying with another list.
             Joins are only allowed through a lookup field relation.
             @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
@@ -34,22 +35,39 @@ declare module CamlBuilder {
             @alias alias for the joined list */
         LeftJoin(lookupFieldInternalName: string, alias: string): IJoin;
     }
+    interface IJoinable {
+        /** Join the list you're querying with another list.
+            Joins are only allowed through a lookup field relation.
+            @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
+            @param alias Alias for the joined list
+            @param fromList (optional) List where the lookup column resides - use it only for nested joins */
+        InnerJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin;
+        /** Join the list you're querying with another list.
+            Joins are only allowed through a lookup field relation.
+            @param lookupFieldInternalName Internal name of the lookup field, that points to the list you're going to join in.
+            @param alias Alias for the joined list
+            @param fromList (optional) List where the lookup column resides - use it only for nested joins */
+        LeftJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin;
+    }
     interface IJoin extends IJoinable {
         /** Select projected field for using in the main Query body
             @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
         Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView;
     }
-    interface IProjectableView extends IView {
+    interface IProjectableView extends IJoinable {
+        /** Define query */
+        Query(): IQuery;
+        /** Define maximum amount of returned records */
+        RowLimit(limit: number, paged?: boolean): IView;
+        /** Define view scope */
+        Scope(scope: ViewScope): IView;
         /** Select projected field for using in the main Query body
             @param remoteFieldAlias By this alias, the field can be used in the main Query body. */
         Select(remoteFieldInternalName: string, remoteFieldAlias: string): IProjectableView;
     }
     enum ViewScope {
-        /**  */
         Recursive = 0,
-        /**  */
         RecursiveAll = 1,
-        /**  */
         FilesOnly = 2,
     }
     interface IQuery extends IGroupable {
@@ -109,6 +127,8 @@ declare module CamlBuilder {
         TextField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Choice */
         ChoiceField(internalName: string): ITextFieldExpression;
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Computed */
+        ComputedField(internalName: string): ITextFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Boolean */
         BooleanField(internalName: string): IBooleanFieldExpression;
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is URL */
