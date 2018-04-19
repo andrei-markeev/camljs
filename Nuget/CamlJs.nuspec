@@ -2,16 +2,16 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>CamlJs</id>
-        <version>2.8.2</version>
+        <version>2.9.0</version>
         <authors>Andrei Markeev</authors>
         <owners>Andrei Markeev</owners>
-        <licenseUrl>http://camljs.codeplex.com/license</licenseUrl>
-        <projectUrl>http://camljs.codeplex.com</projectUrl>
+        <licenseUrl>https://github.com/andrei-markeev/camljs/blob/master/LICENSE</licenseUrl>
+        <projectUrl>http://github.com/andrei-markeev/camljs</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Simplifies creation of SharePoint CAML queries for client-side scripts. Can be used with SharePoint Client Object Model and SPServices.</description>
         <tags>SharePoint JavaScript CAML</tags>
     </metadata>
     <files>
-        <file src="content\Scripts\camljs.js" target="content\Scripts\camljs.js" />
+        <file src="..\dist\camljs.js" target="content\Scripts\camljs.js" />
     </files>
 </package>

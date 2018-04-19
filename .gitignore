@@ -5,5 +5,9 @@ pkgobj
 *.user
 *.suo
 *.js.map
-/packages/*
-/.vs/*
+/VisualStudio/packages
+/VisualStudio/.vs
+node_modules
+/tests/Tests.js
+/tests/Tests.bundle.js
+/lib/camljs.js

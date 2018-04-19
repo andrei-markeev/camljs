@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Elements xmlns="http://schemas.microsoft.com/sharepoint/">
+  <Module Name="Scripts">
+    <File Path="Scripts\camljs.js" Url="Scripts/camljs.js" ReplaceContent="TRUE" />
+    <File Path="Scripts\vkbeautify.js" Url="Scripts/vkbeautify.js" ReplaceContent="TRUE" />
+  </Module>
+</Elements>

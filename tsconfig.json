@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "lib": [
+            "dom",
+            "es2015",
+            "es2016"
+        ]
+    },
+    "exclude": [
+        "VisualStudio",
+        "Nuget",
+        "node_modules",
+        "dist"
+    ]
+}

@@ -5,9 +5,19 @@ Nuget:
 PM> Install-Package CamlJs
 ```
 
-TypeScript definitions:
+Nuget TypeScript definitions:
 ```
 PM> Install-Package camljs.TypeScript.DefinitelyTyped
+```
+
+Npm:
+```
+npm install camljs
+```
+
+Npm TypeScript definitions:
+```
+npm install @types/camljs
 ```
 
 Also check out [CamlJs Console](https://github.com/andrei-markeev/camljs-console) - Chrome extension for testing queries with live preview against real lists.

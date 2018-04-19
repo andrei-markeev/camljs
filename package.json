@@ -1,0 +1,40 @@
+{
+  "name": "camljs",
+  "version": "2.9.0",
+  "description": "Library for creating SharePoint CAML queries client-side. For JSOM, REST or SPServices.",
+  "main": "lib/.js",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "build": "tsc && browserify lib/camljs.js -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --outDir dist/",
+    "build-tests-bundle": "tsc && browserify tests/Tests.js -s Tests -o tests/Tests.bundle.js",
+    "test": "tsc && node tests/index.js"
+  },
+  "files": [
+    "./dist/camljs.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrei-markeev/camljs.git"
+  },
+  "keywords": [
+    "sharepoint",
+    "caml"
+  ],
+  "author": "Andrei Markeev",
+  "license": "MS-PL",
+  "bugs": {
+    "url": "https://github.com/andrei-markeev/camljs/issues"
+  },
+  "homepage": "https://github.com/andrei-markeev/camljs#readme",
+  "devDependencies": {
+    "@types/node": "^9.6.6",
+    "browserify": "^16.2.0",
+    "diff": "^3.5.0",
+    "sinon": "^4.5.0",
+    "ts-unit": "^1.0.1",
+    "typescript": "^2.8.1"
+  }
+}
