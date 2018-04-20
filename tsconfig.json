@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "es3",
         "module": "commonjs",
         "lib": [
             "dom",
@@ -8,10 +8,7 @@
             "es2016"
         ]
     },
-    "exclude": [
-        "VisualStudio",
-        "Nuget",
-        "node_modules",
-        "dist"
+    "files": [
+        "lib/camljs.ts"
     ]
 }

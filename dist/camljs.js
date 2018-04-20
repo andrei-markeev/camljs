@@ -1,6 +1,5 @@
 "use strict";
-exports.__esModule = true;
-var CamlBuilder = (function () {
+var CamlBuilder = /** @class */ (function () {
     function CamlBuilder() {
     }
     /** Generate CAML Query, starting from <Where> tag */
@@ -51,7 +50,7 @@ var CamlBuilder = (function () {
         /** Returns events for one year, specified by CalendarDate in QueryOptions */
         DateRangesOverlapType[DateRangesOverlapType["Year"] = 4] = "Year";
     })(DateRangesOverlapType = CamlBuilder.DateRangesOverlapType || (CamlBuilder.DateRangesOverlapType = {}));
-    var Internal = (function () {
+    var Internal = /** @class */ (function () {
         function Internal() {
         }
         Internal.createView = function (viewFields) {
@@ -72,7 +71,7 @@ var CamlBuilder = (function () {
         return Internal;
     }());
     CamlBuilder.Internal = Internal;
-    var ViewInternal = (function () {
+    var ViewInternal = /** @class */ (function () {
         function ViewInternal() {
             this.builder = new Builder();
         }
@@ -143,7 +142,7 @@ var CamlBuilder = (function () {
         return ViewInternal;
     }());
     /** Represents SharePoint CAML Query element */
-    var QueryInternal = (function () {
+    var QueryInternal = /** @class */ (function () {
         function QueryInternal(builder) {
             this.builder = builder || new Builder();
         }
@@ -187,7 +186,7 @@ var CamlBuilder = (function () {
         };
         return QueryInternal;
     }());
-    var JoinsManager = (function () {
+    var JoinsManager = /** @class */ (function () {
         function JoinsManager(builder, viewInternal) {
             this.projectedFields = [];
             this.joins = [];
@@ -237,7 +236,7 @@ var CamlBuilder = (function () {
         };
         return JoinsManager;
     }());
-    var Join = (function () {
+    var Join = /** @class */ (function () {
         function Join(builder, joinsManager) {
             this.builder = builder;
             this.joinsManager = joinsManager;
@@ -255,7 +254,7 @@ var CamlBuilder = (function () {
         };
         return Join;
     }());
-    var QueryToken = (function () {
+    var QueryToken = /** @class */ (function () {
         function QueryToken(builder, startIndex) {
             this.builder = builder;
             this.startIndex = startIndex;
@@ -316,7 +315,7 @@ var CamlBuilder = (function () {
         ModifyType[ModifyType["AppendOr"] = 1] = "AppendOr";
         ModifyType[ModifyType["AppendAnd"] = 2] = "AppendAnd";
     })(ModifyType || (ModifyType = {}));
-    var RawQueryInternal = (function () {
+    var RawQueryInternal = /** @class */ (function () {
         function RawQueryInternal(xml) {
             this.xml = xml;
         }
@@ -365,7 +364,8 @@ var CamlBuilder = (function () {
                 var parser = new DOMParser();
                 xmlDoc = parser.parseFromString(this.xml, "text/xml");
             }
-            else {
+            else // Internet Explorer
+             {
                 xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
                 xmlDoc["async"] = false;
                 xmlDoc["loadXML"](this.xml);
@@ -406,7 +406,7 @@ var CamlBuilder = (function () {
         };
         return RawQueryInternal;
     }());
-    var FieldExpression = (function () {
+    var FieldExpression = /** @class */ (function () {
         function FieldExpression(builder) {
             this.builder = builder;
         }
@@ -546,7 +546,7 @@ var CamlBuilder = (function () {
         FieldMultiExpressionType[FieldMultiExpressionType["UserMulti"] = 0] = "UserMulti";
         FieldMultiExpressionType[FieldMultiExpressionType["LookupMulti"] = 1] = "LookupMulti";
     })(FieldMultiExpressionType || (FieldMultiExpressionType = {}));
-    var LookupOrUserMultiFieldExpression = (function () {
+    var LookupOrUserMultiFieldExpression = /** @class */ (function () {
         function LookupOrUserMultiFieldExpression(builder, name, type) {
             this.builder = builder;
             this.name = name;
@@ -582,7 +582,7 @@ var CamlBuilder = (function () {
         };
         return LookupOrUserMultiFieldExpression;
     }());
-    var LookupFieldExpression = (function () {
+    var LookupFieldExpression = /** @class */ (function () {
         function LookupFieldExpression(builder, name) {
             this.builder = builder;
             this.name = name;
@@ -610,7 +610,7 @@ var CamlBuilder = (function () {
         };
         return LookupFieldExpression;
     }());
-    var UserFieldExpression = (function () {
+    var UserFieldExpression = /** @class */ (function () {
         function UserFieldExpression(builder, name) {
             var self = this;
             this.builder = builder;
@@ -680,7 +680,7 @@ var CamlBuilder = (function () {
         };
         return UserFieldExpression;
     }());
-    var ModStatFieldExpression = (function () {
+    var ModStatFieldExpression = /** @class */ (function () {
         function ModStatFieldExpression(builder, name) {
             this.builder = builder;
             this.name = name;
@@ -703,7 +703,7 @@ var CamlBuilder = (function () {
         };
         return ModStatFieldExpression;
     }());
-    var FieldExpressionToken = (function () {
+    var FieldExpressionToken = /** @class */ (function () {
         function FieldExpressionToken(builder, name, valueType, isLookupId) {
             this.builder = builder;
             this.name = name;
@@ -790,7 +790,7 @@ var CamlBuilder = (function () {
         };
         return FieldExpressionToken;
     }());
-    var GroupedQuery = (function () {
+    var GroupedQuery = /** @class */ (function () {
         function GroupedQuery(builder) {
             this.builder = builder;
         }
@@ -812,7 +812,7 @@ var CamlBuilder = (function () {
         };
         return GroupedQuery;
     }());
-    var SortedQuery = (function () {
+    var SortedQuery = /** @class */ (function () {
         function SortedQuery(builder) {
             this.builder = builder;
         }
@@ -832,7 +832,7 @@ var CamlBuilder = (function () {
         };
         return SortedQuery;
     }());
-    var Builder = (function () {
+    var Builder = /** @class */ (function () {
         function Builder() {
             this.tree = new Array();
             this.unclosedTags = 0;
@@ -1025,7 +1025,7 @@ var CamlBuilder = (function () {
         };
         return Builder;
     }());
-    var CamlValues = (function () {
+    var CamlValues = /** @class */ (function () {
         function CamlValues() {
         }
         /** Dynamic value that represents current date with specified offset (may be negative) */
@@ -1085,7 +1085,6 @@ var CamlBuilder = (function () {
     }());
     CamlBuilder.CamlValues = CamlValues;
 })(CamlBuilder || (CamlBuilder = {}));
-exports["default"] = CamlBuilder;
 // -------------------- Dependencies ------------------
 (function (window) {
     if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
@@ -1295,3 +1294,4 @@ exports["default"] = CamlBuilder;
         };
     }
 })(typeof window != "undefined" ? window : global);
+module.exports = CamlBuilder;

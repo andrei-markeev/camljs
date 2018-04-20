@@ -2,18 +2,22 @@
   "name": "camljs",
   "version": "2.9.0",
   "description": "Library for creating SharePoint CAML queries client-side. For JSOM, REST or SPServices.",
-  "main": "lib/.js",
+  "main": "dist/camljs.js",
+  "types": "dist/camljs.d.ts",
   "directories": {
     "lib": "lib",
     "test": "tests"
   },
   "scripts": {
     "build": "tsc && browserify lib/camljs.js -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --outDir dist/",
-    "build-tests-bundle": "tsc && browserify tests/Tests.js -s Tests -o tests/Tests.bundle.js",
-    "test": "tsc && node tests/index.js"
+    "test-common": "npm run build && tsc tests/Tests.ts --target es6 --module commonjs",
+    "test-html": "npm run test-common && browserify tests/Tests.js -s Tests -o tests/Tests.bundle.js",
+    "test": "npm run test-common && node tests/index.js",
+    "clean": "del tests\\Tests.js && del tests\\Tests.bundle.js && del dist\\*.* /Q"
   },
   "files": [
-    "./dist/camljs.js"
+    "dist/camljs.js",
+    "dist/camljs.d.ts"
   ],
   "repository": {
     "type": "git",

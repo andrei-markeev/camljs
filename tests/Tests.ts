@@ -1,8 +1,9 @@
-import CamlBuilder from '../lib/camljs';
 import * as tsUnit from 'ts-unit';
 import * as sinon from 'sinon';
-import * as vkbeautify from './vkbeautify';
 import * as diff from 'diff';
+
+var vkbeautify = require('./vkbeautify');
+var CamlBuilder = require('../dist/camljs');
 
 declare var SP;
 
@@ -35,7 +36,7 @@ export default class Tests extends tsUnit.TestClass {
             vkbeautify.xml(
                 '<Where>\
                     <Or>\
-                        <Eq>2<FieldRef Name="Email" /><Value Type="Text">support@google.com</Value></Eq>\
+                        <Eq><FieldRef Name="Email" /><Value Type="Text">support@google.com</Value></Eq>\
                         <Or>\
                             <Eq><FieldRef Name="Email" /><Value Type="Text">plus@google.com</Value></Eq>\
                             <Or>\

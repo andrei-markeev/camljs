@@ -417,4 +417,4 @@ declare module CamlBuilder {
         };
     }
 }
-export default CamlBuilder;
+export = CamlBuilder;
