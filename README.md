@@ -22,9 +22,33 @@ npm install @types/camljs
 
 Also check out [CamlJs Console](https://github.com/andrei-markeev/camljs-console) - Chrome extension for testing queries with live preview against real lists.
 
+## Usage
+
+In browser:
+
+```html
+<script type="text/javascript" src="//unpkg.com/camljs"></script>
+<script>
+    alert(new CamlBuilder().View().ToString());
+</script>
+```
+
+In node:
+
+```js
+var CamlBuilder = require('camljs');
+console.log(new CamlBuilder().View().ToString());
+```
+
+ES2015 modules:
+```js
+import * as CamlBuilder from 'camljs';
+console.log(new CamlBuilder().View().ToString());
+```
+
 ## Basics
 
-To start with, let's assume we need to fetch all Google-related letters from some mailbox list, using SharePoint Client Object Model. To generate the corresponding query using Caml Builder, you could use following javascript code:
+Let's assume we need to fetch all Google-related emails from a SharePoint list where your company stores archived project emails. To generate the corresponding query using CamlJs, you could use following javascript code:
 
 ```js
 var camlBuilder = new CamlBuilder();
