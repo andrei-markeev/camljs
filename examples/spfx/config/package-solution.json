@@ -1,0 +1,13 @@
+{
+  "$schema": "https://dev.office.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "camljs-spfx-client-side-solution",
+    "id": "0bd3ca21-9840-46ac-95be-64cccf60d6d6",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true
+  },
+  "paths": {
+    "zippedPackage": "solution/camljs-spfx.sppkg"
+  }
+}

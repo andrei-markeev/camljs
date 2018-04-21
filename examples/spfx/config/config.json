@@ -1,0 +1,15 @@
+{
+  "$schema": "https://dev.office.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "caml-js-example-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/camlJsExample/CamlJsExampleWebPart.js",
+          "manifest": "./src/webparts/camlJsExample/CamlJsExampleWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {}
+}

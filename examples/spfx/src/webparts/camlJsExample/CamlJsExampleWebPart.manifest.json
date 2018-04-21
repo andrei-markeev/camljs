@@ -1,0 +1,19 @@
+{
+  "$schema": "https://dev.office.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "95af6ae6-25fd-4646-86b6-eaa97513922d",
+  "alias": "CamlJsExampleWebPart",
+  "componentType": "WebPart",
+  "version": "*",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "preconfiguredEntries": [{
+    "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
+    "group": { "default": "Other" },
+    "title": { "default": "CamlJsExample" },
+    "description": { "default": "Example of using CamlJs with SPFx" },
+    "officeFabricIconFontName": "Page",
+    "properties": {
+      "description": "CamlJsExample"
+    }
+  }]
+}
