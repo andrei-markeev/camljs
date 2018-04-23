@@ -9,7 +9,7 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "tsc && browserify lib/camljs.js -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --outDir dist/",
+    "build": "tsc && browserify lib/camljs.js -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --emitDeclarationOnly --outDir dist/",
     "test-common": "npm run build && tsc tests/Tests.ts --target es6 --module commonjs",
     "test-html": "npm run test-common && browserify tests/Tests.js -s Tests -o tests/Tests.bundle.js",
     "test": "npm run test-common && node tests/index.js",
