@@ -474,11 +474,11 @@ module CamlBuilder {
             }
             return this;
         }
-        InnerJoin(lookupFieldInternalName: string, alias: string): IJoin {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER");
+        InnerJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "INNER", fromList);
         }
-        LeftJoin(lookupFieldInternalName: string, alias: string): IJoin {
-            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT");
+        LeftJoin(lookupFieldInternalName: string, alias: string, fromList?: string): IJoin {
+            return this.joinsManager.Join(lookupFieldInternalName, alias, "LEFT", fromList);
         }
         /** Select projected field for using in the main Query body
             @param remoteFieldAlias By this alias, the field can be used in the main Query body. */

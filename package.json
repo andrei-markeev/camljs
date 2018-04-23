@@ -1,6 +1,6 @@
 {
   "name": "camljs",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "description": "Library for creating SharePoint CAML queries client-side. For JSOM, REST or SPServices.",
   "main": "dist/camljs.js",
   "types": "dist/camljs.d.ts",

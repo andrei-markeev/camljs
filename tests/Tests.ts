@@ -395,6 +395,46 @@ export default class Tests extends tsUnit.TestClass {
             vkbeautify.xml(query)
         );
 
+        var query = new CamlBuilder()
+            .View(["Title", "CustomerName", "CustomerCity"])
+            .LeftJoin("CustomerName", "customers")
+            .Select("Title", "CustomerName")
+            .LeftJoin("CityName", "customerCities", "customers")
+            .Select("Title", "CustomerCity")
+            .Query()
+            .ToString();
+
+        this.areIdentical(
+            vkbeautify.xml(
+            '<View>\
+                <ViewFields>\
+                    <FieldRef Name="Title" />\
+                    <FieldRef Name="CustomerName" />\
+                    <FieldRef Name="CustomerCity" />\
+                </ViewFields>\
+                <Joins>\
+                  <Join Type="LEFT" ListAlias="customers">\
+                    <Eq>\
+                      <FieldRef Name="CustomerName" RefType="ID" />\
+                      <FieldRef Name="ID" List="customers" />\
+                    </Eq>\
+                  </Join>\
+                  <Join Type="LEFT" ListAlias="customerCities">\
+                    <Eq>\
+                      <FieldRef Name="CityName" RefType="ID" List="customers" />\
+                      <FieldRef Name="ID" List="customerCities" />\
+                    </Eq>\
+                  </Join>\
+                </Joins>\
+                <ProjectedFields>\
+                    <Field ShowField="Title" Type="Lookup" Name="CustomerName" List="customers" />\
+                    <Field ShowField="Title" Type="Lookup" Name="CustomerCity" List="customerCities" />\
+                </ProjectedFields>\
+                <Query />\
+            </View>'),
+            vkbeautify.xml(query)
+        );
+        
     }
 
     TestScope() {
