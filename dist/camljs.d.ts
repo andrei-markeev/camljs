@@ -4,8 +4,9 @@ declare class CamlBuilder {
     Where(): CamlBuilder.IFieldExpression;
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
-                          Specifying view fields is a good practice, as it decreases traffic between server and client. */
-    View(viewFields?: string[]): CamlBuilder.IView;
+                          Specifying view fields is a good practice, as it decreases traffic between server and client.
+                          Additionally you can specify aggregated fields, e.g. { count: "<field name>" }, { sum: "<field name>" }, etc.. */
+    View(viewFields?: CamlBuilder.ViewField[]): CamlBuilder.IView;
     /** Generate <ViewFields> tag for SPServices */
     ViewFields(viewFields: string[]): CamlBuilder.IFinalizableToString;
     /** Use for:
@@ -17,6 +18,22 @@ declare class CamlBuilder {
     static FromXml(xml: string): CamlBuilder.IRawQuery;
 }
 declare module CamlBuilder {
+    type Aggregation = {
+        count: string;
+    } | {
+        sum: string;
+    } | {
+        avg: string;
+    } | {
+        max: string;
+    } | {
+        min: string;
+    } | {
+        stdev: string;
+    } | {
+        var: string;
+    };
+    type ViewField = string | Aggregation;
     interface IView extends IFinalizable {
         /** Define query */
         Query(): IQuery;
@@ -376,7 +393,7 @@ declare module CamlBuilder {
         Year = 4,
     }
     class Internal {
-        static createView(viewFields?: string[]): IView;
+        static createView(viewFields?: ViewField[]): IView;
         static createViewFields(viewFields: string[]): IFinalizableToString;
         static createWhere(): IFieldExpression;
         static createExpression(): IFieldExpression;

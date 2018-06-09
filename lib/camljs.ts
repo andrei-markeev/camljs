@@ -7,8 +7,9 @@ class CamlBuilder {
     }
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
-                          Specifying view fields is a good practice, as it decreases traffic between server and client. */
-    View(viewFields?: string[]): CamlBuilder.IView {
+                          Specifying view fields is a good practice, as it decreases traffic between server and client.
+                          Additionally you can specify aggregated fields, e.g. { count: "<field name>" }, { sum: "<field name>" }, etc.. */
+    View(viewFields?: CamlBuilder.ViewField[]): CamlBuilder.IView {
         return CamlBuilder.Internal.createView(viewFields);
     }
 
@@ -34,6 +35,9 @@ class CamlBuilder {
 module CamlBuilder {
 
     declare var SP, Sys, ActiveXObject;
+
+    export type Aggregation = { count: string } | { sum: string } | { avg: string } | { max: string } | { min: string } | { stdev: string } | { var: string };
+    export type ViewField = string | Aggregation;
 
     export interface IView extends IFinalizable {
         /** Define query */
@@ -414,7 +418,7 @@ module CamlBuilder {
     }
 
     export class Internal {
-        static createView(viewFields?: string[]): IView {
+        static createView(viewFields?: ViewField[]): IView {
             return new ViewInternal().View(viewFields);
         }
         static createViewFields(viewFields: string[]): IFinalizableToString {
@@ -438,11 +442,23 @@ module CamlBuilder {
         private builder: Builder;
         private joinsManager: JoinsManager;
         /** Adds View element. */
-        View(viewFields?: string[]): IView {
+        View(viewFields?: ViewField[]): IView {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
-            if (viewFields && viewFields.length > 0)
-                this.CreateViewFields(viewFields);
+            if (viewFields) {
+                let fieldNames: string[] = [];
+                let aggregations: Aggregation[] = [];
+                for (let viewField of viewFields) {
+                    if (typeof viewField === "string")
+                        fieldNames.push(viewField);
+                    else
+                        aggregations.push(viewField);
+                }
+                if (fieldNames.length > 0)
+                    this.CreateViewFields(fieldNames);
+                if (aggregations.length > 0)
+                    this.CreateAggregations(aggregations);
+            }
             this.joinsManager = new JoinsManager(this.builder, this);
             return this;
         }
@@ -450,6 +466,16 @@ module CamlBuilder {
             this.builder.WriteStart("ViewFields");
             for (var i = 0; i < viewFields.length; i++) {
                 this.builder.WriteFieldRef(viewFields[i]);
+            }
+            this.builder.WriteEnd();
+            return this;
+        }
+        CreateAggregations(aggregations: Aggregation[]): IFinalizableToString {
+            this.builder.WriteStart("Aggregations", [ { Name: "Value", Value: "On" } ]);
+            for (var i = 0; i < aggregations.length; i++) {
+                let type = Object.keys(aggregations[i])[0];
+                let name = aggregations[i][type];
+                this.builder.WriteFieldRef(name, { Type: type.toUpperCase() });
             }
             this.builder.WriteEnd();
             return this;

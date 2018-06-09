@@ -1,9 +1,8 @@
 import * as tsUnit from 'ts-unit';
 import * as sinon from 'sinon';
 import * as diff from 'diff';
-
-var vkbeautify = require('./vkbeautify');
-var CamlBuilder = require('../dist/camljs');
+import * as CamlBuilder from '../dist/camljs';
+import * as vkbeautify from './vkbeautify';
 
 declare var SP;
 
@@ -588,7 +587,36 @@ export default class Tests extends tsUnit.TestClass {
             );
 
     }
-	
+
+    TestAggregations() {
+        var query = new CamlBuilder()
+            .View(["Category", { count: "ID" }, { sum: "Amount" }])
+            .Query()
+            .GroupBy("Category")
+            .ToString();
+
+
+        this.areIdentical(
+            vkbeautify.xml(
+                '<View>\
+                <ViewFields>\
+                    <FieldRef Name="Category" />\
+                </ViewFields>\
+                <Aggregations Value=\"On\">\
+                    <FieldRef Name="ID" Type="COUNT" />\
+                    <FieldRef Name="Amount" Type="SUM" />\
+                </Aggregations>\
+                <Query>\
+                    <GroupBy>\
+						<FieldRef Name="Category" />\
+                    </GroupBy>\
+                </Query>\
+            </View>'),
+            vkbeautify.xml(query)
+            );
+
+    }
+    
     TestToCamlQuery() {
         SP.CamlQuery = function() {
             this.set_viewXml = sinon.spy();

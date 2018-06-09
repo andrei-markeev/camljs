@@ -10,7 +10,8 @@ var CamlBuilder = /** @class */ (function () {
     };
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
-                          Specifying view fields is a good practice, as it decreases traffic between server and client. */
+                          Specifying view fields is a good practice, as it decreases traffic between server and client.
+                          Additionally you can specify aggregated fields, e.g. { count: "<field name>" }, { sum: "<field name>" }, etc.. */
     CamlBuilder.prototype.View = function (viewFields) {
         return CamlBuilder.Internal.createView(viewFields);
     };
@@ -81,8 +82,21 @@ var CamlBuilder = /** @class */ (function () {
         ViewInternal.prototype.View = function (viewFields) {
             this.builder.WriteStart("View");
             this.builder.unclosedTags++;
-            if (viewFields && viewFields.length > 0)
-                this.CreateViewFields(viewFields);
+            if (viewFields) {
+                var fieldNames = [];
+                var aggregations = [];
+                for (var _i = 0, viewFields_1 = viewFields; _i < viewFields_1.length; _i++) {
+                    var viewField = viewFields_1[_i];
+                    if (typeof viewField === "string")
+                        fieldNames.push(viewField);
+                    else
+                        aggregations.push(viewField);
+                }
+                if (fieldNames.length > 0)
+                    this.CreateViewFields(fieldNames);
+                if (aggregations.length > 0)
+                    this.CreateAggregations(aggregations);
+            }
             this.joinsManager = new JoinsManager(this.builder, this);
             return this;
         };
@@ -90,6 +104,16 @@ var CamlBuilder = /** @class */ (function () {
             this.builder.WriteStart("ViewFields");
             for (var i = 0; i < viewFields.length; i++) {
                 this.builder.WriteFieldRef(viewFields[i]);
+            }
+            this.builder.WriteEnd();
+            return this;
+        };
+        ViewInternal.prototype.CreateAggregations = function (aggregations) {
+            this.builder.WriteStart("Aggregations", [{ Name: "Value", Value: "On" }]);
+            for (var i = 0; i < aggregations.length; i++) {
+                var type = Object.keys(aggregations[i])[0];
+                var name_1 = aggregations[i][type];
+                this.builder.WriteFieldRef(name_1, { Type: type.toUpperCase() });
             }
             this.builder.WriteEnd();
             return this;
