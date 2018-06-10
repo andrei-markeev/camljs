@@ -119,8 +119,9 @@ module CamlBuilder {
     }
     export interface IGroupable extends ISortable {
         /** Adds GroupBy clause to the query.
-            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        GroupBy(fieldInternalName): IGroupedQuery;
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
+            @param groupLimit Return only first N groups */
+        GroupBy(fieldInternalName, collapse?: boolean, groupLimit?: number): IGroupedQuery;
     }
 
     export interface IExpression extends IGroupable {
@@ -544,9 +545,10 @@ module CamlBuilder {
         }
 
         /** Adds GroupBy clause to the query.
-            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        GroupBy(groupFieldName: string, collapse?: boolean) {
-            this.builder.WriteStartGroupBy(groupFieldName, collapse);
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
+            @param groupLimit Return only first N groups */
+        GroupBy(groupFieldName: string, collapse?: boolean, groupLimit?: number) {
+            this.builder.WriteStartGroupBy(groupFieldName, collapse, groupLimit);
             return new GroupedQuery(this.builder);
         }
 
@@ -675,9 +677,10 @@ module CamlBuilder {
         }
 
         /** Adds GroupBy clause to the query.
-            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        GroupBy(groupFieldName: string, collapse?: boolean) {
-            this.builder.WriteStartGroupBy(groupFieldName, collapse);
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
+            @param groupLimit Return only first N groups */
+        GroupBy(groupFieldName: string, collapse?: boolean, groupLimit?: number) {
+            this.builder.WriteStartGroupBy(groupFieldName, collapse, groupLimit);
             return new GroupedQuery(this.builder);
         }
 
@@ -1370,7 +1373,7 @@ module CamlBuilder {
             this.WriteValueElement(valueType, value);
             this.WriteEnd();
         }
-        WriteStartGroupBy(groupFieldName, collapse) {
+        WriteStartGroupBy(groupFieldName, collapse, groupLimit) {
             if (this.unclosedTags > 0)
             {
                 var tagsToClose = this.unclosedTags;
@@ -1382,10 +1385,13 @@ module CamlBuilder {
                     this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
             }
+            let elem = { Element: "Start", Name: "GroupBy", Attributes: [] };
             if (collapse)
-                this.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE" }] });
-            else
-                this.tree.push({ Element: "Start", Name: "GroupBy" });
+                elem.Attributes.push({ Name: "Collapse", Value: "TRUE" });
+            if (groupLimit)
+                elem.Attributes.push({ Name: "GroupLimit", Value: ""+groupLimit });
+            
+            this.tree.push(elem);
             this.tree.push({ Element: "FieldRef", Name: groupFieldName });
             this.WriteEnd();
         }

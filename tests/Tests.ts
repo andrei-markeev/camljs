@@ -592,7 +592,7 @@ export default class Tests extends tsUnit.TestClass {
         var query = new CamlBuilder()
             .View(["Category", { count: "ID" }, { sum: "Amount" }])
             .Query()
-            .GroupBy("Category")
+            .GroupBy("Category", true, 100)
             .ToString();
 
 
@@ -607,7 +607,7 @@ export default class Tests extends tsUnit.TestClass {
                     <FieldRef Name="Amount" Type="SUM" />\
                 </Aggregations>\
                 <Query>\
-                    <GroupBy>\
+                    <GroupBy Collapse="TRUE" GroupLimit="100">\
 						<FieldRef Name="Category" />\
                     </GroupBy>\
                 </Query>\

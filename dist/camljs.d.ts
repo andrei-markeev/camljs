@@ -114,8 +114,9 @@ declare module CamlBuilder {
     }
     interface IGroupable extends ISortable {
         /** Adds GroupBy clause to the query.
-            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        GroupBy(fieldInternalName: any): IGroupedQuery;
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
+            @param groupLimit Return only first N groups */
+        GroupBy(fieldInternalName: any, collapse?: boolean, groupLimit?: number): IGroupedQuery;
     }
     interface IExpression extends IGroupable {
         /** Adds And clause to the query. */

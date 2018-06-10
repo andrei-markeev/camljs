@@ -179,9 +179,10 @@ var CamlBuilder = /** @class */ (function () {
             return new FieldExpression(this.builder);
         };
         /** Adds GroupBy clause to the query.
-            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        QueryInternal.prototype.GroupBy = function (groupFieldName, collapse) {
-            this.builder.WriteStartGroupBy(groupFieldName, collapse);
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
+            @param groupLimit Return only first N groups */
+        QueryInternal.prototype.GroupBy = function (groupFieldName, collapse, groupLimit) {
+            this.builder.WriteStartGroupBy(groupFieldName, collapse, groupLimit);
             return new GroupedQuery(this.builder);
         };
         /** Adds OrderBy clause to the query
@@ -298,9 +299,10 @@ var CamlBuilder = /** @class */ (function () {
             return new FieldExpression(this.builder);
         };
         /** Adds GroupBy clause to the query.
-            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved. */
-        QueryToken.prototype.GroupBy = function (groupFieldName, collapse) {
-            this.builder.WriteStartGroupBy(groupFieldName, collapse);
+            @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
+            @param groupLimit Return only first N groups */
+        QueryToken.prototype.GroupBy = function (groupFieldName, collapse, groupLimit) {
+            this.builder.WriteStartGroupBy(groupFieldName, collapse, groupLimit);
             return new GroupedQuery(this.builder);
         };
         /** Adds OrderBy clause to the query
@@ -925,7 +927,7 @@ var CamlBuilder = /** @class */ (function () {
             this.WriteValueElement(valueType, value);
             this.WriteEnd();
         };
-        Builder.prototype.WriteStartGroupBy = function (groupFieldName, collapse) {
+        Builder.prototype.WriteStartGroupBy = function (groupFieldName, collapse, groupLimit) {
             if (this.unclosedTags > 0) {
                 var tagsToClose = this.unclosedTags;
                 if (this.tree[0].Name == "Query")
@@ -936,10 +938,12 @@ var CamlBuilder = /** @class */ (function () {
                     this.tree.push({ Element: "End", Count: tagsToClose });
                 this.unclosedTags -= tagsToClose;
             }
+            var elem = { Element: "Start", Name: "GroupBy", Attributes: [] };
             if (collapse)
-                this.tree.push({ Element: "Start", Name: "GroupBy", Attributes: [{ Name: "Collapse", Value: "TRUE" }] });
-            else
-                this.tree.push({ Element: "Start", Name: "GroupBy" });
+                elem.Attributes.push({ Name: "Collapse", Value: "TRUE" });
+            if (groupLimit)
+                elem.Attributes.push({ Name: "GroupLimit", Value: "" + groupLimit });
+            this.tree.push(elem);
             this.tree.push({ Element: "FieldRef", Name: groupFieldName });
             this.WriteEnd();
         };
