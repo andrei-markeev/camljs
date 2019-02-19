@@ -666,4 +666,18 @@ export default class Tests extends tsUnit.TestClass {
         this.areIdentical("<View><Query>" + queryText + "</Query></View>", camlQuery.set_viewXml.getCall(0).args[0]);
     }
 
+    TestFinalizeTwice() {
+        try {
+            var camlBuilder1 = new CamlBuilder()
+                .View(["ID", "Created"])
+                .RowLimit(20, true)
+                .Scope(CamlBuilder.ViewScope.RecursiveAll).Query().Where();
+            var queryA = camlBuilder1.TextField("Title").BeginsWith("A").ToString();
+            var queryB = camlBuilder1.TextField("Title").BeginsWith("B").ToString();
+            this.fail("Reusing CamlBuilder to create more than 1 query should throw an error.")
+        } catch(e) {
+            this.isTrue(e.toString().indexOf("Please create a new CamlBuilder object for every query") > -1);
+        }
+    }
+
 }

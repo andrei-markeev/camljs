@@ -868,8 +868,10 @@ var CamlBuilder = /** @class */ (function () {
         function Builder() {
             this.tree = new Array();
             this.unclosedTags = 0;
+            this.sealed = false;
         }
         Builder.prototype.SetAttributeToLastElement = function (tagName, attributeName, attributeValue) {
+            this.ThrowIfSealed();
             for (var i = this.tree.length - 1; i >= 0; i--) {
                 if (this.tree[i].Name == tagName) {
                     this.tree[i].Attributes = this.tree[i].Attributes || [];
@@ -880,6 +882,7 @@ var CamlBuilder = /** @class */ (function () {
             throw new Error("CamlJs ERROR: can't find element '" + tagName + "' in the tree while setting attribute " + attributeName + " to '" + attributeValue + "'!");
         };
         Builder.prototype.WriteRowLimit = function (paged, limit) {
+            this.ThrowIfSealed();
             if (paged)
                 this.tree.push({ Element: "Start", Name: "RowLimit", Attributes: [{ Name: "Paged", Value: "TRUE" }] });
             else
@@ -888,18 +891,21 @@ var CamlBuilder = /** @class */ (function () {
             this.tree.push({ Element: "End" });
         };
         Builder.prototype.WriteStart = function (tagName, attributes) {
+            this.ThrowIfSealed();
             if (attributes)
                 this.tree.push({ Element: "Start", Name: tagName, Attributes: attributes });
             else
                 this.tree.push({ Element: "Start", Name: tagName });
         };
         Builder.prototype.WriteEnd = function (count) {
+            this.ThrowIfSealed();
             if (count > 0)
                 this.tree.push({ Element: "End", Count: count });
             else
                 this.tree.push({ Element: "End" });
         };
         Builder.prototype.WriteFieldRef = function (fieldInternalName, options) {
+            this.ThrowIfSealed();
             var fieldRef = { Element: 'FieldRef', Name: fieldInternalName };
             for (var name in options || {}) {
                 fieldRef[name] = options[name];
@@ -907,6 +913,7 @@ var CamlBuilder = /** @class */ (function () {
             this.tree.push(fieldRef);
         };
         Builder.prototype.WriteValueElement = function (valueType, value) {
+            this.ThrowIfSealed();
             if (valueType == "Date")
                 this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
             else if (valueType == "DateTime")
@@ -915,6 +922,7 @@ var CamlBuilder = /** @class */ (function () {
                 this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
         };
         Builder.prototype.WriteMembership = function (startIndex, type, groupId) {
+            this.ThrowIfSealed();
             var attributes = [{ Name: "Type", Value: type }];
             if (groupId) {
                 attributes.push({ Name: "ID", Value: groupId });
@@ -923,15 +931,18 @@ var CamlBuilder = /** @class */ (function () {
             this.WriteEnd();
         };
         Builder.prototype.WriteUnaryOperation = function (startIndex, operation) {
+            this.ThrowIfSealed();
             this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
             this.WriteEnd();
         };
         Builder.prototype.WriteBinaryOperation = function (startIndex, operation, valueType, value) {
+            this.ThrowIfSealed();
             this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
             this.WriteValueElement(valueType, value);
             this.WriteEnd();
         };
         Builder.prototype.WriteStartGroupBy = function (groupFieldName, collapse, groupLimit) {
+            this.ThrowIfSealed();
             if (this.unclosedTags > 0) {
                 var tagsToClose = this.unclosedTags;
                 if (this.tree[0].Name == "Query")
@@ -952,6 +963,7 @@ var CamlBuilder = /** @class */ (function () {
             this.WriteEnd();
         };
         Builder.prototype.WriteStartOrderBy = function (override, useIndexForOrderBy) {
+            this.ThrowIfSealed();
             if (this.unclosedTags > 0) {
                 var tagsToClose = this.unclosedTags;
                 if (this.tree[0].Name == "Query")
@@ -974,6 +986,7 @@ var CamlBuilder = /** @class */ (function () {
             this.unclosedTags++;
         };
         Builder.prototype.WriteConditions = function (builders, elementName) {
+            this.ThrowIfSealed();
             var pos = this.tree.length;
             builders.reverse();
             for (var i = 0; i < builders.length; i++) {
@@ -986,6 +999,10 @@ var CamlBuilder = /** @class */ (function () {
                 }
                 Array.prototype.splice.apply(this.tree, [pos, 0].concat(conditionBuilder.tree));
             }
+        };
+        Builder.prototype.ThrowIfSealed = function () {
+            if (this.sealed)
+                throw new Error("CamlBuilder was already serialized, you cannot make modifications to it anymore. Please create a new CamlBuilder object for every query.");
         };
         Builder.prototype.Finalize = function () {
             var sb = new Sys.StringBuilder();
@@ -1045,7 +1062,7 @@ var CamlBuilder = /** @class */ (function () {
                 this.unclosedTags--;
                 writer.writeEndElement();
             }
-            this.tree = new Array();
+            this.sealed = true;
             writer.close();
             return sb.toString();
         };

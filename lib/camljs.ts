@@ -1311,11 +1311,14 @@ module CamlBuilder {
         constructor() {
             this.tree = new Array();
             this.unclosedTags = 0;
+            this.sealed = false;
         }
         tree: any[];
         unclosedTags: number;
+        sealed: boolean;
 
         SetAttributeToLastElement(tagName: string, attributeName: string, attributeValue: string) {
+            this.ThrowIfSealed();
             for (var i = this.tree.length - 1; i >= 0; i--) {
                 if (this.tree[i].Name == tagName) {
                     this.tree[i].Attributes = this.tree[i].Attributes || [];
@@ -1326,6 +1329,7 @@ module CamlBuilder {
             throw new Error("CamlJs ERROR: can't find element '" + tagName + "' in the tree while setting attribute " + attributeName + " to '" + attributeValue + "'!");
         }
         WriteRowLimit(paged: boolean, limit: number) {
+            this.ThrowIfSealed();
             if (paged)
                 this.tree.push({ Element: "Start", Name: "RowLimit", Attributes: [{ Name: "Paged", Value: "TRUE" }] });
             else
@@ -1336,18 +1340,21 @@ module CamlBuilder {
             this.tree.push({ Element: "End" });
         }
         WriteStart(tagName: string, attributes?: any[]) {
+            this.ThrowIfSealed();
             if (attributes)
                 this.tree.push({ Element: "Start", Name: tagName, Attributes: attributes });
             else
                 this.tree.push({ Element: "Start", Name: tagName });
         }
         WriteEnd(count?: number) {
+            this.ThrowIfSealed();
             if (count > 0)
                 this.tree.push({ Element: "End", Count: count });
             else
                 this.tree.push({ Element: "End" });
         }
         WriteFieldRef(fieldInternalName: string, options?: any) {
+            this.ThrowIfSealed();
             var fieldRef = { Element: 'FieldRef', Name: fieldInternalName };
             for (var name in options || {}) {
                 fieldRef[name] = options[name];
@@ -1355,6 +1362,7 @@ module CamlBuilder {
             this.tree.push(fieldRef);
         }
         WriteValueElement(valueType: string, value: any) {
+            this.ThrowIfSealed();
             if (valueType == "Date")
                 this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
             else if (valueType == "DateTime")
@@ -1363,6 +1371,7 @@ module CamlBuilder {
                 this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
         }
         WriteMembership(startIndex: number, type, groupId?: number) {
+            this.ThrowIfSealed();
             var attributes = [{ Name: "Type", Value: type }];
             if (groupId) {
                 attributes.push({ Name: "ID", Value: groupId });
@@ -1371,15 +1380,18 @@ module CamlBuilder {
             this.WriteEnd();
         }
         WriteUnaryOperation(startIndex, operation) {
+            this.ThrowIfSealed();
             this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
             this.WriteEnd();
         }
         WriteBinaryOperation(startIndex, operation, valueType, value) {
+            this.ThrowIfSealed();
             this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
             this.WriteValueElement(valueType, value);
             this.WriteEnd();
         }
         WriteStartGroupBy(groupFieldName, collapse, groupLimit) {
+            this.ThrowIfSealed();
             if (this.unclosedTags > 0)
             {
                 var tagsToClose = this.unclosedTags;
@@ -1402,6 +1414,7 @@ module CamlBuilder {
             this.WriteEnd();
         }
         WriteStartOrderBy(override, useIndexForOrderBy) {
+            this.ThrowIfSealed();
             if (this.unclosedTags > 0)
             {
                 var tagsToClose = this.unclosedTags;
@@ -1427,6 +1440,7 @@ module CamlBuilder {
 
         }
         WriteConditions(builders: Builder[], elementName: string) {
+            this.ThrowIfSealed();
             var pos = this.tree.length;
             builders.reverse();
             for (var i = 0; i < builders.length; i++) {
@@ -1439,6 +1453,10 @@ module CamlBuilder {
                 }
                 Array.prototype.splice.apply(this.tree, [pos, 0].concat(conditionBuilder.tree));
             }
+        }
+        ThrowIfSealed() {
+            if (this.sealed)
+                throw new Error("CamlBuilder was already serialized, you cannot make modifications to it anymore. Please create a new CamlBuilder object for every query.")
         }
         Finalize(): string {
             var sb = new Sys.StringBuilder();
@@ -1498,7 +1516,7 @@ module CamlBuilder {
                 writer.writeEndElement();
             }
 
-            this.tree = new Array();
+            this.sealed = true;
             writer.close();
             return sb.toString();
         }
