@@ -988,7 +988,7 @@ var CamlBuilder = /** @class */ (function () {
         Builder.prototype.WriteConditions = function (builders, elementName) {
             this.ThrowIfSealed();
             var pos = this.tree.length;
-            builders.reverse();
+            builders = builders.filter(function (b) { return b.tree.length > 0; }).reverse();
             for (var i = 0; i < builders.length; i++) {
                 var conditionBuilder = builders[i];
                 if (conditionBuilder.unclosedTags > 0)

@@ -1442,7 +1442,7 @@ module CamlBuilder {
         WriteConditions(builders: Builder[], elementName: string) {
             this.ThrowIfSealed();
             var pos = this.tree.length;
-            builders.reverse();
+            builders = builders.filter(b => b.tree.length > 0).reverse();
             for (var i = 0; i < builders.length; i++) {
                 var conditionBuilder = builders[i];
                 if (conditionBuilder.unclosedTags > 0)

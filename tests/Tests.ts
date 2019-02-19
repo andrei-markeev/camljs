@@ -640,7 +640,7 @@ export default class Tests extends tsUnit.TestClass {
                 </And>
             </Where>`),
             vkbeautify.xml(query)
-            );
+        );
 
     }
     
@@ -678,6 +678,44 @@ export default class Tests extends tsUnit.TestClass {
         } catch(e) {
             this.isTrue(e.toString().indexOf("Please create a new CamlBuilder object for every query") > -1);
         }
+    }
+
+    TestEmptyAll() {
+        var expression = CamlBuilder.Expression().All([
+            CamlBuilder.Expression().ModStatField("_ModerationStatus").ModStatId().EqualTo(0),
+            CamlBuilder.Expression().All([])
+        ]).ToString()
+
+        this.areIdentical(
+            vkbeautify.xml(
+                `<Eq>
+                    <FieldRef Name="_ModerationStatus" />
+                    <Value Type="ModStat">0</Value>
+                </Eq>`),
+            vkbeautify.xml(expression)
+        );
+
+        expression = CamlBuilder.Expression().Any([
+            CamlBuilder.Expression().TextField("Title").Contains("test"),
+            CamlBuilder.Expression().All([
+                CamlBuilder.Expression().Any([]),
+                CamlBuilder.Expression().UrlField("Link").IsNull(),
+            ])
+        ]).ToString()
+
+        this.areIdentical(
+            vkbeautify.xml(
+                `<Or>
+                    <Contains>
+                        <FieldRef Name="Title" />
+                        <Value Type="Text">test</Value>
+                    </Contains>
+                    <IsNull>
+                        <FieldRef Name="Link" />
+                    </IsNull>
+                </Or>`),
+            vkbeautify.xml(expression)
+        );
     }
 
 }
