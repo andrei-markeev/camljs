@@ -1,45 +1,42 @@
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
 import { Version } from '@microsoft/sp-core-library';
-import {
-    BaseClientSideWebPart,
-    IPropertyPaneConfiguration,
-    PropertyPaneTextField
-} from '@microsoft/sp-webpart-base';
+import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import WebPartContext from '@microsoft/sp-webpart-base/lib/core/WebPartContext';
 
 import * as CamlBuilder from 'camljs';
+
 import {
     SPHttpClient,
-    SPHttpClientResponse   
+    SPHttpClientResponse
    } from '@microsoft/sp-http';
 
 export interface ICamlJsExampleWebPartProps {
     description: string;
 }
 
-interface AppProps {
+interface IAppProps {
     context: WebPartContext;
 }
-interface AppState {
-    items: ListItem[];
+interface IAppState {
+    items: IListItem[];
 }
-interface ListItem {
+interface IListItem {
     Title: string;
 }
 
-class AppComponent extends React.Component<AppProps, AppState> {
-    public componentWillMount() {
+class AppComponent extends React.Component<IAppProps, IAppState> {
+    public componentWillMount(): void {
         this.setState({ items: [] });
     }
-    public componentDidMount() {
+    public componentDidMount(): void {
         this.props.context.spHttpClient.post(
             `${this.props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Cities')/getitems`,
             SPHttpClient.configurations.v1,
             {
                 body: JSON.stringify({
                     query: {
-                        ViewXml: new CamlBuilder().View().Query().Where().BooleanField("Visited").IsTrue().ToString()
+                        ViewXml: new CamlBuilder().View().Query().Where().BooleanField('Visited').IsTrue().ToString()
                     }
                 })
             }
@@ -51,7 +48,7 @@ class AppComponent extends React.Component<AppProps, AppState> {
             this.setState({ items: items.value });
         });
     }
-    public render() {
+    public render(): JSX.Element {
         return (<ul>{this.state.items.map(i => <li>{i.Title}</li>)}</ul>);
     }
 }
