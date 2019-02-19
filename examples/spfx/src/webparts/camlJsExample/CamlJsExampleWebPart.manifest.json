@@ -1,16 +1,23 @@
 {
-  "$schema": "https://dev.office.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
-  "id": "95af6ae6-25fd-4646-86b6-eaa97513922d",
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "820c8b32-a3b1-4121-a941-1ec5dd575781",
   "alias": "CamlJsExampleWebPart",
   "componentType": "WebPart",
+
+  // The "*" signifies that the version should be taken from the package.json
   "version": "*",
   "manifestVersion": 2,
+
+  // If true, the component can only be installed on sites where Custom Script is allowed.
+  // Components that allow authors to embed arbitrary script code should set this to true.
+  // https://support.office.com/en-us/article/Turn-scripting-capabilities-on-or-off-1f2c515f-5d7e-448a-9fd7-835da935584f
   "requiresCustomScript": false,
+
   "preconfiguredEntries": [{
-    "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
+    "groupId": "5c03119e-3074-46fd-976b-c60198311f70", // Other
     "group": { "default": "Other" },
     "title": { "default": "CamlJsExample" },
-    "description": { "default": "Example of using CamlJs with SPFx" },
+    "description": { "default": "Example of using CamlJs in SPFx" },
     "officeFabricIconFontName": "Page",
     "properties": {
       "description": "CamlJsExample"

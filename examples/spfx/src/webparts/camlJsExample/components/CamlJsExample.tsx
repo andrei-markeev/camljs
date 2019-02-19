@@ -1,31 +1,19 @@
-import * as React from 'react';
-import * as ReactDom from 'react-dom';
-import { Version } from '@microsoft/sp-core-library';
-import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
-import WebPartContext from '@microsoft/sp-webpart-base/lib/core/WebPartContext';
+import { WebPartContext } from "@microsoft/sp-webpart-base";
+import * as React from "react";
+import * as CamlBuilder from "camljs";
+import { SPHttpClient, SPHttpClientResponse } from "@microsoft/sp-http";
 
-import * as CamlBuilder from 'camljs';
-
-import {
-    SPHttpClient,
-    SPHttpClientResponse
-   } from '@microsoft/sp-http';
-
-export interface ICamlJsExampleWebPartProps {
-    description: string;
-}
-
-interface IAppProps {
+export interface IAppProps {
     context: WebPartContext;
 }
-interface IAppState {
+export interface IAppState {
     items: IListItem[];
 }
-interface IListItem {
+export interface IListItem {
     Title: string;
 }
 
-class AppComponent extends React.Component<IAppProps, IAppState> {
+export default class CamlJsExample extends React.Component<IAppProps, IAppState> {
     public componentWillMount(): void {
         this.setState({ items: [] });
     }
@@ -51,16 +39,4 @@ class AppComponent extends React.Component<IAppProps, IAppState> {
     public render(): JSX.Element {
         return (<ul>{this.state.items.map(i => <li>{i.Title}</li>)}</ul>);
     }
-}
-
-export default class CamlJsExampleWebPart extends BaseClientSideWebPart<ICamlJsExampleWebPartProps> {
-
-    public render(): void {
-        ReactDom.render(<AppComponent context={this.context} />, this.domElement);
-    }
-
-    protected get dataVersion(): Version {
-        return Version.parse('1.0');
-    }
-
 }
