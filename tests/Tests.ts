@@ -616,6 +616,33 @@ export default class Tests extends tsUnit.TestClass {
             );
 
     }
+
+    TestContentTypeIdField() {
+        var query = new CamlBuilder()
+            .Where()
+            .TextField("Title").EqualTo("Document")
+            .And()
+            .ContentTypeIdField().BeginsWith("0x101")
+            .ToString();
+
+        this.areIdentical(
+            vkbeautify.xml(
+            `<Where>
+                <And>
+                    <Eq>
+                        <FieldRef Name="Title" />
+                        <Value Type="Text">Document</Value>
+                    </Eq>
+                    <BeginsWith>
+                        <FieldRef Name="ContentTypeId" />
+                        <Value Type="ContentTypeId">0x101</Value>
+                    </BeginsWith>
+                </And>
+            </Where>`),
+            vkbeautify.xml(query)
+            );
+
+    }
     
     TestToCamlQuery() {
         SP.CamlQuery = function() {

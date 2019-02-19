@@ -442,6 +442,10 @@ var CamlBuilder = /** @class */ (function () {
         FieldExpression.prototype.TextField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Text");
         };
+        /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is ContentTypeId */
+        FieldExpression.prototype.ContentTypeIdField = function (internalName) {
+            return new FieldExpressionToken(this.builder, internalName || "ContentTypeId", "ContentTypeId");
+        };
         /** Specifies that a condition will be tested against the field with the specified internal name, and the type of this field is Choice */
         FieldExpression.prototype.ChoiceField = function (internalName) {
             return new FieldExpressionToken(this.builder, internalName, "Choice");
