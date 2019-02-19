@@ -35,7 +35,7 @@
   "homepage": "https://github.com/andrei-markeev/camljs#readme",
   "devDependencies": {
     "@types/node": "^9.6.6",
-    "browserify": "^16.2.0",
+    "browserify": "^16.2.3",
     "diff": "^3.5.0",
     "sinon": "^4.5.0",
     "ts-unit": "^1.0.1",
