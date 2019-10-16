@@ -64,7 +64,7 @@ export default class Tests extends tsUnit.TestClass {
             vkbeautify.xml(
                 '<Where>\
                     <Or>\
-                        <Eq><FieldRef Name="AssignedTo" LookupId="True" /><Value Type="Integer"><UserID /></Value></Eq>\
+                        <Eq><FieldRef Name="AssignedTo" LookupId="TRUE" /><Value Type="Integer"><UserID /></Value></Eq>\
                         <Membership Type="CurrentUserGroups"><FieldRef Name="AssignedTo" /></Membership>\
                     </Or>\
                 </Where>\
@@ -213,7 +213,7 @@ export default class Tests extends tsUnit.TestClass {
                 '<Where>\
                   <And>\
                     <In>\
-                      <FieldRef Name="Category" LookupId="True" />\
+                      <FieldRef Name="Category" LookupId="TRUE" />\
                       <Values>\
                         <Value Type="Integer">2</Value>\
                         <Value Type="Integer">3</Value>\
@@ -281,7 +281,7 @@ export default class Tests extends tsUnit.TestClass {
                         <FieldRef Name="BroadcastTo" />\
                         </Membership>\
                         <Eq>\
-                        <FieldRef Name="BroadcastTo" LookupId="True" />\
+                        <FieldRef Name="BroadcastTo" LookupId="TRUE" />\
                         <Value Type="Integer"><UserID /></Value>\
                         </Eq>\
                     </Or>\
@@ -306,7 +306,7 @@ export default class Tests extends tsUnit.TestClass {
                 '<Where>\
                 <Gt>\
                     <FieldRef Name="Created" />\
-                    <Value IncludeTimeValue="True" Type="DateTime">2013-01-01T00:00:00.000Z</Value>\
+                    <Value IncludeTimeValue="TRUE" Type="DateTime">2013-01-01T00:00:00.000Z</Value>\
                 </Gt>\
             </Where>'),
             vkbeautify.xml(caml)

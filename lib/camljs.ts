@@ -1466,9 +1466,9 @@ module CamlBuilder {
                     writer.writeStartElement("FieldRef");
                     writer.writeAttributeString("Name", this.tree[i].Name);
                     if (this.tree[i].LookupId)
-                        writer.writeAttributeString("LookupId", "True");
+                        writer.writeAttributeString("LookupId", "TRUE");
                     if (this.tree[i].Descending)
-                        writer.writeAttributeString("Ascending", "False");
+                        writer.writeAttributeString("Ascending", "FALSE");
                     for (var attr in this.tree[i]) {
                         if (attr == "Element" || attr == "Name" || attr == "LookupId" || attr == "Descending")
                             continue;
@@ -1489,7 +1489,7 @@ module CamlBuilder {
                 } else if (this.tree[i].Element == "Value") {
                     writer.writeStartElement("Value");
                     if (this.tree[i].IncludeTimeValue === true)
-                        writer.writeAttributeString("IncludeTimeValue", "True");
+                        writer.writeAttributeString("IncludeTimeValue", "TRUE");
                     writer.writeAttributeString("Type", this.tree[i].ValueType);
                     var value = this.tree[i].Value.toString();
                     if (value.slice(0, 1) == "{" && value.slice(-1) == "}")
