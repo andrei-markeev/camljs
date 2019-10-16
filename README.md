@@ -109,7 +109,7 @@ As you see, the code is pretty clean and readable. The resulting CAML is much mo
 <Where>
   <And>
     <In>
-      <FieldRef Name="Category" LookupId="True" />
+      <FieldRef Name="Category" LookupId="TRUE" />
       <Values>
         <Value Type="Integer">2</Value>
         <Value Type="Integer">3</Value>
@@ -124,7 +124,7 @@ As you see, the code is pretty clean and readable. The resulting CAML is much mo
     </Leq>
   </And>
 </Where><OrderBy>
-  <FieldRef Name="ExpirationDate" Ascending="False" />
+  <FieldRef Name="ExpirationDate" Ascending="FALSE" />
 </OrderBy>
 ```
 
@@ -278,7 +278,7 @@ Result:
     <Where>
       <And>
         <Eq>
-          <FieldRef Name="Author" LookupId="true" />
+          <FieldRef Name="Author" LookupId="TRUE" />
           <Value Type="Integer">
             <UserID />
           </Value>
