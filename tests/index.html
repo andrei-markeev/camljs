@@ -43,7 +43,7 @@
                                     p.removed ? "<del>" + encodeHtml(p.value) + "</del>" :
                                     encodeHtml(p.value)); }, "") + "</pre>";
                             } else
-                                html = err.message;
+                                html = e.message;
                             return '<li>' + e.funcName + ": " + html + '</li>';
                         }).join("")}
                     </ul>

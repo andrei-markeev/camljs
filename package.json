@@ -1,6 +1,6 @@
 {
   "name": "camljs",
-  "version": "2.11.0",
+  "version": "2.12.0",
   "description": "Library for creating SharePoint CAML queries client-side. For JSOM, REST or SPServices.",
   "main": "dist/camljs.js",
   "types": "dist/camljs.d.ts",
@@ -9,9 +9,9 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "tsc && browserify lib/camljs.js -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --emitDeclarationOnly --outDir dist/",
+    "build": "tsc && browserify lib/camljs.js -x xmldom -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --emitDeclarationOnly --outDir dist/",
     "test-common": "npm run build && tsc tests/Tests.ts --target es6 --module commonjs",
-    "test-html": "npm run test-common && browserify tests/Tests.js -s Tests -o tests/Tests.bundle.js",
+    "test-html": "npm run test-common && browserify tests/Tests.js -x xmldom -s Tests -o tests/Tests.bundle.js",
     "test": "npm run test-common && node tests/index.js",
     "clean": "del tests\\Tests.js && del tests\\Tests.bundle.js && del dist\\*.* /Q"
   },
@@ -40,5 +40,8 @@
     "sinon": "^4.5.0",
     "ts-unit": "^1.0.1",
     "typescript": "^2.8.1"
+  },
+  "dependencies": {
+    "xmldom": "^0.1.27"
   }
 }

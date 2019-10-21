@@ -371,13 +371,11 @@ var CamlBuilder = /** @class */ (function () {
                 case ModifyType.Replace:
                     return new FieldExpression(builder);
                 case ModifyType.AppendAnd:
-                    var pos = builder.tree.length;
                     builder.WriteStart("And");
                     builder.unclosedTags++;
                     builder.tree = builder.tree.concat(whereBuilder.tree);
                     return new FieldExpression(builder);
                 case ModifyType.AppendOr:
-                    var pos = builder.tree.length;
                     builder.WriteStart("Or");
                     builder.unclosedTags++;
                     builder.tree = builder.tree.concat(whereBuilder.tree);
@@ -388,7 +386,11 @@ var CamlBuilder = /** @class */ (function () {
         };
         RawQueryInternal.prototype.getXmlDocument = function (xml) {
             var xmlDoc;
-            if (window["DOMParser"]) {
+            if (typeof window === "undefined") {
+                var XMLDOM = require('xmldom').DOMParser;
+                xmlDoc = new XMLDOM().parseFromString(this.xml, "text/xml");
+            }
+            else if (window["DOMParser"]) {
                 var parser = new DOMParser();
                 xmlDoc = parser.parseFromString(this.xml, "text/xml");
             }
@@ -1348,5 +1350,5 @@ var CamlBuilder = /** @class */ (function () {
 module.exports = CamlBuilder;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[1])(1)
+},{"xmldom":"xmldom"}]},{},[1])(1)
 });
