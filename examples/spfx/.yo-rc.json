@@ -1,11 +1,13 @@
 {
-  "@microsoft/generator-sharepoint": {
-    "isCreatingSolution": true,
-    "environment": "spo",
-    "version": "1.7.1",
-    "libraryName": "spfx",
-    "libraryId": "b73a2d02-68f2-45fe-806c-362d555ccc17",
-    "packageManager": "npm",
-    "componentType": "webpart"
-  }
+    "@microsoft/generator-sharepoint": {
+        "plusBeta": false,
+        "isCreatingSolution": true,
+        "environment": "spo",
+        "version": "1.13.0",
+        "libraryName": "caml-js-example-webpart",
+        "libraryId": "02e219b9-67b7-484b-8df2-0dda74721670",
+        "packageManager": "npm",
+        "isDomainIsolated": false,
+        "componentType": "webpart"
+    }
 }
