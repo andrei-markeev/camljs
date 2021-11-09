@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>CamlJs</id>
-        <version>2.12.0</version>
+        <version>2.12.1</version>
         <authors>Andrei Markeev</authors>
         <owners>Andrei Markeev</owners>
         <licenseUrl>https://github.com/andrei-markeev/camljs/blob/master/LICENSE</licenseUrl>

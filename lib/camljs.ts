@@ -778,7 +778,7 @@ module CamlBuilder {
         private getXmlDocument(xml: string): Document {
             var xmlDoc: Document;
             if (typeof window === "undefined") {
-                var XMLDOM = require('xmldom').DOMParser;
+                var XMLDOM = require('@xmldom/xmldom').DOMParser;
                 xmlDoc = new XMLDOM().parseFromString(this.xml, "text/xml");
             } else if (window["DOMParser"]) {
                 var parser = new DOMParser();

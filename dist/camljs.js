@@ -387,7 +387,7 @@ var CamlBuilder = /** @class */ (function () {
         RawQueryInternal.prototype.getXmlDocument = function (xml) {
             var xmlDoc;
             if (typeof window === "undefined") {
-                var XMLDOM = require('xmldom').DOMParser;
+                var XMLDOM = require('@xmldom/xmldom').DOMParser;
                 xmlDoc = new XMLDOM().parseFromString(this.xml, "text/xml");
             }
             else if (window["DOMParser"]) {
@@ -1350,5 +1350,5 @@ var CamlBuilder = /** @class */ (function () {
 module.exports = CamlBuilder;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"xmldom":"xmldom"}]},{},[1])(1)
+},{"@xmldom/xmldom":"@xmldom/xmldom"}]},{},[1])(1)
 });

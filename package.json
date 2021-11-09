@@ -9,9 +9,9 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "tsc && browserify lib/camljs.js -x xmldom -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --emitDeclarationOnly --outDir dist/",
+    "build": "tsc && browserify lib/camljs.js -x @xmldom/xmldom -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --emitDeclarationOnly --outDir dist/",
     "test-common": "npm run build && tsc tests/Tests.ts --target es6 --module commonjs",
-    "test-html": "npm run test-common && browserify tests/Tests.js -x xmldom -s Tests -o tests/Tests.bundle.js",
+    "test-html": "npm run test-common && browserify tests/Tests.js -x @xmldom/xmldom -s Tests -o tests/Tests.bundle.js",
     "test": "npm run test-common && node tests/index.js",
     "clean": "del tests\\Tests.js && del tests\\Tests.bundle.js && del dist\\*.* /Q"
   },
@@ -42,6 +42,6 @@
     "typescript": "^2.8.1"
   },
   "dependencies": {
-    "xmldom": "^0.6.0"
+    "@xmldom/xmldom": "^0.7.5"
   }
 }
