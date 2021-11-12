@@ -2,6 +2,8 @@ declare class CamlBuilder {
     constructor();
     /** Generate CAML Query, starting from <Where> tag */
     Where(): CamlBuilder.IFieldExpression;
+    /** Generate CAML Query, starting from <Query> tag */
+    Query(): CamlBuilder.IQuery;
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
                           Specifying view fields is a good practice, as it decreases traffic between server and client.
@@ -398,6 +400,7 @@ declare module CamlBuilder {
     class Internal {
         static createView(viewFields?: ViewField[]): IView;
         static createViewFields(viewFields: string[]): IFinalizableToString;
+        static createQuery(): IQuery;
         static createWhere(): IFieldExpression;
         static createExpression(): IFieldExpression;
         static createRawQuery(xml: string): IRawQuery;

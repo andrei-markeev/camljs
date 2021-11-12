@@ -5,6 +5,10 @@ class CamlBuilder {
     Where(): CamlBuilder.IFieldExpression {
         return CamlBuilder.Internal.createWhere();
     }
+    /** Generate CAML Query, starting from <Query> tag */
+    Query(): CamlBuilder.IQuery {
+        return CamlBuilder.Internal.createQuery();
+    }
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
                           Specifying view fields is a good practice, as it decreases traffic between server and client.
@@ -426,6 +430,12 @@ module CamlBuilder {
         }
         static createViewFields(viewFields: string[]): IFinalizableToString {
             return new ViewInternal().CreateViewFields(viewFields);
+        }
+        static createQuery(): IQuery {
+            const builder = new Builder();
+            builder.WriteStart("Query");
+            builder.unclosedTags++;
+            return new QueryInternal(builder);
         }
         static createWhere(): IFieldExpression {
             return new QueryInternal().Where();

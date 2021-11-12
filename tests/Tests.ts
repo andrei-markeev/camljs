@@ -741,4 +741,21 @@ export default class Tests extends tsUnit.TestClass {
         );
     }
 
+    TestStartFromQueryTag() {
+        var query = new CamlBuilder().Query().Where().TextField("Title").BeginsWith("Hello").ToString();
+        this.areIdentical(
+            vkbeautify.xml(
+                `<Query>
+                    <Where>
+                        <BeginsWith>
+                            <FieldRef Name="Title" />
+                            <Value Type="Text">Hello</Value>
+                        </BeginsWith>
+                    </Where>
+                </Query>`
+            ),
+            vkbeautify.xml(query)
+        )
+    }
+
 }

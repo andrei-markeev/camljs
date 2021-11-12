@@ -8,6 +8,10 @@ var CamlBuilder = /** @class */ (function () {
     CamlBuilder.prototype.Where = function () {
         return CamlBuilder.Internal.createWhere();
     };
+    /** Generate CAML Query, starting from <Query> tag */
+    CamlBuilder.prototype.Query = function () {
+        return CamlBuilder.Internal.createQuery();
+    };
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
                           Specifying view fields is a good practice, as it decreases traffic between server and client.
@@ -61,6 +65,12 @@ var CamlBuilder = /** @class */ (function () {
         };
         Internal.createViewFields = function (viewFields) {
             return new ViewInternal().CreateViewFields(viewFields);
+        };
+        Internal.createQuery = function () {
+            var builder = new Builder();
+            builder.WriteStart("Query");
+            builder.unclosedTags++;
+            return new QueryInternal(builder);
         };
         Internal.createWhere = function () {
             return new QueryInternal().Where();
