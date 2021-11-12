@@ -680,6 +680,29 @@ export default class Tests extends tsUnit.TestClass {
         }
     }
 
+    TestToStringTwice() {
+        const builder = new CamlBuilder().View().Query().Where()
+            .DateTimeField("Modified").GreaterThanOrEqualTo(new Date(2021,1,1).toISOString())
+        const query1 = builder.ToString();
+        const query2 = builder.ToString();
+
+        this.areIdentical(
+            vkbeautify.xml(
+            `<View>
+                <Query>
+                    <Where>
+                        <Geq>
+                            <FieldRef Name="Modified" />
+                            <Value IncludeTimeValue="TRUE" Type="DateTime">2021-01-31T22:00:00.000Z</Value>
+                        </Geq>
+                    </Where>
+                </Query>
+            </View>`),
+            vkbeautify.xml(query1)
+        );
+        this.areIdentical(vkbeautify.xml(query1), vkbeautify.xml(query2));
+    }
+
     TestEmptyAll() {
         var expression = CamlBuilder.Expression().All([
             CamlBuilder.Expression().ModStatField("_ModerationStatus").ModStatId().EqualTo(0),

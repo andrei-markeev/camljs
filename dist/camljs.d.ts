@@ -128,9 +128,9 @@ declare module CamlBuilder {
     }
     interface ISortedQuery extends IFinalizable {
         /** Specifies next order field (ascending) */
-        ThenBy(fieldInternalName: string): any;
+        ThenBy(fieldInternalName: string): ISortedQuery;
         /** Specifies next order field (descending) */
-        ThenByDesc(fieldInternalName: string): any;
+        ThenByDesc(fieldInternalName: string): ISortedQuery;
     }
     interface IFieldExpression {
         /** Adds And clauses to the query. Use for creating bracket-expressions in conjuction with CamlBuilder.Expression(). */

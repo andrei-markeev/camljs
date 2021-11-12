@@ -1316,14 +1316,14 @@ module CamlBuilder {
         constructor() {
             this.tree = new Array();
             this.unclosedTags = 0;
-            this.sealed = false;
+            this.finalString = null;
         }
         tree: any[];
         unclosedTags: number;
-        sealed: boolean;
+        finalString: string;
 
         SetAttributeToLastElement(tagName: string, attributeName: string, attributeValue: string) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             for (var i = this.tree.length - 1; i >= 0; i--) {
                 if (this.tree[i].Name == tagName) {
                     this.tree[i].Attributes = this.tree[i].Attributes || [];
@@ -1334,7 +1334,7 @@ module CamlBuilder {
             throw new Error("CamlJs ERROR: can't find element '" + tagName + "' in the tree while setting attribute " + attributeName + " to '" + attributeValue + "'!");
         }
         WriteRowLimit(paged: boolean, limit: number) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             if (paged)
                 this.tree.push({ Element: "Start", Name: "RowLimit", Attributes: [{ Name: "Paged", Value: "TRUE" }] });
             else
@@ -1345,21 +1345,21 @@ module CamlBuilder {
             this.tree.push({ Element: "End" });
         }
         WriteStart(tagName: string, attributes?: any[]) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             if (attributes)
                 this.tree.push({ Element: "Start", Name: tagName, Attributes: attributes });
             else
                 this.tree.push({ Element: "Start", Name: tagName });
         }
         WriteEnd(count?: number) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             if (count > 0)
                 this.tree.push({ Element: "End", Count: count });
             else
                 this.tree.push({ Element: "End" });
         }
         WriteFieldRef(fieldInternalName: string, options?: any) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             var fieldRef = { Element: 'FieldRef', Name: fieldInternalName };
             for (var name in options || {}) {
                 fieldRef[name] = options[name];
@@ -1367,7 +1367,7 @@ module CamlBuilder {
             this.tree.push(fieldRef);
         }
         WriteValueElement(valueType: string, value: any) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             if (valueType == "Date")
                 this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
             else if (valueType == "DateTime")
@@ -1376,7 +1376,7 @@ module CamlBuilder {
                 this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
         }
         WriteMembership(startIndex: number, type, groupId?: number) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             var attributes = [{ Name: "Type", Value: type }];
             if (groupId) {
                 attributes.push({ Name: "ID", Value: groupId });
@@ -1385,18 +1385,18 @@ module CamlBuilder {
             this.WriteEnd();
         }
         WriteUnaryOperation(startIndex, operation) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
             this.WriteEnd();
         }
         WriteBinaryOperation(startIndex, operation, valueType, value) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
             this.WriteValueElement(valueType, value);
             this.WriteEnd();
         }
         WriteStartGroupBy(groupFieldName, collapse, groupLimit) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             if (this.unclosedTags > 0)
             {
                 var tagsToClose = this.unclosedTags;
@@ -1419,7 +1419,7 @@ module CamlBuilder {
             this.WriteEnd();
         }
         WriteStartOrderBy(override, useIndexForOrderBy) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             if (this.unclosedTags > 0)
             {
                 var tagsToClose = this.unclosedTags;
@@ -1445,7 +1445,7 @@ module CamlBuilder {
 
         }
         WriteConditions(builders: Builder[], elementName: string) {
-            this.ThrowIfSealed();
+            this.ThrowIfFinalized();
             var pos = this.tree.length;
             builders = builders.filter(b => b.tree.length > 0).reverse();
             for (var i = 0; i < builders.length; i++) {
@@ -1459,11 +1459,14 @@ module CamlBuilder {
                 Array.prototype.splice.apply(this.tree, [pos, 0].concat(conditionBuilder.tree));
             }
         }
-        ThrowIfSealed() {
-            if (this.sealed)
+        ThrowIfFinalized() {
+            if (this.finalString)
                 throw new Error("CamlBuilder was already serialized, you cannot make modifications to it anymore. Please create a new CamlBuilder object for every query.")
         }
         Finalize(): string {
+            if (this.finalString)
+                return this.finalString;
+
             var sb = new Sys.StringBuilder();
             var writer = SP.XmlWriter.create(sb);
             for (var i = 0; i < this.tree.length; i++) {
@@ -1521,9 +1524,9 @@ module CamlBuilder {
                 writer.writeEndElement();
             }
 
-            this.sealed = true;
+            this.finalString = sb.toString();
             writer.close();
-            return sb.toString();
+            return this.finalString;
         }
         FinalizeToSPQuery() {
             var camlQuery = this.Finalize();
