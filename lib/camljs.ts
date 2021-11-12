@@ -134,9 +134,9 @@ module CamlBuilder {
     }
     export interface ISortedQuery extends IFinalizable {
         /** Specifies next order field (ascending) */
-        ThenBy(fieldInternalName: string): any;
+        ThenBy(fieldInternalName: string): ISortedQuery;
         /** Specifies next order field (descending) */
-        ThenByDesc(fieldInternalName: string): any;
+        ThenByDesc(fieldInternalName: string): ISortedQuery;
     }
 
     export interface IFieldExpression {
