@@ -1226,6 +1226,10 @@ module CamlBuilder {
         NotEqualTo(value): IExpression {
             if (value instanceof Date)
                 value = value.toISOString();
+            if (value === true)
+                value = 1;
+            if (value === false)
+                value = 0;
             this.builder.WriteBinaryOperation(this.startIndex, "Neq", this.valueType, value);
             return new QueryToken(this.builder, this.startIndex);
         }
