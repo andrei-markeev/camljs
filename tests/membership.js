@@ -10,7 +10,7 @@ test("Membership", () => {
     var caml = new CamlBuilder().Where()
         .UserField("AssignedTo").EqualToCurrentUser()
         .Or()
-        .UserField("AssignedTo").Membership.CurrentUserGroups()
+        .UserField("AssignedTo").IsInCurrentUserGroups()
         .GroupBy("Category")
         .OrderBy("Priority").ThenBy("Title")
         .ToString();

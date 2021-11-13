@@ -5,10 +5,11 @@
         define([], f)
     } else {
         var g;
-        if (typeof window !== "undefined") { g = window }
-        else if (typeof global !== "undefined") { g = global }
-        else if (typeof self !== "undefined") { g = self }
-        else { g = this } g.CamlBuilder = f()
+        if (typeof window !== "undefined") g = window
+        else if (typeof global !== "undefined") g = global
+        else if (typeof self !== "undefined") g = self
+        else g = this;
+        g.CamlBuilder = f()
     }
 })(function () {
 
@@ -671,31 +672,6 @@ var CamlBuilder = /** @class */ (function () {
             this.builder = builder;
             this.name = name;
             this.startIndex = builder.tree.length;
-            this.Membership = {
-                /** DEPRECATED. Please use UserField(...).IsInCurrentUserGroups() instead */
-                CurrentUserGroups: function () {
-                    return self.IsInCurrentUserGroups();
-                },
-                /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
-                SPGroup: function (groupId) {
-                    return self.IsInSPGroup(groupId);
-                },
-                /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
-                SPWeb: {
-                    /** DEPRECATED. Please use UserField(...).IsInSPWebAllUsers() instead */
-                    AllUsers: function () {
-                        return self.IsInSPWebAllUsers();
-                    },
-                    /** DEPRECATED. Please use UserField(...).IsInSPWebUsers() instead */
-                    Users: function () {
-                        return self.IsInSPWebUsers();
-                    },
-                    /** DEPRECATED. Please use UserField(...).IsInSPWebGroups() instead */
-                    Groups: function () {
-                        return self.IsInSPWebGroups();
-                    }
-                }
-            };
         }
         UserFieldExpression.prototype.Id = function () {
             return new FieldExpressionToken(this.builder, this.name, "Integer", true);

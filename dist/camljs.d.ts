@@ -280,8 +280,6 @@ declare module CamlBuilder {
         In(arrayOfValues: string[]): IExpression;
     }
     interface IUserFieldExpression {
-        /** DEPRECATED. Please use IsIn* methods instead. This property will be removed in next release(!!) */
-        Membership: IMembership;
         /** Checks whether the value of the User field is equal to id of the current user */
         EqualToCurrentUser(): IExpression;
         /** Checks whether the group specified by the value of the field includes the current user. */
@@ -298,24 +296,6 @@ declare module CamlBuilder {
         Id(): INumberFieldExpression;
         /** Specifies that lookup target field value will be used for further comparisons. */
         ValueAsText(): ITextFieldExpression;
-    }
-    /** DEPRECATED!! Please use UserField(...).IsIn* methods instead. This interface will be removed in the next release */
-    interface IMembership {
-        /** DEPRECATED. Please use UserField(...).IsInCurrentUserGroups() instead */
-        CurrentUserGroups(): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
-        SPGroup(groupId: number): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
-        SPWeb: IMembershipSPWeb;
-    }
-    /** DEPRECATED!! Please use UserField(...).IsInSPWeb* methods instead. This interface will be removed in the next release */
-    interface IMembershipSPWeb {
-        /** DEPRECATED. Please use UserField(...).IsInSPWebAllUsers() instead */
-        AllUsers(): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPWebUsers() instead */
-        Users(): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPWebGroups() instead */
-        Groups(): IExpression;
     }
     interface ILookupFieldExpression {
         /** Specifies that lookup id value will be used. */

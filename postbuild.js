@@ -1,4 +1,12 @@
-(function (f) {
+/// @ts-check
+
+var fs = require("fs");
+
+var contents = fs.readFileSync("dist/camljs.js", "utf8");
+
+if (contents.indexOf("(function (f) {") !== 0) {
+
+    contents = `(function (f) {
     if (typeof exports === "object" && typeof module !== "undefined") {
         module.exports = f()
     } else if (typeof define === "function" && define.amd) {
@@ -16,3 +24,13 @@
 var m = {};
 
 (function(module) {
+${contents}
+})(m);
+
+return m.exports;
+
+});`;
+
+    fs.writeFileSync("dist/camljs.js", contents, "utf8");
+
+}

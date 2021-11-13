@@ -295,8 +295,6 @@ module CamlBuilder {
         In(arrayOfValues: string[]): IExpression;
     }
     export interface IUserFieldExpression {
-        /** DEPRECATED. Please use IsIn* methods instead. This property will be removed in next release(!!) */
-        Membership: IMembership;
         /** Checks whether the value of the User field is equal to id of the current user */
         EqualToCurrentUser(): IExpression;
         /** Checks whether the group specified by the value of the field includes the current user. */
@@ -313,24 +311,6 @@ module CamlBuilder {
         Id(): INumberFieldExpression;
         /** Specifies that lookup target field value will be used for further comparisons. */
         ValueAsText(): ITextFieldExpression;
-    }
-    /** DEPRECATED!! Please use UserField(...).IsIn* methods instead. This interface will be removed in the next release */
-    export interface IMembership {
-        /** DEPRECATED. Please use UserField(...).IsInCurrentUserGroups() instead */
-        CurrentUserGroups(): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
-        SPGroup(groupId: number): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
-        SPWeb: IMembershipSPWeb;
-    }
-    /** DEPRECATED!! Please use UserField(...).IsInSPWeb* methods instead. This interface will be removed in the next release */
-    export interface IMembershipSPWeb {
-        /** DEPRECATED. Please use UserField(...).IsInSPWebAllUsers() instead */
-        AllUsers(): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPWebUsers() instead */
-        Users(): IExpression;
-        /** DEPRECATED. Please use UserField(...).IsInSPWebGroups() instead */
-        Groups(): IExpression;
     }
 
     export interface ILookupFieldExpression {
@@ -1067,38 +1047,10 @@ module CamlBuilder {
             this.builder = builder;
             this.name = name;
             this.startIndex = builder.tree.length;
-            this.Membership = {
-                /** DEPRECATED. Please use UserField(...).IsInCurrentUserGroups() instead */
-                CurrentUserGroups: (): IExpression => {
-                    return self.IsInCurrentUserGroups();
-                },
-                /** DEPRECATED. Please use UserField(...).IsInSPGroup() instead */
-                SPGroup: (groupId: number): IExpression => {
-                    return self.IsInSPGroup(groupId);
-                },
-                /** DEPRECATED. Please use UserField(...).IsInSPWeb* methods instead */
-                SPWeb: {
-                    /** DEPRECATED. Please use UserField(...).IsInSPWebAllUsers() instead */
-                    AllUsers: (): IExpression => {
-                        return self.IsInSPWebAllUsers();
-                    },
-                    /** DEPRECATED. Please use UserField(...).IsInSPWebUsers() instead */
-                    Users: (): IExpression => {
-                        return self.IsInSPWebUsers();
-                    },
-                    /** DEPRECATED. Please use UserField(...).IsInSPWebGroups() instead */
-                    Groups: (): IExpression => {
-                        return self.IsInSPWebGroups();
-                    }
-                }
-            };
         }
         private builder: Builder;
         private name: string;
         private startIndex: number;
-
-        /** DEPRECATED. Please use IsIn* methods instead */
-        Membership: IMembership;
 
         Id(): INumberFieldExpression {
             return new FieldExpressionToken(this.builder, this.name, "Integer", true);

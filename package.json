@@ -9,7 +9,7 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "tsc && cat build_banner dist/camljs.js build_footer | tee dist/camljs.js > /dev/null",
+    "build": "tsc && node postbuild.js",
     "test": "uvu tests",
     "test:coverage": "c8 --include=lib npm test",
     "clean": "del tests\\Tests.js && del tests\\Tests.bundle.js && del dist\\*.* /Q"
