@@ -5,6 +5,16 @@ var test = require("uvu").test;
 var CamlBuilder = require("../dist/camljs");
 var vkbeautify = require("./vkbeautify");
 
+test("EmptyView", () => {
+    var query = new CamlBuilder().View().ToString();
+    assert.equal(query, "<View />");
+});
+
+test("SimpleWhere", () => {
+    var query = new CamlBuilder().Where().CounterField("ID").EqualTo(10).ToString();
+    assert.equal(query, `<Where><Eq><FieldRef Name="ID" /><Value Type="Counter">10</Value></Eq></Where>`);
+});
+
 test("OrChaining", () => {
     var caml = new CamlBuilder().Where()
         .TextField("Email").EqualTo("support@google.com")
@@ -203,6 +213,42 @@ test("OrderBy_ThenByDesc", () => {
         )
     );
 
+});
+
+test("StartFromQueryTag", () => {
+    var query = new CamlBuilder().Query().Where().TextField("Title").BeginsWith("Hello").ToString();
+    assert.equal(
+        vkbeautify.xml(query),
+        vkbeautify.xml(
+            `<Query>
+                <Where>
+                    <BeginsWith>
+                        <FieldRef Name="Title" />
+                        <Value Type="Text">Hello</Value>
+                    </BeginsWith>
+                </Where>
+            </Query>`
+        )
+    )
+});
+
+test("EmptyQuery", () => {
+    var query = new CamlBuilder().Query().ToString();
+    assert.equal(query, "<Query />");
+});
+
+test("QueryOrderBy", () => {
+    var query = new CamlBuilder().Query().OrderByDesc("Department", true, true).ToString();
+    assert.equal(
+        vkbeautify.xml(query),
+        vkbeautify.xml(
+            `<Query>
+                <OrderBy Override="TRUE" UseIndexForOrderBy="TRUE">
+                    <FieldRef Name="Department" Ascending="FALSE" />
+                </OrderBy>
+            </Query>`
+        )
+    )
 });
 
 test.run();
