@@ -11,8 +11,8 @@ class CamlBuilder {
     }
     /** Generate <View> tag for SP.CamlQuery
         @param viewFields If omitted, default view fields are requested; otherwise, only values for the fields with the specified internal names are returned.
-                          Specifying view fields is a good practice, as it decreases traffic between server and client.
-                          Additionally you can specify aggregated fields, e.g. { count: "<field name>" }, { sum: "<field name>" }, etc.. */
+                        Specifying view fields is a good practice, as it decreases traffic between server and client.
+                        Additionally you can specify aggregated fields, e.g. { count: "<field name>" }, { sum: "<field name>" }, etc.. */
     View(viewFields?: CamlBuilder.ViewField[]): CamlBuilder.IView {
         return CamlBuilder.Internal.createView(viewFields);
     }
@@ -38,7 +38,7 @@ class CamlBuilder {
 
 module CamlBuilder {
 
-    declare var SP, Sys, ActiveXObject;
+    declare var SP, ActiveXObject;
 
     export type Aggregation = { count: string } | { sum: string } | { avg: string } | { max: string } | { min: string } | { stdev: string } | { var: string };
     export type ViewField = string | Aggregation;
@@ -194,7 +194,7 @@ module CamlBuilder {
             @param eventDateField Internal name of "Start Time" field (default: "EventDate" - all OOTB Calendar lists use this name)
             @param endDateField Internal name of "End Time" field (default: "EndDate" - all OOTB Calendar lists use this name)
             @param recurrenceIDField Internal name of "Recurrence ID" field (default: "RecurrenceID" - all OOTB Calendar lists use this name)
-         */
+        */
         DateRangesOverlap(overlapType: DateRangesOverlapType, calendarDate: string, eventDateField?: string, endDateField?: string, recurrenceIDField?: string): IExpression;
     }
     export interface IBooleanFieldExpression {
@@ -434,7 +434,6 @@ module CamlBuilder {
         static createQuery(): IQuery {
             const builder = new Builder();
             builder.WriteStart("Query");
-            builder.unclosedTags++;
             return new QueryInternal(builder);
         }
         static createWhere(): IFieldExpression {
@@ -457,7 +456,6 @@ module CamlBuilder {
         /** Adds View element. */
         View(viewFields?: ViewField[]): IView {
             this.builder.WriteStart("View");
-            this.builder.unclosedTags++;
             if (viewFields) {
                 let fieldNames: string[] = [];
                 let aggregations: Aggregation[] = [];
@@ -538,7 +536,6 @@ module CamlBuilder {
         Query(): IQuery {
             this.joinsManager.Finalize();
             this.builder.WriteStart("Query");
-            this.builder.unclosedTags++;
             return new QueryInternal(this.builder);
         }
     }
@@ -552,7 +549,6 @@ module CamlBuilder {
         /** Adds Where clause to the query, inside you can specify conditions for certain field values. */
         Where(): IFieldExpression {
             this.builder.WriteStart("Where");
-            this.builder.unclosedTags++;
             return new FieldExpression(this.builder);
         }
 
@@ -560,7 +556,7 @@ module CamlBuilder {
             @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
             @param groupLimit Return only first N groups */
         GroupBy(groupFieldName: string, collapse?: boolean, groupLimit?: number) {
-            this.builder.WriteStartGroupBy(groupFieldName, collapse, groupLimit);
+            this.builder.WriteGroupBy(groupFieldName, collapse, groupLimit);
             return new GroupedQuery(this.builder);
         }
 
@@ -602,7 +598,7 @@ module CamlBuilder {
         }
         private builder: Builder;
         private originalView: ViewInternal;
- 
+
         Finalize() {
             if (this.joins.length > 0) {
                 this.builder.WriteStart("Joins");
@@ -676,15 +672,21 @@ module CamlBuilder {
 
         /** Adds And clause to the query. */
         And(): IFieldExpression {
-            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "And" });
-            this.builder.unclosedTags++;
+            const elem: StartElement = { Kind: "Start", Name: "And", End: null };
+            this.builder.tree.splice(this.startIndex, 0, elem);
+            const amountOfUnclosedBefore = this.builder.tree.slice(0, this.startIndex)
+                .reduce((count, e) => count += e.Kind === "Start" && e.End === null ? 1 : 0, 0);
+            this.builder.unclosedTags.splice(amountOfUnclosedBefore, 0, elem);
             return new FieldExpression(this.builder);
         }
 
         /** Adds Or clause to the query. */
         Or(): IFieldExpression {
-            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "Or" });
-            this.builder.unclosedTags++;
+            const elem: StartElement = { Kind: "Start", Name: "Or", End: null };
+            this.builder.tree.splice(this.startIndex, 0, elem);
+            const amountOfUnclosedBefore = this.builder.tree.slice(0, this.startIndex)
+                .reduce((count, e) => count += e.Kind === "Start" && e.End === null ? 1 : 0, 0);
+            this.builder.unclosedTags.splice(amountOfUnclosedBefore, 0, elem);
             return new FieldExpression(this.builder);
         }
 
@@ -692,7 +694,7 @@ module CamlBuilder {
             @param collapse If true, only information about the groups is retrieved, otherwise items are also retrieved.
             @param groupLimit Return only first N groups */
         GroupBy(groupFieldName: string, collapse?: boolean, groupLimit?: number) {
-            this.builder.WriteStartGroupBy(groupFieldName, collapse, groupLimit);
+            this.builder.WriteGroupBy(groupFieldName, collapse, groupLimit);
             return new GroupedQuery(this.builder);
         }
 
@@ -766,18 +768,15 @@ module CamlBuilder {
                 throw new Error("CamlJs error: cannot find Query tag in provided XML")
 
             builder.WriteStart("Where");
-            builder.unclosedTags++;
             switch (modifyType) {
                 case ModifyType.Replace:
                     return new FieldExpression(builder);
                 case ModifyType.AppendAnd:
                     builder.WriteStart("And");
-                    builder.unclosedTags++;
                     builder.tree = builder.tree.concat(whereBuilder.tree);
                     return new FieldExpression(builder);
                 case ModifyType.AppendOr:
                     builder.WriteStart("Or");
-                    builder.unclosedTags++;
                     builder.tree = builder.tree.concat(whereBuilder.tree);
                     return new FieldExpression(builder);
                 default:
@@ -805,7 +804,7 @@ module CamlBuilder {
 
         private parseRecursive(builder: Builder, node: Node, modifyType: ModifyType): Builder {
             if (node.nodeName == "#text") {
-                builder.tree.push({ Element: "Raw", Xml: node.nodeValue });
+                builder.tree.push({ Kind: "Raw", Xml: node.nodeValue });
                 return;
             }
 
@@ -814,7 +813,6 @@ module CamlBuilder {
                 attrs.push({ Name: (<HTMLElement>node).attributes[i].name, Value: (<HTMLElement>node).attributes[i].value });
             }
             builder.WriteStart(node.nodeName, attrs);
-            builder.unclosedTags++;
             var found = node.nodeName == "Query" ? new Builder() : null;
             for (var i = 0, len = node.childNodes.length; i < len; i++) {
                 if (node.nodeName == "Query" && node.childNodes[i].nodeName == "Where") {
@@ -831,10 +829,8 @@ module CamlBuilder {
                 if (found == null)
                     found = result;
             }
-            if (!found) {
-                builder.unclosedTags--;
+            if (!found)
                 builder.WriteEnd();
-            }
             return found;
         }
     }
@@ -917,7 +913,7 @@ module CamlBuilder {
             @param eventDateField Internal name of "Start Time" field (default: "EventDate" - all OOTB Calendar lists use this name)
             @param endDateField Internal name of "End Time" field (default: "EndDate" - all OOTB Calendar lists use this name)
             @param recurrenceIDField Internal name of "Recurrence ID" field (default: "RecurrenceID" - all OOTB Calendar lists use this name)
-         */
+        */
         DateRangesOverlap(overlapType: DateRangesOverlapType, calendarDate: string, eventDateField?: string, endDateField?: string, recurrenceIDField?: string): IExpression {
             var pos = this.builder.tree.length;
 
@@ -1000,7 +996,7 @@ module CamlBuilder {
         private builder: Builder;
         private type: FieldMultiExpressionType;
         private name: string;
-        private typeAsString: string;
+        private typeAsString: ValueType;
 
         IncludesSuchItemThat(): any {
             if (this.type == FieldMultiExpressionType.LookupMulti)
@@ -1169,7 +1165,7 @@ module CamlBuilder {
     }
 
     class FieldExpressionToken implements IBooleanFieldExpression, INumberFieldExpression, ITextFieldExpression, IDateTimeFieldExpression {
-        constructor(builder: Builder, name: string, valueType: string, isLookupId?: boolean) {
+        constructor(builder: Builder, name: string, valueType: ValueType, isLookupId?: boolean) {
             this.builder = builder;
             this.name = name;
             this.startIndex = builder.tree.length;
@@ -1180,7 +1176,7 @@ module CamlBuilder {
         private builder: Builder;
         private name: string;
         private startIndex: number;
-        private valueType: string;
+        private valueType: ValueType;
 
         IsTrue(): IExpression {
             this.builder.WriteBinaryOperation(this.startIndex, "Eq", "Integer", "1");
@@ -1253,7 +1249,6 @@ module CamlBuilder {
         }
         In(arrayOfValues: any[]): IExpression {
 
-            this.builder.tree.splice(this.startIndex, 0, { Element: "Start", Name: "In" });
             this.builder.WriteStart("Values");
 
             for (var i = 0; i < arrayOfValues.length; i++) {
@@ -1264,7 +1259,8 @@ module CamlBuilder {
             }
 
             this.builder.WriteEnd();
-            this.builder.WriteEnd();
+
+            this.builder.InsertAtIndexAndWriteEnd(this.startIndex, "In")
 
             return new QueryToken(this.builder, this.startIndex);
         }
@@ -1322,68 +1318,109 @@ module CamlBuilder {
         }
     }
 
+    type ValueType = "Boolean" | "Integer" | "Date" | "DateTime" | "Text"
+        | "Number" | "Lookup" | "LookupMulti" | "UserMulti" | "ModStat"
+        | "Choice" | "Computed" | "URL" | "Counter" | "ContentTypeId";
+    interface FieldRefElement extends FieldRefOptions {
+        Kind: "FieldRef";
+        Name: string;
+    }
+    interface FieldRefOptions {
+        Descending?: boolean;
+        LookupId?: boolean;
+    }
+    interface ValueElement {
+        Kind: "Value";
+        ValueType: ValueType;
+        IncludeTimeValue?: boolean;
+        Value: string | boolean | number;
+    }
+    interface RawElement {
+        Kind: "Raw";
+        Xml: string;
+    }
+    interface StartElement {
+        Kind: "Start";
+        Name: string;
+        Attributes?: { Name: string, Value: string }[];
+        End: EndElement | null;
+    }
+    interface EndElement {
+        Kind: "End";
+        Start: StartElement;
+    }
+    type TreeElement = StartElement | EndElement | FieldRefElement | ValueElement | RawElement;
+
     class Builder {
         constructor() {
             this.tree = new Array();
-            this.unclosedTags = 0;
+            this.unclosedTags = [];
             this.finalString = null;
         }
-        tree: any[];
-        unclosedTags: number;
+        tree: TreeElement[];
+        unclosedTags: StartElement[];
         finalString: string;
 
         SetAttributeToLastElement(tagName: string, attributeName: string, attributeValue: string) {
             this.ThrowIfFinalized();
             for (var i = this.tree.length - 1; i >= 0; i--) {
-                if (this.tree[i].Name == tagName) {
-                    this.tree[i].Attributes = this.tree[i].Attributes || [];
-                    this.tree[i].Attributes.push({Name: attributeName, Value: attributeValue})
+                var item = this.tree[i];
+                if (item.Kind === "Start" && item.Name == tagName) {
+                    item.Attributes = item.Attributes || [];
+                    item.Attributes.push({Name: attributeName, Value: attributeValue})
                     return;
                 }
             }
-            throw new Error("CamlJs ERROR: can't find element '" + tagName + "' in the tree while setting attribute " + attributeName + " to '" + attributeValue + "'!");
         }
         WriteRowLimit(paged: boolean, limit: number) {
             this.ThrowIfFinalized();
-            if (paged)
-                this.tree.push({ Element: "Start", Name: "RowLimit", Attributes: [{ Name: "Paged", Value: "TRUE" }] });
-            else
-                this.tree.push({ Element: "Start", Name: "RowLimit" });
-
-            this.tree.push({ Element: "Raw", Xml: limit });
-
-            this.tree.push({ Element: "End" });
+            const attributes = paged ? [{ Name: "Paged", Value: "TRUE" }] : undefined;
+            this.WriteStart("RowLimit", attributes);
+            this.tree.push({ Kind: "Raw", Xml: ""+limit });
+            this.WriteEnd();
         }
         WriteStart(tagName: string, attributes?: any[]) {
             this.ThrowIfFinalized();
-            if (attributes)
-                this.tree.push({ Element: "Start", Name: tagName, Attributes: attributes });
-            else
-                this.tree.push({ Element: "Start", Name: tagName });
+            const elem: StartElement = { Kind: "Start", Name: tagName, Attributes: attributes, End: null };
+            this.tree.push(elem);
+            this.unclosedTags.push(elem);
+        }
+        InsertAtIndexAndWriteEnd(index: number, tagName: string, attributes?: any[]) {
+            this.ThrowIfFinalized();
+            const startElem: StartElement = { Kind: "Start", Name: tagName, Attributes: attributes, End: null };
+            const endElem: EndElement = { Kind: "End", Start: startElem };
+            startElem.End = endElem;
+            this.tree.splice(index, 0, startElem);
+            this.tree.push(endElem);
         }
         WriteEnd(count?: number) {
             this.ThrowIfFinalized();
-            if (count > 0)
-                this.tree.push({ Element: "End", Count: count });
-            else
-                this.tree.push({ Element: "End" });
+            if (count == null)
+                count = 1;
+            while (count > 0) {
+                count--;
+                const startElem = this.unclosedTags.pop();
+                const endElem: EndElement = { Kind: "End", Start: startElem };
+                startElem.End = endElem;
+                this.tree.push(endElem);
+            }
         }
         WriteFieldRef(fieldInternalName: string, options?: any) {
             this.ThrowIfFinalized();
-            var fieldRef = { Element: 'FieldRef', Name: fieldInternalName };
+            var fieldRef: FieldRefElement = { Kind: 'FieldRef', Name: fieldInternalName };
             for (var name in options || {}) {
                 fieldRef[name] = options[name];
             }
             this.tree.push(fieldRef);
         }
-        WriteValueElement(valueType: string, value: any) {
+        WriteValueElement(valueType: ValueType, value: string | boolean | number) {
             this.ThrowIfFinalized();
             if (valueType == "Date")
-                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value });
+                this.tree.push({ Kind: "Value", ValueType: "DateTime", Value: value });
             else if (valueType == "DateTime")
-                this.tree.push({ Element: "Value", ValueType: "DateTime", Value: value, IncludeTimeValue: true });
+                this.tree.push({ Kind: "Value", ValueType: "DateTime", Value: value, IncludeTimeValue: true });
             else
-                this.tree.push({ Element: "Value", ValueType: valueType, Value: value });
+                this.tree.push({ Kind: "Value", ValueType: valueType, Value: value });
         }
         WriteMembership(startIndex: number, type, groupId?: number) {
             this.ThrowIfFinalized();
@@ -1391,68 +1428,58 @@ module CamlBuilder {
             if (groupId) {
                 attributes.push({ Name: "ID", Value: groupId });
             }
-            this.tree.splice(startIndex, 0, { Element: "Start", Name: "Membership", Attributes: attributes });
-            this.WriteEnd();
+            this.InsertAtIndexAndWriteEnd(startIndex, "Membership", attributes);
         }
-        WriteUnaryOperation(startIndex, operation) {
+        WriteUnaryOperation(startIndex: number, operation: string) {
             this.ThrowIfFinalized();
-            this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
-            this.WriteEnd();
+            this.InsertAtIndexAndWriteEnd(startIndex, operation);
         }
         WriteBinaryOperation(startIndex, operation, valueType, value) {
             this.ThrowIfFinalized();
-            this.tree.splice(startIndex, 0, { Element: "Start", Name: operation });
             this.WriteValueElement(valueType, value);
-            this.WriteEnd();
+            this.InsertAtIndexAndWriteEnd(startIndex, operation);
         }
-        WriteStartGroupBy(groupFieldName, collapse, groupLimit) {
+        WriteGroupBy(groupFieldName, collapse, groupLimit) {
             this.ThrowIfFinalized();
-            if (this.unclosedTags > 0)
+            if (this.unclosedTags.length > 0)
             {
-                var tagsToClose = this.unclosedTags;
-                if (this.tree[0].Name == "Query")
+                var tagsToClose = this.unclosedTags.length;
+                var top = this.tree[0] as StartElement;
+                if (top.Name == "Query")
                     tagsToClose--;
-                else if (this.tree[0].Name == "View")
+                else if (top.Name == "View")
                     tagsToClose -= 2;
-                if (tagsToClose > 0)
-                    this.tree.push({ Element: "End", Count: tagsToClose });
-                this.unclosedTags -= tagsToClose;
+                this.WriteEnd(tagsToClose);
             }
-            let elem = { Element: "Start", Name: "GroupBy", Attributes: [] };
+            const attributes = [];
             if (collapse)
-                elem.Attributes.push({ Name: "Collapse", Value: "TRUE" });
+                attributes.push({ Name: "Collapse", Value: "TRUE" });
             if (groupLimit)
-                elem.Attributes.push({ Name: "GroupLimit", Value: ""+groupLimit });
-            
-            this.tree.push(elem);
-            this.tree.push({ Element: "FieldRef", Name: groupFieldName });
+                attributes.push({ Name: "GroupLimit", Value: ""+groupLimit });
+
+            this.WriteStart("GroupBy", attributes);
+            this.tree.push({ Kind: "FieldRef", Name: groupFieldName });
             this.WriteEnd();
         }
         WriteStartOrderBy(override, useIndexForOrderBy) {
             this.ThrowIfFinalized();
-            if (this.unclosedTags > 0)
+            if (this.unclosedTags.length > 0)
             {
-                var tagsToClose = this.unclosedTags;
-                if (this.tree[0].Name == "Query")
+                var tagsToClose = this.unclosedTags.length;
+                var top = this.tree[0] as StartElement;
+                if (top.Name == "Query")
                     tagsToClose--;
-                else if (this.tree[0].Name == "View")
+                else if (top.Name == "View")
                     tagsToClose -= 2;
-                if (tagsToClose > 0)
-                    this.tree.push({ Element: "End", Count: tagsToClose });
-                this.unclosedTags -= tagsToClose;
+                this.WriteEnd(tagsToClose);
             }
 
-            var attributes = new Array();
+            var attributes = [];
             if (override)
                 attributes.push({ Name: "Override", Value: "TRUE" });
             if (useIndexForOrderBy)
                 attributes.push({ Name: "UseIndexForOrderBy", Value: "TRUE" });
-            if (attributes.length > 0)
-                this.tree.push({ Element: "Start", Name: "OrderBy", Attributes: attributes });
-            else
-                this.tree.push({ Element: "Start", Name: "OrderBy" });
-            this.unclosedTags++;
-
+            this.WriteStart("OrderBy", attributes);
         }
         WriteConditions(builders: Builder[], elementName: string) {
             this.ThrowIfFinalized();
@@ -1460,83 +1487,75 @@ module CamlBuilder {
             builders = builders.filter(b => b.tree.length > 0).reverse();
             for (var i = 0; i < builders.length; i++) {
                 var conditionBuilder = builders[i];
-                if (conditionBuilder.unclosedTags > 0)
-                    conditionBuilder.WriteEnd(conditionBuilder.unclosedTags);
-                if (i > 0) {
-                    conditionBuilder.tree.splice(0, 0, { Element: "Start", Name: elementName });
-                    this.WriteEnd();
-                }
-                Array.prototype.splice.apply(this.tree, [pos, 0].concat(conditionBuilder.tree));
+                if (conditionBuilder.unclosedTags.length > 0)
+                    conditionBuilder.WriteEnd(conditionBuilder.unclosedTags.length);
+                Array.prototype.splice.apply(this.tree, (<any[]>[pos, 0]).concat(conditionBuilder.tree));
+                if (i > 0)
+                    this.InsertAtIndexAndWriteEnd(pos, elementName);
             }
         }
         ThrowIfFinalized() {
             if (this.finalString)
-                throw new Error("CamlBuilder was already serialized, you cannot make modifications to it anymore. Please create a new CamlBuilder object for every query.")
+                throw new Error("CamlBuilder was already finalized, you cannot make modifications to it anymore. Please create a new CamlBuilder object for every query.")
         }
         Finalize(): string {
             if (this.finalString)
                 return this.finalString;
 
-            var sb = new Sys.StringBuilder();
-            var writer = SP.XmlWriter.create(sb);
-            for (var i = 0; i < this.tree.length; i++) {
-                if (this.tree[i].Element == "FieldRef") {
-                    writer.writeStartElement("FieldRef");
-                    writer.writeAttributeString("Name", this.tree[i].Name);
-                    if (this.tree[i].LookupId)
-                        writer.writeAttributeString("LookupId", "TRUE");
-                    if (this.tree[i].Descending)
-                        writer.writeAttributeString("Ascending", "FALSE");
-                    for (var attr in this.tree[i]) {
-                        if (attr == "Element" || attr == "Name" || attr == "LookupId" || attr == "Descending")
-                            continue;
-                        writer.writeAttributeString(attr, this.tree[i][attr]);
-                    }
-                    writer.writeEndElement();
-                } else if (this.tree[i].Element == "Start") {
-                    writer.writeStartElement(this.tree[i].Name);
-                    if (this.tree[i].Attributes) {
-                        for (var a = 0; a < this.tree[i].Attributes.length; a++) {
-                            writer.writeAttributeString(
-                                this.tree[i].Attributes[a].Name,
-                                this.tree[i].Attributes[a].Value);
-                        }
-                    }
-                } else if (this.tree[i].Element == "Raw") {
-                    writer.writeRaw(this.tree[i].Xml);
-                } else if (this.tree[i].Element == "Value") {
-                    writer.writeStartElement("Value");
-                    if (this.tree[i].IncludeTimeValue === true)
-                        writer.writeAttributeString("IncludeTimeValue", "TRUE");
-                    writer.writeAttributeString("Type", this.tree[i].ValueType);
-                    var value = this.tree[i].Value.toString();
-                    if (value.slice(0, 1) == "{" && value.slice(-1) == "}")
-                        writer.writeRaw("<" + value.slice(1, value.length - 1) + " />");
-                    else
-                        writer.writeString(value);
+            if (this.unclosedTags.length > 0)
+                this.WriteEnd(this.unclosedTags.length)
 
-                    writer.writeEndElement();
-                } else if (this.tree[i].Element == "End") {
-                    var count = this.tree[i].Count;
-                    if (count) {
-                        while (count > 0) {
-                            count--;
-                            writer.writeEndElement();
-                        }
-                    } else {
-                        writer.writeEndElement();
+            var xml = "";
+            for (var i = 0; i < this.tree.length; i++) {
+                const element = this.tree[i];
+                if (element.Kind == "FieldRef") {
+                    xml += "<FieldRef";
+                    xml += xmlAttr("Name", element.Name);
+                    if (element.LookupId)
+                        xml += " LookupId=\"TRUE\"";
+                    if (element.Descending)
+                        xml += " Ascending=\"FALSE\"";
+                    for (var attr in this.tree[i]) {
+                        if (attr == "Kind" || attr == "Name" || attr == "LookupId" || attr == "Descending")
+                            continue;
+                        xml += xmlAttr(attr, this.tree[i][attr]);
                     }
+                    xml += " />";
+                } else if (element.Kind == "Start") {
+                    xml += "<" + element.Name;
+                    if (element.Attributes) {
+                        for (var a = 0; a < element.Attributes.length; a++) {
+                            xml += xmlAttr(
+                                element.Attributes[a].Name,
+                                element.Attributes[a].Value);
+                        }
+                    }
+                    const isEmpty = this.tree[i+1] === element.End;
+                    if (!isEmpty)
+                        xml += ">";
+                } else if (element.Kind == "Raw") {
+                    xml += element.Xml;
+                } else if (element.Kind == "Value") {
+                    xml += "<Value";
+                    if (element.IncludeTimeValue === true)
+                        xml += " IncludeTimeValue=\"TRUE\"";
+                    xml += xmlAttr("Type", element.ValueType);
+                    xml += ">";
+                    var value = element.Value.toString();
+                    if (value.slice(0, 1) == "{" && value.slice(-1) == "}")
+                        xml += "<" + value.slice(1, value.length - 1) + " />";
+                    else
+                        xml += xmlValue(value);
+
+                    xml += "</Value>";
+                } else if (element.Kind == "End") {
+                    const isEmpty = this.tree[i-1] === element.Start;
+                    xml += isEmpty ? " />" : "</" + element.Start.Name + ">";
                 }
             }
 
-            while (this.unclosedTags > 0) {
-                this.unclosedTags--;
-                writer.writeEndElement();
-            }
-
-            this.finalString = sb.toString();
-            writer.close();
-            return this.finalString;
+            this.finalString = xml;
+            return xml;
         }
         FinalizeToSPQuery() {
             var camlQuery = this.Finalize();
@@ -1604,224 +1623,19 @@ module CamlBuilder {
     }
 }
 
-export = CamlBuilder;
+function xmlAttr(name: string, value: string) {
+    return " " + name + "=\"" + xmlValue(value) + "\"";
+}
 
-// -------------------- Dependencies ------------------
+function xmlValue(s: string) {
+    return ('' + s)
+        .replace(/&/g, '&amp;')
+        .replace(/'/g, '&apos;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\r/g, '&#10;')
+        .replace(/\n/g, '&#13;');
+}
 
-(function(window) {
-
-    if (typeof (window["Sys"]) == "undefined" || window["Sys"] == null) {
-        window["Sys"] = {};
-        window["Sys"].StringBuilder = function Sys$StringBuilder(initialText) {
-            this._parts = (typeof (initialText) !== 'undefined' && initialText !== null && initialText !== '') ?
-            [initialText.toString()] : [];
-            this._value = {};
-            this._len = 0;
-        }
-    
-        var Sys$StringBuilder$append = function(text) {
-            this._parts[this._parts.length] = text;
-        }
-        var Sys$StringBuilder$appendLine = function(text) {
-            this._parts[this._parts.length] =
-            ((typeof (text) === 'undefined') || (text === null) || (text === '')) ?
-            '\r\n' : text + '\r\n';
-        }
-        var Sys$StringBuilder$clear = function() {
-            this._parts = [];
-            this._value = {};
-            this._len = 0;
-        }
-        var Sys$StringBuilder$isEmpty = function() {
-            if (this._parts.length === 0) return true;
-            return this.toString() === '';
-        }
-        var Sys$StringBuilder$toString = function(separator) {
-            separator = separator || '';
-            var parts = this._parts;
-            if (this._len !== parts.length) {
-                this._value = {};
-                this._len = parts.length;
-            }
-            var val = this._value;
-            if (typeof (val[separator]) === 'undefined') {
-                if (separator !== '') {
-                    for (var i = 0; i < parts.length;) {
-                        if ((typeof (parts[i]) === 'undefined') || (parts[i] === '') || (parts[i] === null)) {
-                            parts.splice(i, 1);
-                        }
-                        else {
-                            i++;
-                        }
-                    }
-                }
-                val[separator] = this._parts.join(separator);
-            }
-            return val[separator];
-        }
-    
-        window["Sys"].StringBuilder.prototype = {
-            append: Sys$StringBuilder$append,
-            appendLine: Sys$StringBuilder$appendLine,
-            clear: Sys$StringBuilder$clear,
-            isEmpty: Sys$StringBuilder$isEmpty,
-            toString: Sys$StringBuilder$toString
-        }
-    
-    }
-    
-    if (typeof window["SP"] == 'undefined') {
-        window["SP"] = {};
-
-        var SP_ScriptUtility$isNullOrEmptyString = function(str) {
-            var strNull = null;
-
-            return str === strNull || typeof str === 'undefined' || !str.length;
-        };
-
-        window["SP"].XmlWriter = function SP_XmlWriter($p0) {
-            this.$f_0 = [];
-            this.$1_0 = $p0;
-            this.$V_0 = true;
-        };
-        window["SP"].XmlWriter.create = function SP_XmlWriter$create(sb) {
-            return new window["SP"].XmlWriter(sb);
-        };
-        window["SP"].XmlWriter.prototype = {
-            $1_0: null,
-            $11_0: null,
-            $V_0: false,
-            $k_0: false,
-            writeStartElement: function SP_XmlWriter$writeStartElement(tagName) {
-                this.$1R_0();
-                this.$1A_0();
-                this.$f_0.push(tagName);
-                this.$11_0 = tagName;
-                this.$1_0.append('<');
-                this.$1_0.append(tagName);
-                this.$V_0 = false;
-                this.$k_0 = false;
-            },
-            writeElementString: function SP_XmlWriter$writeElementString(tagName, value) {
-                this.$1R_0();
-                this.$1A_0();
-                this.writeStartElement(tagName);
-                this.writeString(value);
-                this.writeEndElement();
-            },
-            writeEndElement: function SP_XmlWriter$writeEndElement() {
-                this.$1R_0();
-                if (SP_ScriptUtility$isNullOrEmptyString(this.$11_0)) {
-                    throw "Invalid operation";
-                }
-                if (!this.$V_0) {
-                    this.$1_0.append(' />');
-                    this.$V_0 = true;
-                }
-                else {
-                    this.$1_0.append('</');
-                    this.$1_0.append(this.$11_0);
-                    this.$1_0.append('>');
-                }
-                this.$f_0.pop();
-                if (this.$f_0.length > 0) {
-                    this.$11_0 = this.$f_0[this.$f_0.length - 1];
-                }
-                else {
-                    this.$11_0 = null;
-                }
-            },
-            $1A_0: function SP_XmlWriter$$1A_0() {
-                if (!this.$V_0) {
-                    this.$1_0.append('>');
-                    this.$V_0 = true;
-                }
-            },
-            writeAttributeString: function SP_XmlWriter$writeAttributeString(localName, value) {
-                if (this.$V_0) {
-                    throw "Invalid operation";
-                }
-                this.$1_0.append(' ');
-                this.$1_0.append(localName);
-                this.$1_0.append('=\"');
-                this.$1T_0(value, true);
-                this.$1_0.append('\"');
-            },
-            writeStartAttribute: function SP_XmlWriter$writeStartAttribute(localName) {
-                if (!this.$V_0) {
-                    throw "Invalid operation";
-                }
-                this.$k_0 = true;
-                this.$1_0.append(' ');
-                this.$1_0.append(localName);
-                this.$1_0.append('=\"');
-            },
-            writeEndAttribute: function SP_XmlWriter$writeEndAttribute() {
-                if (!this.$k_0) {
-                    throw "Invalid operation";
-                }
-                this.$1_0.append('\"');
-                this.$k_0 = false;
-            },
-            writeString: function SP_XmlWriter$writeString(value) {
-                if (this.$k_0) {
-                    this.$1T_0(value, true);
-                    this.$1_0.append(value);
-                }
-                else {
-                    this.$1A_0();
-                    this.$1T_0(value, false);
-                }
-            },
-            writeRaw: function SP_XmlWriter$writeRaw(xml) {
-                this.$1R_0();
-                this.$1A_0();
-                this.$1_0.append(xml);
-            },
-            $1R_0: function SP_XmlWriter$$1R_0() {
-                if (this.$k_0) {
-                    throw "Invalid operation";
-                }
-            },
-            $1T_0: function SP_XmlWriter$$1T_0($p0, $p1) {
-                if (SP_ScriptUtility$isNullOrEmptyString($p0)) {
-                    return;
-                }
-                for (var $v_0 = 0; $v_0 < $p0.length; $v_0++) {
-                    var $v_1 = $p0.charCodeAt($v_0);
-
-                    if ($v_1 === 62) {
-                        this.$1_0.append('&gt;');
-                    }
-                    else if ($v_1 === 60) {
-                        this.$1_0.append('&lt;');
-                    }
-                    else if ($v_1 === 38) {
-                        this.$1_0.append('&amp;');
-                    }
-                    else if ($v_1 === 34 && $p1) {
-                        this.$1_0.append('&quot;');
-                    }
-                    else if ($v_1 === 39 && $p1) {
-                        this.$1_0.append('&apos;');
-                    }
-                    else if ($v_1 === 9 && $p1) {
-                        this.$1_0.append('&#09;');
-                    }
-                    else if ($v_1 === 10) {
-                        this.$1_0.append('&#10;');
-                    }
-                    else if ($v_1 === 13) {
-                        this.$1_0.append('&#13;');
-                    }
-                    else {
-                        this.$1_0.append(($p0.charAt($v_0)).toString());
-                    }
-                }
-            },
-            close: function SP_XmlWriter$close() {
-            }
-        };
-    }
-
-})(typeof window != "undefined" ? window : global);
+export = CamlBuilder

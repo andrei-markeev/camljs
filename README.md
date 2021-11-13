@@ -5,19 +5,9 @@ Nuget:
 PM> Install-Package CamlJs
 ```
 
-Nuget TypeScript definitions:
-```
-PM> Install-Package camljs.TypeScript.DefinitelyTyped
-```
-
 Npm:
 ```
 npm install camljs
-```
-
-Npm TypeScript definitions:
-```
-npm install @types/camljs
 ```
 
 Also check out [CamlJs Console](https://github.com/andrei-markeev/camljs-console) - Chrome extension for testing queries with live preview against real lists.
@@ -25,7 +15,6 @@ Also check out [CamlJs Console](https://github.com/andrei-markeev/camljs-console
 ## Usage
 
 In browser:
-
 ```html
 <script type="text/javascript" src="//unpkg.com/camljs"></script>
 <script>
@@ -33,8 +22,7 @@ In browser:
 </script>
 ```
 
-In node:
-
+In Node.js:
 ```js
 var CamlBuilder = require('camljs');
 console.log(new CamlBuilder().View().ToString());
@@ -205,6 +193,8 @@ This code will generate following CAML:
 </OrderBy>
 ```
 
+## Joins
+
 You can also create the upper-level View element as supported by SP.CamlQuery object.
 Scope attribute, ViewFields, Joins and ProjectedFields are supported in this case.
 
@@ -292,3 +282,9 @@ Result:
   </Query>
 </View>
 ```
+
+## More examples
+
+More query examples can be found under [tests](https://github.com/andrei-markeev/camljs/tree/master/tests) folder.
+
+Also, check out [examples](https://github.com/andrei-markeev/camljs/tree/master/examples) folder for usage examples in SP Addins and SPFx projects.

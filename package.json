@@ -9,10 +9,9 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "tsc && browserify lib/camljs.js -x @xmldom/xmldom -s CamlBuilder -o dist/camljs.js && tsc --declaration lib/camljs.ts --emitDeclarationOnly --outDir dist/",
-    "test-common": "npm run build && tsc tests/Tests.ts --target es6 --module commonjs",
-    "test-html": "npm run test-common && browserify tests/Tests.js -x @xmldom/xmldom -s Tests -o tests/Tests.bundle.js",
-    "test": "npm run test-common && node tests/index.js",
+    "build": "tsc && cat build_banner dist/camljs.js build_footer | tee dist/camljs.js > /dev/null",
+    "test": "uvu tests",
+    "test:coverage": "c8 --include=lib npm test",
     "clean": "del tests\\Tests.js && del tests\\Tests.bundle.js && del dist\\*.* /Q"
   },
   "files": [
@@ -34,12 +33,10 @@
   },
   "homepage": "https://github.com/andrei-markeev/camljs#readme",
   "devDependencies": {
-    "@types/node": "^9.6.6",
-    "browserify": "^16.2.3",
-    "diff": "^3.5.0",
-    "sinon": "^4.5.0",
-    "ts-unit": "^1.0.1",
-    "typescript": "^2.8.1"
+    "@types/node": "^9.6.61",
+    "c8": "^7.10.0",
+    "typescript": "^4.4.4",
+    "uvu": "^0.5.2"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.7.5"

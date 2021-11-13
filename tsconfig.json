@@ -1,12 +1,9 @@
 {
     "compilerOptions": {
         "target": "es3",
-        "module": "commonjs",
-        "lib": [
-            "dom",
-            "es2015",
-            "es2016"
-        ]
+        "module": "CommonJS",
+        "declaration": true,
+        "outDir": "dist"
     },
     "files": [
         "lib/camljs.ts"

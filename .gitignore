@@ -11,3 +11,4 @@ node_modules
 /tests/Tests.js
 /tests/Tests.bundle.js
 /lib/camljs.js
+coverage
