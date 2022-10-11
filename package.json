@@ -39,6 +39,6 @@
     "uvu": "^0.5.2"
   },
   "dependencies": {
-    "@xmldom/xmldom": "^0.7.5"
+    "@xmldom/xmldom": "^0.8.3"
   }
 }
